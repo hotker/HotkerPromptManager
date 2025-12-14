@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { User } from '../types';
 import { authService } from '../services/authService';
-import { ArrowRight, Loader2, AlertCircle, Globe, Upload } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle, Globe } from 'lucide-react';
 
 interface AuthPageProps {
   onLogin: (user: User) => void;
@@ -15,8 +15,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const t = {
     zh: {
       subtitle: '商业级提示词工程管理系统',
@@ -28,13 +26,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       passwordPlaceholder: '请输入密码',
       enterBtn: '进入工作台',
       createBtn: '创建账户',
-      orContinue: '或通过以下方式继续',
+      orContinue: '或',
       googleBtn: 'Google 账户登录',
       defaultError: '认证失败',
       googleError: 'Google 登录模拟失败',
-      restoreBtn: '从备份恢复账户',
-      restoreSuccess: '账户恢复成功！密码已重置为: 123456',
-      dataWarning: '更换浏览器会导致数据丢失 (本地存储)。请使用“从备份恢复”来迁移数据。'
     },
     en: {
       subtitle: 'Enterprise Prompt Engineering System',
@@ -46,13 +41,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       passwordPlaceholder: 'Enter password',
       enterBtn: 'Enter Workspace',
       createBtn: 'Create Account',
-      orContinue: 'Or continue with',
+      orContinue: 'OR',
       googleBtn: 'Sign in with Google',
       defaultError: 'Authentication failed',
       googleError: 'Google login simulation failed',
-      restoreBtn: 'Restore from Backup',
-      restoreSuccess: 'Account restored! Password reset to: 123456',
-      dataWarning: 'Changing browsers clears data (Local Storage). Use "Restore" to migrate.'
     }
   };
 
@@ -90,37 +82,6 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
     }
   };
 
-  const handleRestoreClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      try {
-        const jsonStr = event.target?.result as string;
-        const backup = JSON.parse(jsonStr);
-        
-        const user = await authService.restoreBackup(backup);
-        alert(text.restoreSuccess);
-        onLogin(user);
-      } catch (err: any) {
-        console.error(err);
-        setError("恢复失败：" + (err.message || "无效的文件"));
-        setIsLoading(false);
-      } finally {
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      }
-    };
-    reader.readAsText(file);
-  };
-
   return (
     <div className="h-full w-full bg-zinc-950 overflow-y-auto relative">
       {/* Fixed Background Decoration */}
@@ -150,6 +111,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
           </div>
 
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl">
+            {/* Tabs */}
             <div className="flex bg-zinc-950 p-1 rounded-lg mb-6 border border-zinc-800">
               <button
                 onClick={() => { setMode('login'); setError(null); }}
@@ -201,6 +163,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
                 />
               </div>
 
+              {/* Primary Action Button */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -215,41 +178,22 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
               </button>
             </form>
 
-            {/* Restore Backup Option */}
-            <div className="mt-6 pt-6 border-t border-zinc-800">
-              <button
-                type="button"
-                onClick={handleRestoreClick}
-                className="w-full flex items-center justify-center gap-2 text-zinc-500 hover:text-banana-400 text-sm transition-colors py-2"
-              >
-                <Upload size={14} /> {text.restoreBtn}
-              </button>
-              <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileChange} 
-                  className="hidden" 
-                  accept=".json"
-              />
-              <p className="text-[10px] text-zinc-600 text-center mt-2 px-4">
-                  {text.dataWarning}
-              </p>
-            </div>
-
-            <div className="relative my-6">
+            {/* Divider */}
+            <div className="relative my-5">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-zinc-800"></div>
               </div>
-              <div className="relative flex justify-center text-xs">
+              <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-wider">
                 <span className="bg-zinc-900 px-2 text-zinc-500">{text.orContinue}</span>
               </div>
             </div>
 
+            {/* Google Button - Now Prominent */}
             <button
               type="button"
               onClick={handleGoogleLogin}
               disabled={isLoading}
-              className="w-full bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-3"
+              className="w-full bg-zinc-950 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-300 font-medium py-3 rounded-xl transition-all flex items-center justify-center gap-3 shadow-sm"
             >
               <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                   <path
@@ -271,6 +215,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
               </svg>
               {text.googleBtn}
             </button>
+            
           </div>
           <p className="text-center text-xs text-zinc-600 mt-6">
             Nano Banana v2.0 &copy; 2024. All rights reserved.
