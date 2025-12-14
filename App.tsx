@@ -72,6 +72,7 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
   // Sync State
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [syncErrorMsg, setSyncErrorMsg] = useState<string | undefined>(undefined);
 
   // Initial Data Defaults
   const initialModules: PromptModule[] = [
@@ -126,12 +127,14 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
 
     const saveData = async () => {
       setSyncStatus('saving');
+      setSyncErrorMsg(undefined);
       try {
         await apiService.saveData(currentUser.id, debouncedData);
         setSyncStatus('saved');
-      } catch (e) {
+      } catch (e: any) {
         console.error("Sync failed", e);
         setSyncStatus('error');
+        setSyncErrorMsg(e.message);
       }
     };
 
@@ -170,6 +173,7 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
         userApiKey={userApiKey}
         setUserApiKey={setUserApiKey}
         syncStatus={syncStatus}
+        syncErrorMsg={syncErrorMsg}
       />
       
       <main className="flex-1 h-full overflow-hidden relative">

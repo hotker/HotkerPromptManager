@@ -10,6 +10,7 @@ interface SidebarProps {
   userApiKey: string;
   setUserApiKey: (key: string) => void;
   syncStatus?: 'saved' | 'saving' | 'error';
+  syncErrorMsg?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -19,7 +20,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
   userApiKey,
   setUserApiKey,
-  syncStatus = 'saved'
+  syncStatus = 'saved',
+  syncErrorMsg
 }) => {
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [tempKey, setTempKey] = useState(userApiKey);
@@ -53,7 +55,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       case 'saving':
         return <span className="text-zinc-500 flex items-center gap-1.5"><RefreshCcw size={12} className="animate-spin"/> 同步中...</span>;
       case 'error':
-        return <span className="text-red-400 flex items-center gap-1.5"><AlertTriangle size={12}/> 同步失败</span>;
+        return (
+          <span 
+            className="text-red-400 flex items-center gap-1.5 cursor-help" 
+            title={syncErrorMsg || "数据无法保存到云端，请检查网络或数据库绑定"}
+          >
+            <AlertTriangle size={12}/> 同步失败
+          </span>
+        );
       case 'saved':
       default:
         return <span className="text-zinc-600 flex items-center gap-1.5"><Cloud size={12}/> 已同步</span>;

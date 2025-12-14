@@ -19,8 +19,12 @@ export const apiService = {
     });
     
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || '注册失败');
+      let errorMsg = '注册失败';
+      try {
+        const err = await res.json();
+        errorMsg = err.error || errorMsg;
+      } catch (e) {}
+      throw new Error(errorMsg);
     }
     return res.json();
   },
@@ -33,8 +37,12 @@ export const apiService = {
     });
 
     if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || '登录失败');
+      let errorMsg = '登录失败';
+      try {
+        const err = await res.json();
+        errorMsg = err.error || errorMsg;
+      } catch (e) {}
+      throw new Error(errorMsg);
     }
     return res.json();
   },
@@ -43,7 +51,12 @@ export const apiService = {
   loadData: async (userId: string): Promise<UserData | null> => {
     try {
       const res = await fetch(`${API_BASE}/data?userId=${userId}`);
-      if (!res.ok) return null;
+      if (!res.ok) {
+        // If API fails (e.g., 500 because DB not bound), log it but allow app to load with empty data
+        const text = await res.text();
+        console.warn("Cloud data load failed:", text);
+        return null;
+      }
       return res.json();
     } catch (e) {
       console.error("Failed to load cloud data", e);
@@ -52,10 +65,25 @@ export const apiService = {
   },
 
   saveData: async (userId: string, data: UserData): Promise<void> => {
-    await fetch(`${API_BASE}/data`, {
+    const res = await fetch(`${API_BASE}/data`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, data })
     });
+    
+    if (!res.ok) {
+        let errorMsg = 'Sync failed';
+        try {
+            // Try to parse JSON error first
+            const errJson = await res.json();
+            errorMsg = errJson.error || errorMsg;
+        } catch(e) {
+            // If not JSON, use text (e.g. 500 HTML or plain text)
+            const text = await res.text();
+            if (text.includes('NANO_DB')) errorMsg = '服务端 NANO_DB 未绑定';
+            else errorMsg = `Server Error: ${res.status}`;
+        }
+        throw new Error(errorMsg);
+    }
   }
 };
