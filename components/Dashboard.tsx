@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { PromptModule, PromptTemplate, RunLog, User } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Zap, Layers, FileCode2, Download, Upload, Database, AlertTriangle, CheckCircle2, Wifi, WifiOff } from 'lucide-react';
+import { Zap, Layers, FileCode2, Download, Upload, Database, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
 
 interface DashboardProps {
   modules: PromptModule[];
@@ -26,23 +26,36 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
 
   useEffect(() => {
-    // Simple check to see if we can reach the data endpoint
-    const checkConnection = async () => {
+    // Commercial-grade health check pattern
+    const checkSystemHealth = async () => {
       try {
-        const res = await fetch(`/api/data?userId=${currentUser.id}`);
-        if (res.status === 503) {
+        // First try the dedicated health endpoint
+        const healthRes = await fetch('/api/health');
+        if (healthRes.ok) {
+           const healthData = await healthRes.json();
+           if (healthData.services?.database === 'connected') {
+             setDbStatus('connected');
+             return;
+           } else {
+             setDbStatus('disconnected');
+             return;
+           }
+        }
+        
+        // Fallback: Check data endpoint if health check fails/doesn't exist yet
+        const dataRes = await fetch(`/api/data?userId=${currentUser.id}`);
+        if (dataRes.status === 503) {
            setDbStatus('disconnected');
-        } else if (res.ok) {
-           setDbStatus('connected');
         } else {
-           // 200 ok or 400 are technically connected to the worker
            setDbStatus('connected'); 
         }
       } catch (e) {
+        console.warn("Health check failed:", e);
         setDbStatus('disconnected');
       }
     };
-    checkConnection();
+    
+    checkSystemHealth();
   }, [currentUser.id]);
 
   const successRate = logs.length > 0 
@@ -129,19 +142,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <h2 className="text-3xl font-bold text-zinc-100 mb-2">欢迎回来，{currentUser.username}</h2>
           <div className="flex items-center gap-4 text-sm">
              <div className="flex items-center gap-1.5 text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
-                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                <span>Pages Functions Active</span>
+                <Activity size={12} className="text-green-500" />
+                <span>System Online</span>
              </div>
 
              {dbStatus === 'connected' ? (
                 <div className="flex items-center gap-1.5 text-green-500 bg-green-500/10 px-2 py-1 rounded border border-green-500/20">
                     <Database size={12}/>
-                    <span>Cloud DB 已连接</span>
+                    <span>KV 数据库已连接</span>
                 </div>
              ) : (
-                <div className="flex items-center gap-1.5 text-red-400 bg-red-500/10 px-2 py-1 rounded border border-red-500/20" title="KV 绑定未配置">
+                <div className="flex items-center gap-1.5 text-red-400 bg-red-500/10 px-2 py-1 rounded border border-red-500/20 animate-pulse" title="KV 绑定未配置">
                     <AlertTriangle size={12}/>
-                    <span>Cloud DB 未连接</span>
+                    <span>KV 数据库未连接</span>
                 </div>
              )}
           </div>
@@ -152,11 +165,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
            <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={20} />
            <div>
-             <h4 className="font-bold text-red-400">数据库配置警告</h4>
+             <h4 className="font-bold text-red-400">数据库连接错误</h4>
              <p className="text-sm text-red-400/80 mt-1">
-               检测到 NANO_DB (Workers KV) 未绑定。数据将无法保存到云端，仅保存在当前浏览器会话中。
+               后端 API 报告数据库不可用。这通常意味着 Cloudflare KV Namespace 未正确绑定。
                <br/>
-               请在 Cloudflare Dashboard 设置 KV Namespace 绑定，变量名为 <code>NANO_DB</code>。
+               数据将暂时存储在浏览器内存中，刷新页面后将会丢失。
              </p>
            </div>
         </div>
@@ -171,9 +184,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex flex-col md:flex-row gap-4">
            <div className="flex-1">
              <p className="text-sm text-zinc-400 mb-4">
-               为防止浏览器缓存清除导致数据丢失，建议定期导出备份。
+               为防止意外丢失，请养成定期备份的习惯。
                <br/>
-               <span className="text-zinc-500 text-xs">导出的 JSON 文件可用于在任何设备上恢复您的工作台。</span>
+               <span className="text-zinc-500 text-xs">导出的 JSON 文件包含您所有的模块、模板和历史记录。</span>
              </p>
              <div className="flex gap-4">
                 <button 

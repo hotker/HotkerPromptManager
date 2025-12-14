@@ -1,46 +1,30 @@
-# Nano Banana 部署求救指南
+# Nano Banana 部署与修复指南
 
-## 🚨 紧急：关于部署失败的修复 (ERROR: Workers-specific command)
+## 🛑 必须执行的操作：修复部署失败
 
-如果您的日志显示：
-`[ERROR] It looks like you've run a Workers-specific command in a Pages project.`
+您的部署日志显示系统正在执行 `npx wrangler deploy`，这导致了错误。
 
-**原因**：
-系统执行了 `npx wrangler deploy`（这是用于部署 Workers 的命令）。
-对于 Nano Banana 这样的 Pages 项目，**必须**使用 `npx wrangler pages deploy`。
+**请立即执行以下步骤：**
 
-**解决方案**：
-
-1.  **如果您在本地命令行部署**：
-    请运行：
-    ```bash
-    npm run deploy
-    ```
-    (这个命令已经在 package.json 中配置为使用 correct 的 pages 命令)
-
-2.  **如果您在 Cloudflare Dashboard 设置中**：
-    *   **Build command (构建命令)**: `npm run build`
-    *   **Build output directory (输出目录)**: `dist`
-    *   **不要**在任何自定义部署脚本中填写 `npx wrangler deploy`。Cloudflare Pages 会在构建完成后自动部署 `dist` 目录，不需要额外的部署命令。
+1.  登录 Cloudflare Dashboard。
+2.  进入您的 Pages 项目 (nano-banana-prompt-workshop)。
+3.  点击顶部标签栏的 **Settings (设置)** -> **Build & deployments (构建与部署)**。
+4.  找到 **Build configurations (构建配置)** 部分，点击 **Edit (编辑)**。
+5.  **关键步骤**：
+    *   **Build command (构建命令)**: 保持为 `npm run build`。
+    *   **Build output directory (构建输出目录)**: 保持为 `dist`。
+    *   **Deploy command (部署命令)**: **请将其清空！** (不要填写 `npx wrangler deploy`，因为 Pages 会自动部署 `dist` 目录)。
+6.  点击 **Save (保存)**。
+7.  回到 **Deployments** 标签页，点击 **Retry deployment (重试部署)**。
 
 ---
 
-## 🛠️ KV 数据库绑定 (必须步骤)
+## 🛠️ KV 数据库绑定
 
-为了让登录和保存功能正常工作，您需要创建一个 KV Namespace 并绑定它。
-
-1.  运行 `npx wrangler kv:namespace create NANO_DB` 创建数据库。
-2.  复制返回的 `id`。
-3.  打开项目根目录下的 `wrangler.toml` 文件。
-4.  将 `id` 替换为您刚刚获得的 ID：
+确保 `wrangler.toml` 中的 `id` 已替换为您真实的 KV ID。
 
 ```toml
 [[kv_namespaces]]
 binding = "NANO_DB"
-id = "您的_KV_ID_粘贴在这里" 
+id = "您的_KV_ID" 
 ```
-
-## 环境变量
-如果您想让应用自带默认的 Google API Key (仅供演示或内部使用)，请在 Cloudflare Pages 后台设置环境变量：
-*   `VITE_API_KEY`: `您的_Gemini_API_Key`
-
