@@ -1,14 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 import { FixedConfig } from "../types";
 
-// Safely access process.env to prevent "process is not defined" errors in some environments
+// Standard Vite environment variable access
+// Note: In Cloudflare Pages, set the environment variable as VITE_API_KEY in the dashboard to expose it to the client bundle if needed.
 const getEnvApiKey = () => {
-  try {
-    return process.env.API_KEY || '';
-  } catch (e) {
-    console.warn("Could not access process.env");
-    return '';
-  }
+  return import.meta.env.VITE_API_KEY || '';
 };
 
 interface ApiKeyOptions {
@@ -58,8 +54,6 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
        const parts = response.candidates?.[0]?.content?.parts;
        if (parts) {
             // Priority: Check for image first
-            // The model may return text parts (like "Here is the image") before the actual image data.
-            // We must find the part with inlineData, iterating through all parts.
             const imagePart = parts.find(p => p.inlineData);
             
             if (imagePart && imagePart.inlineData) {

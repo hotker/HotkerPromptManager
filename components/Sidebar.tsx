@@ -34,7 +34,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isPrivilegedUser = currentUser?.username === 'hotker@gmail.com';
   
   // Status check: Valid if User has their own key, OR (User is privileged AND System has a key)
-  const hasValidKey = !!userApiKey || (isPrivilegedUser && !!process.env.API_KEY);
+  // Use VITE_API_KEY for system default
+  const systemKey = import.meta.env.VITE_API_KEY;
+  const hasValidKey = !!userApiKey || (isPrivilegedUser && !!systemKey);
 
   const handleSaveKey = () => {
     setUserApiKey(tempKey.trim());
@@ -134,7 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {userApiKey ? (
                 <span className="text-banana-400/80">已使用自定义 Key</span>
               ) : (
-                (isPrivilegedUser && process.env.API_KEY) ? '系统默认 Key' : <span className="text-red-400">需配置 Key</span>
+                (isPrivilegedUser && systemKey) ? '系统默认 Key' : <span className="text-red-400">需配置 Key</span>
               )}
             </div>
             <button 
