@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { PromptModule, PromptTemplate, RunLog } from '../types';
+import { PromptModule, PromptTemplate, RunLog, User } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Zap, Layers, FileCode2, Download, Upload, Database, AlertTriangle } from 'lucide-react';
 
@@ -10,6 +10,7 @@ interface DashboardProps {
   setModules: React.Dispatch<React.SetStateAction<PromptModule[]>>;
   setTemplates: React.Dispatch<React.SetStateAction<PromptTemplate[]>>;
   setLogs: React.Dispatch<React.SetStateAction<RunLog[]>>;
+  currentUser: User;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
@@ -18,7 +19,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   logs,
   setModules,
   setTemplates,
-  setLogs
+  setLogs,
+  currentUser
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,6 +45,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const backupData = {
       version: 1,
       timestamp: Date.now(),
+      user: currentUser, // Include User Profile
       data: {
         modules,
         templates,
@@ -54,7 +57,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `nano-banana-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `nano-banana-backup-${currentUser.username}-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -102,7 +105,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     <div className="p-8 h-full overflow-y-auto bg-zinc-950">
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-zinc-100 mb-2">欢迎回来，工程师</h2>
+          <h2 className="text-3xl font-bold text-zinc-100 mb-2">欢迎回来，{currentUser.username}</h2>
           <p className="text-zinc-500">Nano Banana 系统运行正常</p>
         </div>
       </div>
@@ -111,23 +114,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">
         <div className="flex items-center gap-3 mb-4">
            <Database className="text-banana-500" size={24} />
-           <h3 className="text-lg font-bold text-zinc-200">数据管理与备份</h3>
+           <h3 className="text-lg font-bold text-zinc-200">数据迁移与备份</h3>
         </div>
         <div className="flex flex-col md:flex-row gap-4">
            <div className="flex-1">
-             <p className="text-sm text-zinc-400 mb-4">将您的所有模块库、模板配置和运行历史导出为 JSON 文件，或者从之前的备份中恢复数据。</p>
+             <p className="text-sm text-zinc-400 mb-4">
+               由于本应用使用浏览器本地存储，更换浏览器会导致数据“丢失”。请定期导出备份。
+               <br/>
+               <span className="text-zinc-500 text-xs">导出文件包含您的账户信息和所有数据，可用于在其他浏览器中“一键搬家”。</span>
+             </p>
              <div className="flex gap-4">
                 <button 
                   onClick={handleExport}
                   className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-lg font-medium transition-colors border border-zinc-700"
                 >
-                  <Download size={18} /> 导出备份 (.json)
+                  <Download size={18} /> 导出完整备份
                 </button>
                 <button 
                   onClick={handleImportClick}
                   className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-banana-400 px-4 py-2 rounded-lg font-medium transition-colors border border-zinc-700 hover:border-banana-500/50"
                 >
-                  <Upload size={18} /> 导入恢复
+                  <Upload size={18} /> 导入数据
                 </button>
                 <input 
                   type="file" 
@@ -143,7 +150,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
              <div>
                <h4 className="text-sm font-bold text-amber-500 mb-1">注意</h4>
                <p className="text-xs text-zinc-500 leading-relaxed">
-                 导入操作将会<strong>完全覆盖</strong>当前浏览器中的所有 Nano Banana 数据。建议在导入前先执行导出操作以防止数据丢失。
+                 导入操作将会<strong>覆盖</strong>当前界面显示的数据。如果您是在新浏览器中恢复账户，请使用登录页面的“从备份恢复”功能。
                </p>
              </div>
            </div>

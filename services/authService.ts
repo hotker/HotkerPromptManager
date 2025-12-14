@@ -1,93 +1,40 @@
 import { User } from '../types';
+import { apiService } from './apiService';
 
-const STORAGE_KEY_USERS = 'nano_users_db';
-const STORAGE_KEY_SESSION = 'nano_current_session';
-
-// Helper to get users DB
-const getUsersDB = (): Record<string, any> => {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY_USERS) || '{}');
-  } catch {
-    return {};
-  }
-};
-
-// Helper to save users DB
-const saveUsersDB = (db: Record<string, any>) => {
-  localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(db));
-};
+const STORAGE_KEY_SESSION = 'nano_cloud_session';
 
 export const authService = {
-  // Login with Username/Password
+  // Login interacting with Cloudflare KV API
   login: async (username: string, password: string): Promise<User> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 600));
-
-    const db = getUsersDB();
-    const userRecord = db[username];
-
-    // Simple simulation: in real app, never store plain text passwords
-    if (userRecord && userRecord.password === password) {
-      const user: User = userRecord.profile;
-      localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user));
-      return user;
-    }
-
-    throw new Error('用户名或密码错误');
+    const user = await apiService.login(username, password);
+    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user));
+    return user;
   },
 
-  // Register new user
+  // Register interacting with Cloudflare KV API
   register: async (username: string, password: string): Promise<User> => {
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    const db = getUsersDB();
-    if (db[username]) {
-      throw new Error('该用户名已被注册');
-    }
-
-    const newUser: User = {
-      id: crypto.randomUUID(),
-      username,
-      provider: 'local',
-      createdAt: Date.now(),
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}` // Auto avatar
-    };
-
-    db[username] = {
-      profile: newUser,
-      password: password // In demo only.
-    };
-
-    saveUsersDB(db);
-    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(newUser));
-    return newUser;
+    const user = await apiService.register(username, password);
+    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user));
+    return user;
   },
 
   // Mock Google Login
   loginWithGoogle: async (): Promise<User> => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // For demo purposes, we simulate a delay.
+    // In a real implementation, this would involve OAuth redirects.
+    await new Promise(resolve => setTimeout(resolve, 800));
     
-    // Simulate a Google User
-    const googleId = 'google_user_demo';
-    const db = getUsersDB();
+    // We treat this as a special "local" user for now unless we implement full OAuth backend
+    const googleUser: User = {
+      id: 'google_demo_user',
+      username: 'Google User',
+      provider: 'google',
+      createdAt: Date.now(),
+      avatarUrl: 'https://lh3.googleusercontent.com/a/default-user=s96-c'
+    };
     
-    // Check if google user exists, if not create one
-    if (!db[googleId]) {
-      const newUser: User = {
-        id: 'g_' + crypto.randomUUID(),
-        username: 'Google User',
-        email: 'demo@gmail.com',
-        provider: 'google',
-        createdAt: Date.now(),
-        avatarUrl: 'https://lh3.googleusercontent.com/a/default-user=s96-c'
-      };
-      db[googleId] = { profile: newUser, password: '' };
-      saveUsersDB(db);
-    }
-
-    const user = db[googleId].profile;
-    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user));
-    return user;
+    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(googleUser));
+    return googleUser;
   },
 
   // Logout
@@ -103,5 +50,13 @@ export const authService = {
     } catch {
       return null;
     }
+  },
+
+  // Restore is now handled by the API sync, but we keep this signature if needed for manual imports
+  restoreBackup: async (backup: any): Promise<User> => {
+    // With Cloudflare KV, we might just want to load the data and save it to the cloud
+    // For now, we'll assume the standard login flow handles restoration.
+    // This function can be deprecated or used to force-upload a local backup to the cloud.
+    throw new Error("请直接登录，数据将自动同步。使用仪表盘的导入功能上传旧备份。");
   }
 };

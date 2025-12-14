@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { User } from '../types';
 import { authService } from '../services/authService';
-import { ArrowRight, Loader2, AlertCircle, Globe } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle, Globe, Upload } from 'lucide-react';
 
 interface AuthPageProps {
   onLogin: (user: User) => void;
@@ -14,6 +14,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const t = {
     zh: {
@@ -29,7 +31,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       orContinue: '或通过以下方式继续',
       googleBtn: 'Google 账户登录',
       defaultError: '认证失败',
-      googleError: 'Google 登录模拟失败'
+      googleError: 'Google 登录模拟失败',
+      restoreBtn: '从备份恢复账户',
+      restoreSuccess: '账户恢复成功！密码已重置为: 123456',
+      dataWarning: '更换浏览器会导致数据丢失 (本地存储)。请使用“从备份恢复”来迁移数据。'
     },
     en: {
       subtitle: 'Enterprise Prompt Engineering System',
@@ -44,7 +49,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       orContinue: 'Or continue with',
       googleBtn: 'Sign in with Google',
       defaultError: 'Authentication failed',
-      googleError: 'Google login simulation failed'
+      googleError: 'Google login simulation failed',
+      restoreBtn: 'Restore from Backup',
+      restoreSuccess: 'Account restored! Password reset to: 123456',
+      dataWarning: 'Changing browsers clears data (Local Storage). Use "Restore" to migrate.'
     }
   };
 
@@ -80,6 +88,37 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       setError(text.googleError);
       setIsLoading(false);
     }
+  };
+
+  const handleRestoreClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const jsonStr = event.target?.result as string;
+        const backup = JSON.parse(jsonStr);
+        
+        const user = await authService.restoreBackup(backup);
+        alert(text.restoreSuccess);
+        onLogin(user);
+      } catch (err: any) {
+        console.error(err);
+        setError("恢复失败：" + (err.message || "无效的文件"));
+        setIsLoading(false);
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -174,7 +213,28 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
             </button>
           </form>
 
-          <div className="relative my-8">
+          {/* Restore Backup Option */}
+          <div className="mt-6 pt-6 border-t border-zinc-800">
+             <button
+               type="button"
+               onClick={handleRestoreClick}
+               className="w-full flex items-center justify-center gap-2 text-zinc-500 hover:text-banana-400 text-sm transition-colors py-2"
+             >
+               <Upload size={14} /> {text.restoreBtn}
+             </button>
+             <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileChange} 
+                className="hidden" 
+                accept=".json"
+             />
+             <p className="text-[10px] text-zinc-600 text-center mt-2 px-4">
+                {text.dataWarning}
+             </p>
+          </div>
+
+          <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-zinc-800"></div>
             </div>

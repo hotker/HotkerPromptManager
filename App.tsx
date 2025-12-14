@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { LibraryView } from './components/LibraryView';
 import { BuilderView } from './components/BuilderView';
@@ -7,40 +7,20 @@ import { Dashboard } from './components/Dashboard';
 import { AuthPage } from './components/AuthPage';
 import { ViewState, PromptModule, PromptTemplate, RunLog, ModuleType, User } from './types';
 import { authService } from './services/authService';
+import { apiService, UserData } from './services/apiService';
 
-// Improved LocalStorage Hook that reacts to Key changes (Crucial for multi-user switching)
-function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
-  // Initialize state based on the current key immediately
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.error(error);
-      return initialValue;
-    }
-  });
-
-  // When key changes, re-read from local storage
+// Debounce Hook to prevent API spamming
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      setStoredValue(item ? JSON.parse(item) : initialValue);
-    } catch (error) {
-      setStoredValue(initialValue);
-    }
-  }, [key]);
-
-  // Sync state changes to local storage
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(key, JSON.stringify(storedValue));
-    } catch (error) {
-      console.error("Error writing to local storage", error);
-    }
-  }, [key, storedValue]);
-
-  return [storedValue, setStoredValue];
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
 }
 
 const App = () => {
@@ -65,41 +45,108 @@ const App = () => {
     setCurrentUser(null);
   };
 
-  // If loading auth state, show a simple loader or nothing
   if (isLoadingAuth) {
-    return <div className="h-screen bg-zinc-950 flex items-center justify-center text-banana-500">加载中...</div>;
+    return <div className="h-screen bg-zinc-950 flex items-center justify-center text-banana-500">
+      <span className="animate-pulse">Loading Nano Banana...</span>
+    </div>;
   }
 
-  // If not logged in, show Auth Page
   if (!currentUser) {
     return <AuthPage onLogin={handleLogin} />;
   }
 
-  // Render Main App with User-Scoped Data
   return (
     <AuthenticatedApp currentUser={currentUser} onLogout={handleLogout} />
   );
 };
 
-// Extracted to ensure hooks re-run completely when user changes (though key-based hook handles it, this is cleaner)
 const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = ({ currentUser, onLogout }) => {
   const [view, setView] = useState<ViewState>('dashboard');
   
-  // User-scoped keys
-  const userPrefix = `nano_${currentUser.id}_`;
+  // Data State
+  const [modules, setModules] = useState<PromptModule[]>([]);
+  const [templates, setTemplates] = useState<PromptTemplate[]>([]);
+  const [logs, setLogs] = useState<RunLog[]>([]);
+  const [userApiKey, setUserApiKey] = useState<string>('');
+  
+  // Sync State
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'error'>('saved');
 
+  // Initial Data Defaults
   const initialModules: PromptModule[] = [
-    { id: '1', title: '资深 React 工程师角色', content: '担任具有深厚 UI/UX 专业知识的世界级资深前端 React 工程师。', type: ModuleType.ROLE, tags: ['编程', 'react'], createdAt: Date.now() },
+    { id: '1', title: '资深 React 工程师角色', content: '担任具有深厚 UI/UX 专业知识的世界级资深前端 React 工程师。', description: '用于生成高质量 React 代码的默认角色', type: ModuleType.ROLE, tags: ['编程', 'react'], createdAt: Date.now() },
     { id: '2', title: '简洁语气', content: '极其简洁。没有废话。只提供代码和关键解释。', type: ModuleType.TONE, tags: ['通用'], createdAt: Date.now() },
     { id: '3', title: 'JSON 输出格式', content: '严格将结果作为有效的 JSON 对象输出。', type: ModuleType.FORMAT, tags: ['json', 'api'], createdAt: Date.now() },
   ];
 
-  const [modules, setModules] = useLocalStorage<PromptModule[]>(`${userPrefix}modules`, initialModules);
-  const [templates, setTemplates] = useLocalStorage<PromptTemplate[]>(`${userPrefix}templates`, []);
-  const [logs, setLogs] = useLocalStorage<RunLog[]>(`${userPrefix}logs`, []);
-  
-  // API Key Storage (User specific)
-  const [userApiKey, setUserApiKey] = useLocalStorage<string>(`${userPrefix}api_key`, '');
+  // 1. Load Data from Cloud on Mount
+  useEffect(() => {
+    const loadCloudData = async () => {
+      // Optimistic load: try to get data, if empty/null, use defaults
+      const cloudData = await apiService.loadData(currentUser.id);
+      
+      if (cloudData && cloudData.modules && cloudData.modules.length > 0) {
+        setModules(cloudData.modules);
+        setTemplates(cloudData.templates || []);
+        setLogs(cloudData.logs || []);
+        setUserApiKey(cloudData.apiKey || '');
+      } else {
+        // New user or empty data
+        setModules(initialModules);
+      }
+      setIsDataLoaded(true);
+    };
+
+    loadCloudData();
+  }, [currentUser.id]);
+
+  // 2. Prepare Data Object for Sync
+  const currentData: UserData = {
+    modules,
+    templates,
+    logs,
+    apiKey: userApiKey
+  };
+
+  // 3. Debounce the data changes (Auto-save every 2s of inactivity)
+  const debouncedData = useDebounce(currentData, 2000);
+
+  // 4. Save to Cloud when debounced data changes
+  // We use a ref to skip the initial save when data is first loaded
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    const saveData = async () => {
+      setSyncStatus('saving');
+      try {
+        await apiService.saveData(currentUser.id, debouncedData);
+        setSyncStatus('saved');
+      } catch (e) {
+        console.error("Sync failed", e);
+        setSyncStatus('error');
+      }
+    };
+
+    saveData();
+  }, [debouncedData, currentUser.id, isDataLoaded]);
+
+
+  if (!isDataLoaded) {
+    return (
+      <div className="h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 text-zinc-400">
+        <div className="w-8 h-8 border-2 border-banana-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm">正在同步云端数据...</p>
+      </div>
+    );
+  }
 
   const handleSaveTemplate = (newTemplate: PromptTemplate) => {
     setTemplates(prev => [newTemplate, ...prev]);
@@ -122,6 +169,7 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
         onLogout={onLogout}
         userApiKey={userApiKey}
         setUserApiKey={setUserApiKey}
+        syncStatus={syncStatus}
       />
       
       <main className="flex-1 h-full overflow-hidden relative">
@@ -133,6 +181,7 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
             setModules={setModules}
             setTemplates={setTemplates}
             setLogs={setLogs}
+            currentUser={currentUser}
           />
         )}
         {view === 'library' && <LibraryView modules={modules} setModules={setModules} />}

@@ -4,8 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nano Banana 提示词工坊</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script>
+      // Process Polyfill for Browser Environment
+      window.process = {
+        env: {
+          NODE_ENV: 'production',
+          API_KEY: '' // System key is handled server-side or requires manual input for safety in this architecture
+        }
+      };
+
       tailwind.config = {
         theme: {
           extend: {
@@ -35,6 +42,7 @@
         },
       }
     </script>
+    <script src="https://cdn.tailwindcss.com"></script>
   <script type="importmap">
 {
   "imports": {

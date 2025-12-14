@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutGrid, Library, TestTube2, History, LogOut, User as UserIcon, Settings, KeyRound, X, ExternalLink } from 'lucide-react';
+import { LayoutGrid, Library, TestTube2, History, LogOut, User as UserIcon, Settings, KeyRound, X, ExternalLink, Cloud, CheckCircle2, RefreshCcw, AlertTriangle } from 'lucide-react';
 import { ViewState, User } from '../types';
 
 interface SidebarProps {
@@ -9,6 +9,7 @@ interface SidebarProps {
   onLogout: () => void;
   userApiKey: string;
   setUserApiKey: (key: string) => void;
+  syncStatus?: 'saved' | 'saving' | 'error';
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -17,7 +18,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   currentUser, 
   onLogout,
   userApiKey,
-  setUserApiKey
+  setUserApiKey,
+  syncStatus = 'saved'
 }) => {
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [tempKey, setTempKey] = useState(userApiKey);
@@ -42,6 +44,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const openKeyModal = () => {
     setTempKey(userApiKey);
     setIsKeyModalOpen(true);
+  };
+
+  const renderSyncStatus = () => {
+    switch(syncStatus) {
+      case 'saving':
+        return <span className="text-zinc-500 flex items-center gap-1.5"><RefreshCcw size={12} className="animate-spin"/> 同步中...</span>;
+      case 'error':
+        return <span className="text-red-400 flex items-center gap-1.5"><AlertTriangle size={12}/> 同步失败</span>;
+      case 'saved':
+      default:
+        return <span className="text-zinc-600 flex items-center gap-1.5"><Cloud size={12}/> 已同步</span>;
+    }
   };
 
   return (
@@ -91,7 +105,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                  <p className="text-sm font-semibold text-zinc-200 truncate">{currentUser.username}</p>
-                 <p className="text-[10px] text-zinc-500 truncate capitalize">{currentUser.provider} 账户</p>
+                 <div className="flex items-center justify-between">
+                   <p className="text-[10px] text-zinc-500 truncate capitalize">{currentUser.provider} 账户</p>
+                   <div className="text-[10px]">
+                     {renderSyncStatus()}
+                   </div>
+                 </div>
               </div>
             </div>
           )}
