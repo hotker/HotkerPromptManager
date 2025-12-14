@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && npx wrangler pages deploy dist",
-    "pages:deploy": "npx wrangler pages deploy dist"
+    "pages:deploy": "npx wrangler pages deploy dist",
+    "kv:create": "npx wrangler kv:namespace create NANO_DB"
   },
   "dependencies": {
     "@google/genai": "^1.33.0",

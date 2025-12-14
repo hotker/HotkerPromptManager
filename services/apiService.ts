@@ -12,39 +12,42 @@ const API_BASE = '/api';
 export const apiService = {
   // Auth
   register: async (username: string, password: string): Promise<User> => {
-    const res = await fetch(`${API_BASE}/auth?action=register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
-    
-    if (!res.ok) {
-      let errorMsg = '注册失败';
-      try {
-        const err = await res.json();
-        errorMsg = err.error || errorMsg;
-      } catch (e) {}
-      throw new Error(errorMsg);
+    try {
+      const res = await fetch(`${API_BASE}/auth?action=register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || '注册失败');
+      }
+      return data;
+    } catch (e: any) {
+      // Handle network errors (e.g., API unreachable)
+      throw new Error(e.message || '连接服务器失败，请检查网络');
     }
-    return res.json();
   },
 
   login: async (username: string, password: string): Promise<User> => {
-    const res = await fetch(`${API_BASE}/auth?action=login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
-    });
+    try {
+      const res = await fetch(`${API_BASE}/auth?action=login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
 
-    if (!res.ok) {
-      let errorMsg = '登录失败';
-      try {
-        const err = await res.json();
-        errorMsg = err.error || errorMsg;
-      } catch (e) {}
-      throw new Error(errorMsg);
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || '登录失败');
+      }
+      return data;
+    } catch (e: any) {
+      throw new Error(e.message || '连接服务器失败，请检查网络');
     }
-    return res.json();
   },
 
   // Data Sync
@@ -52,9 +55,8 @@ export const apiService = {
     try {
       const res = await fetch(`${API_BASE}/data?userId=${userId}`);
       if (!res.ok) {
-        // If API fails (e.g., 500 because DB not bound), log it but allow app to load with empty data
-        const text = await res.text();
-        console.warn("Cloud data load failed:", text);
+        // If 503 (DB missing) or 500, we log it but return null so the app can still work in "Offline/Demo" mode locally
+        console.warn(`Cloud data load failed (${res.status}):`, await res.text());
         return null;
       }
       return res.json();
@@ -72,15 +74,12 @@ export const apiService = {
     });
     
     if (!res.ok) {
-        let errorMsg = 'Sync failed';
+        let errorMsg = '同步失败';
         try {
-            // Try to parse JSON error first
             const errJson = await res.json();
             errorMsg = errJson.error || errorMsg;
         } catch(e) {
-            // If not JSON, use text (e.g. 500 HTML or plain text)
-            const text = await res.text();
-            if (text.includes('NANO_DB')) errorMsg = '服务端 NANO_DB 未绑定';
+            if (res.status === 503) errorMsg = '云端数据库未连接 (KV Not Bound)';
             else errorMsg = `Server Error: ${res.status}`;
         }
         throw new Error(errorMsg);

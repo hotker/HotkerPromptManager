@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { PromptModule, PromptTemplate, RunLog, User } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Zap, Layers, FileCode2, Download, Upload, Database, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Zap, Layers, FileCode2, Download, Upload, Database, AlertTriangle, CheckCircle2, Wifi, WifiOff } from 'lucide-react';
 
 interface DashboardProps {
   modules: PromptModule[];
@@ -23,6 +23,27 @@ export const Dashboard: React.FC<DashboardProps> = ({
   currentUser
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+
+  useEffect(() => {
+    // Simple check to see if we can reach the data endpoint
+    const checkConnection = async () => {
+      try {
+        const res = await fetch(`/api/data?userId=${currentUser.id}`);
+        if (res.status === 503) {
+           setDbStatus('disconnected');
+        } else if (res.ok) {
+           setDbStatus('connected');
+        } else {
+           // 200 ok or 400 are technically connected to the worker
+           setDbStatus('connected'); 
+        }
+      } catch (e) {
+        setDbStatus('disconnected');
+      }
+    };
+    checkConnection();
+  }, [currentUser.id]);
 
   const successRate = logs.length > 0 
     ? Math.round((logs.filter(l => l.status === 'success').length / logs.length) * 100) 
@@ -106,13 +127,40 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="flex justify-between items-end mb-8">
         <div>
           <h2 className="text-3xl font-bold text-zinc-100 mb-2">欢迎回来，{currentUser.username}</h2>
-          <div className="flex items-center gap-2 text-zinc-500 text-sm">
-             <span className="flex items-center gap-1 text-green-500"><CheckCircle2 size={12}/> 系统运行正常</span>
-             <span>•</span>
-             <span>Cloudflare Pages Mode</span>
+          <div className="flex items-center gap-4 text-sm">
+             <div className="flex items-center gap-1.5 text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                <span>Pages Functions Active</span>
+             </div>
+
+             {dbStatus === 'connected' ? (
+                <div className="flex items-center gap-1.5 text-green-500 bg-green-500/10 px-2 py-1 rounded border border-green-500/20">
+                    <Database size={12}/>
+                    <span>Cloud DB 已连接</span>
+                </div>
+             ) : (
+                <div className="flex items-center gap-1.5 text-red-400 bg-red-500/10 px-2 py-1 rounded border border-red-500/20" title="KV 绑定未配置">
+                    <AlertTriangle size={12}/>
+                    <span>Cloud DB 未连接</span>
+                </div>
+             )}
           </div>
         </div>
       </div>
+
+      {dbStatus === 'disconnected' && (
+        <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
+           <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={20} />
+           <div>
+             <h4 className="font-bold text-red-400">数据库配置警告</h4>
+             <p className="text-sm text-red-400/80 mt-1">
+               检测到 NANO_DB (Workers KV) 未绑定。数据将无法保存到云端，仅保存在当前浏览器会话中。
+               <br/>
+               请在 Cloudflare Dashboard 设置 KV Namespace 绑定，变量名为 <code>NANO_DB</code>。
+             </p>
+           </div>
+        </div>
+      )}
 
       {/* Data Management Section */}
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">

@@ -16,10 +16,13 @@ export const onRequestPost = async (context: any) => {
   try {
     const { request, env } = context;
 
-    // Database Binding Check
+    // 1. Critical DB Check
     if (!env.NANO_DB) {
-      return new Response(JSON.stringify({ error: '服务端配置错误: NANO_DB 未绑定' }), {
-        status: 500,
+      console.error("Critical Error: NANO_DB binding is missing in Cloudflare Dashboard/wrangler.toml");
+      return new Response(JSON.stringify({ 
+        error: '数据库连接失败: NANO_DB 未绑定。请在 Cloudflare 设置中绑定 KV Namespace。' 
+      }), {
+        status: 503, // Service Unavailable
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -56,7 +59,7 @@ export const onRequestPost = async (context: any) => {
       const newUser = {
         id: crypto.randomUUID(),
         username,
-        password, // Note: In production, consider hashing passwords
+        password, 
         provider: 'local',
         createdAt: Date.now(),
         avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`

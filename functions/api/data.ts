@@ -16,7 +16,8 @@ export const onRequestGet = async (context: any) => {
   const { request, env } = context;
   
   if (!env.NANO_DB) {
-     return new Response(JSON.stringify({ error: '服务端 NANO_DB 未绑定' }), { status: 500, headers: corsHeaders });
+     console.error("NANO_DB binding missing on GET /data");
+     return new Response(JSON.stringify({ error: '数据库未连接 (NANO_DB)' }), { status: 503, headers: corsHeaders });
   }
 
   const url = new URL(request.url);
@@ -26,19 +27,24 @@ export const onRequestGet = async (context: any) => {
     return new Response('Missing userId', { status: 400, headers: corsHeaders });
   }
   
-  const dataStr = await env.NANO_DB.get(`DATA:${userId}`);
-  const data = dataStr ? JSON.parse(dataStr) : { modules: [], templates: [], logs: [], apiKey: '' };
-  
-  return new Response(JSON.stringify(data), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-  });
+  try {
+    const dataStr = await env.NANO_DB.get(`DATA:${userId}`);
+    // If no data exists, return valid empty structure instead of null/error
+    const data = dataStr ? JSON.parse(dataStr) : { modules: [], templates: [], logs: [], apiKey: '' };
+    
+    return new Response(JSON.stringify(data), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  } catch (e) {
+    return new Response(JSON.stringify({ error: 'Database Read Error' }), { status: 500, headers: corsHeaders });
+  }
 }
 
 export const onRequestPost = async (context: any) => {
   const { request, env } = context;
 
   if (!env.NANO_DB) {
-     return new Response(JSON.stringify({ error: '服务端 NANO_DB 未绑定' }), { status: 500, headers: corsHeaders });
+     return new Response(JSON.stringify({ error: '数据库未连接 (NANO_DB)' }), { status: 503, headers: corsHeaders });
   }
 
   try {
@@ -55,6 +61,6 @@ export const onRequestPost = async (context: any) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   } catch (e) {
-    return new Response('Error parsing JSON', { status: 400, headers: corsHeaders });
+    return new Response('Error processing request', { status: 400, headers: corsHeaders });
   }
 }
