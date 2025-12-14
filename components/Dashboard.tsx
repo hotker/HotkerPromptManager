@@ -136,11 +136,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="p-8 h-full overflow-y-auto bg-zinc-950">
-      <div className="flex justify-between items-end mb-8">
+    <div className="p-4 md:p-8 h-full overflow-y-auto bg-zinc-950">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-zinc-100 mb-2">欢迎回来，{currentUser.username}</h2>
-          <div className="flex items-center gap-4 text-sm">
+          <h2 className="text-2xl md:text-3xl font-bold text-zinc-100 mb-2">欢迎回来，{currentUser.username}</h2>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
              <div className="flex items-center gap-1.5 text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
                 <Activity size={12} className="text-green-500" />
                 <span>System Online</span>
@@ -188,18 +188,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
                <br/>
                <span className="text-zinc-500 text-xs">导出的 JSON 文件包含您所有的模块、模板和历史记录。</span>
              </p>
-             <div className="flex gap-4">
+             <div className="flex flex-wrap gap-4">
                 <button 
                   onClick={handleExport}
-                  className="flex items-center gap-2 bg-banana-500 hover:bg-banana-400 text-zinc-950 px-4 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-banana-500/20"
+                  className="flex items-center gap-2 bg-banana-500 hover:bg-banana-400 text-zinc-950 px-4 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-banana-500/20 text-sm"
                 >
-                  <Download size={18} /> 导出完整备份
+                  <Download size={16} /> 导出完整备份
                 </button>
                 <button 
                   onClick={handleImportClick}
-                  className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2 rounded-lg font-medium transition-colors border border-zinc-700 hover:border-zinc-600"
+                  className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2 rounded-lg font-medium transition-colors border border-zinc-700 hover:border-zinc-600 text-sm"
                 >
-                  <Upload size={18} /> 导入数据
+                  <Upload size={16} /> 导入数据
                 </button>
                 <input 
                   type="file" 
@@ -247,9 +247,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
         {/* Activity Chart */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 h-80">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 h-64 md:h-80">
           <h3 className="text-lg font-bold text-zinc-200 mb-4">延迟 (最近运行)</h3>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={activityData}>
@@ -265,7 +265,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Success/Fail Chart */}
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 h-80">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 h-64 md:h-80">
           <h3 className="text-lg font-bold text-zinc-200 mb-4">质量控制</h3>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>

@@ -158,7 +158,7 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
   };
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans animate-in fade-in duration-500">
+    <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans animate-in fade-in duration-500 flex-col md:flex-row">
       <Sidebar 
         currentView={view} 
         setView={setView} 
@@ -170,7 +170,12 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
         syncErrorMsg={syncErrorMsg}
       />
       
-      <main className="flex-1 h-full overflow-hidden relative">
+      {/* 
+        Main Content Area 
+        - Mobile: pt-16 (for top bar), pb-20 (for bottom bar)
+        - Desktop: pt-0, pb-0
+      */}
+      <main className="flex-1 h-full overflow-hidden relative pt-16 pb-20 md:pt-0 md:pb-0">
         {view === 'dashboard' && (
           <Dashboard 
             modules={modules} 

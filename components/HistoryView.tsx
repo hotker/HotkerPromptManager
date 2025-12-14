@@ -15,10 +15,10 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ logs, updateLog }) => 
   };
 
   return (
-    <div className="h-full p-6 bg-zinc-950 overflow-y-auto">
+    <div className="h-full p-4 md:p-6 bg-zinc-950 overflow-y-auto">
       <h2 className="text-2xl font-bold text-zinc-100 mb-6">运行历史与回顾</h2>
       
-      <div className="space-y-4 max-w-4xl mx-auto">
+      <div className="space-y-4 max-w-4xl mx-auto pb-20">
         {sortedLogs.length === 0 && <p className="text-zinc-500 text-center">暂无历史记录。</p>}
         
         {sortedLogs.map(log => (
@@ -48,7 +48,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ logs, updateLog }) => 
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 text-sm font-mono">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm font-mono">
               <div className="bg-zinc-950 p-3 rounded-lg border border-zinc-800">
                 <p className="text-zinc-500 text-xs uppercase mb-2">发送的提示词</p>
                 <div className="text-zinc-400 h-24 overflow-y-auto whitespace-pre-wrap text-xs">{log.finalPrompt}</div>

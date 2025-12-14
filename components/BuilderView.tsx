@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PromptModule, PromptTemplate, RunLog, FixedConfig, ModuleType, User } from '../types';
 import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
-import { Plus, Save, Play, ChevronRight, X, Settings2, GripVertical, AlertCircle, CheckCircle2, Copy, Download, Image as ImageIcon } from 'lucide-react';
+import { Plus, Save, Play, ChevronRight, X, Settings2, GripVertical, AlertCircle, CheckCircle2, Copy, Download, Image as ImageIcon, Box, Layout, Eye } from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
 
 interface BuilderViewProps {
@@ -27,6 +27,9 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
   // UI State
   const [activeTab, setActiveTab] = useState<'modules' | 'config'>('modules');
   const [searchModule, setSearchModule] = useState('');
+  
+  // Mobile Tab State (Resources | Builder | Preview)
+  const [mobileSection, setMobileSection] = useState<'resources' | 'assembly' | 'preview'>('assembly');
 
   // Derived State
   const compiledPrompt = useMemo(() => {
@@ -39,6 +42,10 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
 
   const handleAddModule = (id: string) => {
     setSelectedModuleIds(prev => [...prev, id]);
+    // On mobile, auto-switch to assembly view after adding
+    if (window.innerWidth < 768) {
+      setMobileSection('assembly');
+    }
   };
 
   const handleRemoveModule = (index: number) => {
@@ -47,6 +54,12 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
 
   const handleRun = async () => {
     if (!compiledPrompt) return;
+    
+    // On mobile, switch to preview immediately
+    if (window.innerWidth < 768) {
+       setMobileSection('preview');
+    }
+
     setIsRunning(true);
     setResult(null);
     setExecutionError(null);
@@ -110,6 +123,10 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
     setTemplateName(t.name);
     setSelectedModuleIds(t.moduleIds);
     setConfig(t.config);
+    // On mobile, switch to assembly
+    if (window.innerWidth < 768) {
+      setMobileSection('assembly');
+    }
   };
 
   const handleDownloadImage = (dataUrl: string) => {
@@ -125,10 +142,36 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
   const imageSource = isImageResult ? result?.replace('[IMAGE GENERATED] ', '') : '';
 
   return (
-    <div className="h-full flex flex-col md:flex-row bg-zinc-950 overflow-hidden">
+    <div className="h-full flex flex-col md:flex-row bg-zinc-950 overflow-hidden relative">
       
+      {/* 
+         MOBILE: Tab Switcher (Visible only on mobile) 
+         Use z-20 to stay below fixed top/bottom bars but above content 
+      */}
+      <div className="md:hidden flex border-b border-zinc-800 bg-zinc-950 shrink-0">
+        <button 
+          onClick={() => setMobileSection('resources')}
+          className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${mobileSection === 'resources' ? 'text-banana-400 border-b-2 border-banana-400' : 'text-zinc-500'}`}
+        >
+          <Box size={14}/> 素材库
+        </button>
+        <button 
+          onClick={() => setMobileSection('assembly')}
+          className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${mobileSection === 'assembly' ? 'text-banana-400 border-b-2 border-banana-400' : 'text-zinc-500'}`}
+        >
+          <Layout size={14}/> 构建区 <span className="bg-zinc-800 text-zinc-300 px-1.5 rounded-full text-[10px]">{selectedModuleIds.length}</span>
+        </button>
+        <button 
+          onClick={() => setMobileSection('preview')}
+          className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${mobileSection === 'preview' ? 'text-banana-400 border-b-2 border-banana-400' : 'text-zinc-500'}`}
+        >
+          <Eye size={14}/> 预览
+        </button>
+      </div>
+
+
       {/* LEFT PANEL: Resources */}
-      <div className="w-full md:w-80 border-r border-zinc-800 flex flex-col bg-zinc-900/50">
+      <div className={`w-full md:w-80 border-r border-zinc-800 flex flex-col bg-zinc-900/50 ${mobileSection === 'resources' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
         <div className="p-4 border-b border-zinc-800 flex gap-2">
            <button 
              onClick={() => setActiveTab('modules')}
@@ -191,7 +234,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                </div>
                <div className="grid grid-cols-2 gap-2">
                  <div>
-                    <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider mb-2 block">温度 (Temperature)</label>
+                    <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider mb-2 block">温度</label>
                     <input 
                       type="number" step="0.1" min="0" max="2"
                       className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-zinc-300 outline-none"
@@ -212,7 +255,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
 
                <div>
                   <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider mb-2 block flex items-center gap-1">
-                    <ImageIcon size={12}/> 图片比例 (Aspect Ratio)
+                    <ImageIcon size={12}/> 图片比例
                   </label>
                   <select 
                     className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-zinc-300 outline-none"
@@ -223,8 +266,6 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                     <option value="1:1">1:1 (正方形)</option>
                     <option value="16:9">16:9 (横向宽屏)</option>
                     <option value="9:16">9:16 (手机竖屏)</option>
-                    <option value="4:3">4:3 (标准横向)</option>
-                    <option value="3:4">3:4 (标准竖向)</option>
                   </select>
                </div>
 
@@ -245,25 +286,31 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
       </div>
 
       {/* MIDDLE: Assembly Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-zinc-950">
+      <div className={`flex-1 flex flex-col min-w-0 bg-zinc-950 ${mobileSection === 'assembly' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
         <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
            <input 
-             className="bg-transparent text-lg font-bold text-zinc-100 outline-none placeholder-zinc-600" 
+             className="bg-transparent text-lg font-bold text-zinc-100 outline-none placeholder-zinc-600 w-full" 
              value={templateName} 
              onChange={e => setTemplateName(e.target.value)} 
            />
-           <button onClick={handleSaveTemplate} className="flex items-center gap-2 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg transition-colors">
-             <Save size={14} /> 保存模板
+           <button onClick={handleSaveTemplate} className="flex-shrink-0 flex items-center gap-2 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg transition-colors ml-2">
+             <Save size={14} /> <span className="hidden sm:inline">保存模板</span>
            </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
            {selectedModuleIds.length === 0 && (
              <div className="border-2 border-dashed border-zinc-800 rounded-xl p-10 text-center">
                <div className="w-12 h-12 bg-zinc-900 rounded-full flex items-center justify-center mx-auto mb-3 text-zinc-600">
                  <Plus size={24} />
                </div>
-               <p className="text-zinc-500">拖拽模块到此处或点击侧边栏的 <span className="text-banana-500">+</span></p>
+               <p className="text-zinc-500">点击侧边栏的 <span className="text-banana-500">+</span> 添加模块</p>
+               <button 
+                  onClick={() => setMobileSection('resources')} 
+                  className="md:hidden mt-4 text-xs bg-zinc-800 text-zinc-300 px-3 py-2 rounded-lg"
+               >
+                 去添加素材
+               </button>
              </div>
            )}
 
@@ -272,17 +319,17 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
              if(!module) return null;
              return (
                <div key={`${id}-${index}`} className="group relative bg-zinc-900/40 border border-zinc-800 rounded-lg p-4 hover:border-banana-500/30 transition-all">
-                  <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab text-zinc-600">
+                  <div className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab text-zinc-600 hidden md:block">
                     <GripVertical size={16} />
                   </div>
-                  <div className="pl-6 pr-8">
+                  <div className="md:pl-6 md:pr-8">
                      <div className="flex items-center gap-2 mb-2">
                         <span className={`text-[10px] uppercase font-bold tracking-wider ${MODULE_COLORS[module.type].split(' ')[1]}`}>{module.type}</span>
                         <h4 className="text-sm font-semibold text-zinc-200">{module.title}</h4>
                      </div>
                      <p className="text-sm font-mono text-zinc-400 whitespace-pre-wrap">{module.content}</p>
                   </div>
-                  <button onClick={() => handleRemoveModule(index)} className="absolute top-2 right-2 p-1 text-zinc-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button onClick={() => handleRemoveModule(index)} className="absolute top-2 right-2 p-1 text-zinc-600 hover:text-red-400 md:opacity-0 group-hover:opacity-100 transition-opacity">
                     <X size={16} />
                   </button>
                </div>
@@ -301,11 +348,21 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                 </div>
              </div>
            )}
+           
+           {/* Mobile FAB to run prompt */}
+           <div className="md:hidden h-12"></div> {/* Spacer */}
+           <button 
+             onClick={handleRun}
+             disabled={isRunning || selectedModuleIds.length === 0}
+             className="md:hidden fixed bottom-24 right-4 bg-banana-500 text-zinc-950 rounded-full p-4 shadow-xl z-20 disabled:opacity-50"
+           >
+             {isRunning ? <div className="animate-spin w-6 h-6 border-2 border-black border-t-transparent rounded-full"></div> : <Play fill="currentColor" size={24} />}
+           </button>
         </div>
       </div>
 
       {/* RIGHT: Output / Preview */}
-      <div className="w-full md:w-96 border-l border-zinc-800 flex flex-col bg-zinc-900">
+      <div className={`w-full md:w-96 border-l border-zinc-800 flex flex-col bg-zinc-900 ${mobileSection === 'preview' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
          <div className="p-4 border-b border-zinc-800">
            <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-4">提示词实时测试</h3>
            <div className="flex items-center justify-between text-xs text-zinc-500 mb-2">
@@ -332,7 +389,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                 </div>
                 <p className="leading-relaxed mb-3">{executionError}</p>
                 <div className="text-[10px] text-zinc-500 bg-black/30 p-2 rounded">
-                   提示: 请检查左下角侧边栏的 API Key 设置，或确认您的账户是否有权使用选定的模型。
+                   提示: 请检查 API Key 设置，或确认您的账户是否有权使用选定的模型。
                 </div>
               </div>
             )}
@@ -344,7 +401,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
             )}
 
             {result && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
                 <div className="flex justify-between items-center mb-2">
                    <span className="text-xs text-green-500 flex items-center gap-1"><CheckCircle2 size={12}/> 成功</span>
                    <div className="flex gap-2">

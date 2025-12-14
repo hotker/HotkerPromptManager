@@ -86,7 +86,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
   });
 
   return (
-    <div className="h-full flex flex-col p-6 bg-zinc-950">
+    <div className="h-full flex flex-col p-4 md:p-6 bg-zinc-950">
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-zinc-100">模块库</h2>
@@ -94,20 +94,21 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
         </div>
         <button 
           onClick={() => openModal()}
-          className="flex items-center gap-2 bg-banana-500 hover:bg-banana-400 text-zinc-950 px-4 py-2 rounded-lg font-semibold transition-colors"
+          className="flex items-center gap-2 bg-banana-500 hover:bg-banana-400 text-zinc-950 px-4 py-2 rounded-lg font-semibold transition-colors text-sm md:text-base"
         >
           <Plus size={18} />
-          创建模块
+          <span className="hidden md:inline">创建模块</span>
+          <span className="md:hidden">新建</span>
         </button>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
           <input 
             type="text" 
-            placeholder="搜索模块名称、描述或内容..." 
+            placeholder="搜索模块..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-2 text-zinc-200 focus:outline-none focus:border-banana-500/50"
@@ -131,7 +132,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
                <span className={`text-xs px-2 py-0.5 rounded border font-medium ${MODULE_COLORS[module.type]}`}>
                  {module.type}
                </span>
-               <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+               <div className="flex gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
                  <button 
                     onClick={() => handleCopy(module.content, module.id)} 
                     className={`transition-colors ${copiedId === module.id ? 'text-green-500' : 'text-zinc-400 hover:text-banana-400'}`}
