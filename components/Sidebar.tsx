@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   
   // Status check: Valid if User has their own key, OR (User is privileged AND System has a key)
   // Use VITE_API_KEY for system default
-  const systemKey = import.meta.env.VITE_API_KEY;
+  const systemKey = (import.meta as any).env.VITE_API_KEY;
   const hasValidKey = !!userApiKey || (isPrivilegedUser && !!systemKey);
 
   const handleSaveKey = () => {

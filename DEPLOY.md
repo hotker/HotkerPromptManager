@@ -1,49 +1,35 @@
-# Nano Banana 部署指南 (Cloudflare Pages)
+# Nano Banana 部署求救指南
 
-## 🚨 紧急修复：部署失败 (wrangler: not found)
+## 🛑 为什么部署失败？
 
-如果您在日志中看到 `/bin/sh: 1: wrangler: not found`，请立即检查您的 Cloudflare 配置。
+日志显示您在 Cloudflare 后台的配置仍然包含 `wrangler deploy`，这是导致错误的直接原因。
 
-**Cloudflare Pages 不需要手动运行 deploy 命令！**
-
-### ❌ 错误的配置
-*   Build command: `npm run build && wrangler pages deploy` (错误！)
-*   Build command: `wrangler pages deploy` (错误！)
-
-### ✅ 正确的配置 (请在 Cloudflare 后台修改)
-
-进入项目 **Settings** -> **Build & deployments** -> **Edit configuration**:
-
-1.  **Build command**: `npm run build`
-    *   *仅此而已。Cloudflare 会在构建完成后自动接管部署。*
-2.  **Build output directory**: `dist`
-3.  **Root directory**: `/` (默认)
+**Cloudflare Pages 不需要您手动运行部署命令，它会自动部署 `dist` 目录。**
 
 ---
 
-## 🛠️ 数据库绑定 (必做)
+## ✅ 必须执行的修复步骤 (Cloudflare 后台)
 
-应用部署成功后，必须绑定 KV 数据库才能保存数据：
+请立即前往 Cloudflare Dashboard 并修改以下设置：
 
-1.  创建数据库 (本地终端):
-    ```bash
-    npx wrangler kv:namespace create NANO_DB
-    ```
-    *记下返回的 ID*。
+1.  进入 **Settings** (设置) -> **Build & deployments** (构建与部署)。
+2.  点击 **Edit configuration** (编辑配置)。
+3.  **Build command (构建命令)**:
+    *   🔴 原有 (错误): `npm run build && npx wrangler deploy`
+    *   🟢 **修改为 (正确)**: `npm run build`
+4.  **Build output directory (输出目录)**:
+    *   🟢 确认填写: `dist`
+5.  点击 **Save** (保存)。
 
-2.  绑定 (Cloudflare 后台):
-    *   进入 **Settings** -> **Functions** -> **KV Namespace Bindings**
-    *   **Variable name**: `NANO_DB`
-    *   **KV Namespace**: 选择您创建的数据库
+---
 
-3.  **重试部署**: 绑定变量后，必须去 **Deployments** 标签页点击 **Retry deployment** 才能生效。
+## 🛠️ KV 数据库 ID 填坑
 
-## 本地开发
+代码中我已经重置了 `wrangler.toml`。在重新推送代码前，请确保您填入了正确的数据库 ID：
 
-```bash
-# 安装依赖
-npm install
+1.  打开项目根目录的 `wrangler.toml`。
+2.  找到 `id = "替换为您的_KV_ID"`。
+3.  将其替换为您在终端通过 `npx wrangler kv:namespace create NANO_DB` 生成的真实 ID。
+    *   示例: `id = "e5c1234567890..."`
 
-# 启动本地预览
-npm run dev
-```
+完成以上两步后，推送代码，Cloudflare 将自动开始新的部署。

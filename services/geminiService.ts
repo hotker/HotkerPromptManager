@@ -4,7 +4,7 @@ import { FixedConfig } from "../types";
 // Standard Vite environment variable access
 // Note: In Cloudflare Pages, set the environment variable as VITE_API_KEY in the dashboard to expose it to the client bundle if needed.
 const getEnvApiKey = () => {
-  return import.meta.env.VITE_API_KEY || '';
+  return (import.meta as any).env.VITE_API_KEY || '';
 };
 
 interface ApiKeyOptions {
