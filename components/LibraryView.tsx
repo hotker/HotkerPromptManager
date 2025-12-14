@@ -15,6 +15,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
   
   // Form State
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
   const [type, setType] = useState<ModuleType>(ModuleType.ROLE);
   const [tags, setTags] = useState('');
@@ -27,6 +28,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
     if (module) {
       setEditingModule(module);
       setTitle(module.title);
+      setDescription(module.description || '');
       setContent(module.content);
       setType(module.type);
       setTags(module.tags.join(', '));
@@ -34,6 +36,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
     } else {
       setEditingModule(null);
       setTitle('');
+      setDescription('');
       setContent('');
       setType(ModuleType.ROLE);
       setTags('');
@@ -46,6 +49,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
     const newModule: PromptModule = {
       id: editingModule ? editingModule.id : crypto.randomUUID(),
       title,
+      description,
       content,
       type,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
@@ -75,7 +79,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
 
   const filteredModules = modules.filter(m => {
     const matchesSearch = m.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          m.content.toLowerCase().includes(searchTerm.toLowerCase());
+                          m.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (m.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === '全部' || m.type === filterType;
     return matchesSearch && matchesType;
   });
@@ -154,7 +159,12 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
                </div>
              )}
 
-             <h3 className="font-semibold text-zinc-100 mb-2 truncate" title={module.title}>{module.title}</h3>
+             <h3 className="font-semibold text-zinc-100 mb-1 truncate" title={module.title}>{module.title}</h3>
+             {module.description && (
+                <p className="text-xs text-zinc-500 mb-2 line-clamp-2" title={module.description}>
+                  {module.description}
+                </p>
+             )}
              <p className="text-zinc-400 text-sm line-clamp-3 font-mono bg-zinc-950/50 p-2 rounded mb-3 flex-1 select-all">
                {module.content}
              </p>
@@ -193,6 +203,14 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
                     {Object.values(ModuleType).map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1">描述 (可选)</label>
+                <textarea
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2 text-zinc-200 focus:border-banana-500/50 outline-none resize-none h-16 text-sm"
+                  value={description} onChange={e => setDescription(e.target.value)} placeholder="简要说明此模块的功能..."
+                />
               </div>
 
               <div>
