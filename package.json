@@ -8,7 +8,6 @@
     "dev:full": "wrangler pages dev -- vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && wrangler deploy",
     "kv:create": "wrangler kv:namespace create NANO_DB"
   },
   "dependencies": {
