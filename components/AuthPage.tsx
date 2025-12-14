@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User } from '../types';
 import { authService } from '../services/authService';
-import { banana, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle, Globe } from 'lucide-react';
 
 interface AuthPageProps {
   onLogin: (user: User) => void;
@@ -9,10 +9,46 @@ interface AuthPageProps {
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [lang, setLang] = useState<'zh' | 'en'>('zh');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const t = {
+    zh: {
+      subtitle: '商业级提示词工程管理系统',
+      loginTab: '登录',
+      registerTab: '注册账户',
+      usernameLabel: '用户名',
+      passwordLabel: '密码',
+      usernamePlaceholder: '请输入用户名',
+      passwordPlaceholder: '请输入密码',
+      enterBtn: '进入工作台',
+      createBtn: '创建账户',
+      orContinue: '或通过以下方式继续',
+      googleBtn: 'Google 账户登录',
+      defaultError: '认证失败',
+      googleError: 'Google 登录模拟失败'
+    },
+    en: {
+      subtitle: 'Enterprise Prompt Engineering System',
+      loginTab: 'Sign In',
+      registerTab: 'Register',
+      usernameLabel: 'USERNAME',
+      passwordLabel: 'PASSWORD',
+      usernamePlaceholder: 'Enter username',
+      passwordPlaceholder: 'Enter password',
+      enterBtn: 'Enter Workspace',
+      createBtn: 'Create Account',
+      orContinue: 'Or continue with',
+      googleBtn: 'Sign in with Google',
+      defaultError: 'Authentication failed',
+      googleError: 'Google login simulation failed'
+    }
+  };
+
+  const text = t[lang];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +64,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       }
       onLogin(user);
     } catch (err: any) {
-      setError(err.message || '认证失败');
+      setError(err.message || text.defaultError);
     } finally {
       setIsLoading(false);
     }
@@ -41,7 +77,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       const user = await authService.loginWithGoogle();
       onLogin(user);
     } catch (err: any) {
-      setError('Google 登录模拟失败');
+      setError(text.googleError);
       setIsLoading(false);
     }
   };
@@ -54,13 +90,22 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
         <div className="absolute top-[40%] -right-[10%] w-[40%] h-[40%] rounded-full bg-blue-500/5 blur-[100px]"></div>
       </div>
 
+      {/* Language Toggle */}
+      <button 
+        onClick={() => setLang(prev => prev === 'zh' ? 'en' : 'zh')}
+        className="absolute top-6 right-6 z-20 flex items-center gap-2 bg-zinc-900/80 backdrop-blur border border-zinc-800 text-zinc-400 hover:text-zinc-100 px-3 py-1.5 rounded-full text-xs font-medium transition-colors cursor-pointer"
+      >
+        <Globe size={14} />
+        {lang === 'zh' ? 'English' : '中文'}
+      </button>
+
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-banana-400 to-banana-600 mb-4 shadow-lg shadow-banana-500/20">
             <span className="text-4xl font-bold text-zinc-950">N</span>
           </div>
           <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">Nano Banana</h1>
-          <p className="text-zinc-500 mt-2">商业级提示词工程管理系统</p>
+          <p className="text-zinc-500 mt-2">{text.subtitle}</p>
         </div>
 
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl">
@@ -71,7 +116,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
                 mode === 'login' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              登录
+              {text.loginTab}
             </button>
             <button
               onClick={() => { setMode('register'); setError(null); }}
@@ -79,7 +124,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
                 mode === 'register' ? 'bg-zinc-800 text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-300'
               }`}
             >
-              注册账户
+              {text.registerTab}
             </button>
           </div>
 
@@ -92,24 +137,24 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">用户名</label>
+              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">{text.usernameLabel}</label>
               <input
                 type="text"
                 required
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:border-banana-500/50 focus:ring-1 focus:ring-banana-500/20 transition-all placeholder-zinc-700"
-                placeholder="请输入用户名"
+                placeholder={text.usernamePlaceholder}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
             
             <div>
-              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">密码</label>
+              <label className="block text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1.5">{text.passwordLabel}</label>
               <input
                 type="password"
                 required
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-100 focus:outline-none focus:border-banana-500/50 focus:ring-1 focus:ring-banana-500/20 transition-all placeholder-zinc-700"
-                placeholder="请输入密码"
+                placeholder={text.passwordPlaceholder}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -122,7 +167,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
             >
               {isLoading ? <Loader2 className="animate-spin" size={20} /> : (
                  <>
-                   {mode === 'login' ? '进入工作台' : '创建账户'}
+                   {mode === 'login' ? text.enterBtn : text.createBtn}
                    <ArrowRight size={18} />
                  </>
               )}
@@ -134,7 +179,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
               <div className="w-full border-t border-zinc-800"></div>
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-zinc-900 px-2 text-zinc-500">或通过以下方式继续</span>
+              <span className="bg-zinc-900 px-2 text-zinc-500">{text.orContinue}</span>
             </div>
           </div>
 
@@ -162,7 +207,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
                   fill="#EA4335"
                 />
               </svg>
-              Google 账户登录
+              {text.googleBtn}
           </button>
         </div>
         <p className="text-center text-xs text-zinc-600 mt-6">
