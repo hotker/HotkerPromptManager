@@ -1,60 +1,67 @@
 # Nano Banana 部署指南 (Cloudflare Pages)
 
-## 🚨 紧急修复：访问显示 "Hello World" ?
+## 🚨 部署故障排除 (Log Analysis)
 
-如果您访问部署后的域名看到 "Hello World" 而不是应用界面，这是因为默认的 Worker 脚本拦截了您的网页。请执行以下检查：
+根据您的日志，构建 (`npm run build`) 已成功，但在执行部署命令 (`npx wrangler deploy`) 时失败，提示 `Missing entry-point`。
 
-1.  **删除冲突文件 (关键)**: 检查您的项目目录下的 `functions` 文件夹。如果存在 `functions/index.ts`、`functions/helloworld.ts` 或 `worker.js`，**请立即删除它们**。
-    *   Nano Banana 的路由是由 `index.html` (前端) 和 `functions/api/*` (后端) 组成的。根目录 `/` 不应由 Functions 接管。
-2.  **配置文件修正**: 确保 `wrangler.toml` 包含 `pages_build_output_dir = "dist"` (如下所示)。
+### 核心解决方案
+
+1.  **添加配置文件 (已自动创建)**:
+    项目根目录必须包含 `wrangler.toml`，并且其中必须指定 `pages_build_output_dir = "dist"`。我已经为您创建了这个文件。
+
+2.  **设置 KV 数据库 ID (必须)**:
+    您需要获取 KV 数据库 ID 并填入 `wrangler.toml`，否则应用无法保存数据。
+    *   运行: `npx wrangler kv:namespace create NANO_DB`
+    *   复制生成的 ID。
+    *   修改 `wrangler.toml`: 将 `id = "请替换为您的_KV_ID"` 替换为真实 ID。
+
+3.  **检查 Cloudflare Dashboard 设置**:
+    *   **Build command**: 建议设置为 `npm run build`。
+        *   *注意*: 如果您一定要在 Cloudflare 的 Build Command 中包含 `npx wrangler deploy`，上述的 `wrangler.toml` 修复将使该命令正常工作。但通常 Cloudflare Pages 会自动处理部署，不需要显式运行 deploy 命令。
+    *   **Build output directory**: `dist`
+    *   **Environment Variables**: 确保添加 `NANO_DB` 的绑定 (Settings -> Functions -> KV Namespace Bindings)。
 
 ---
 
-## 🚀 正确部署步骤
+## 🛠️ 详细步骤
 
-### 1. 准备配置 (wrangler.toml)
-
-```toml
-name = "nano-banana"
-compatibility_date = "2024-04-01"
-pages_build_output_dir = "dist"
-
-[[kv_namespaces]]
-binding = "NANO_DB"
-id = "您的_KV_ID"
-```
-
-### 2. 本地命令部署 (推荐)
-
-不要使用 `wrangler deploy` (这是 Worker 的命令)，请使用以下组合：
+### 1. 本地准备
 
 ```bash
-# 1. 安装依赖
+# 安装依赖
 npm install
 
-# 2. 绑定数据库 ID (如果没做过)
+# 创建数据库 (记录返回的 ID)
 npx wrangler kv:namespace create NANO_DB
-# -> 将生成的 ID 填入 wrangler.toml
 
-# 3. 构建前端
+# 编辑 wrangler.toml 填入 ID
+# id = "e5c1..."
+```
+
+### 2. 部署
+
+**方式 A: 使用 Git 集成 (推荐)**
+1.  将代码推送到 GitHub。
+2.  在 Cloudflare Pages Dashboard 中连接仓库。
+3.  构建配置:
+    *   Build command: `npm run build`
+    *   Output directory: `dist`
+4.  **关键步骤**: 部署完成后，进入项目 Settings -> Functions -> KV Namespace Bindings，绑定 `NANO_DB` 到您创建的 KV 空间。
+
+**方式 B: 命令行直接部署**
+由于我们已经配置了 `wrangler.toml`，现在可以直接运行：
+
+```bash
 npm run build
-
-# 4. 部署到 Pages (确保 dist 目录存在)
 npx wrangler pages deploy dist
 ```
 
-### 3. Cloudflare Dashboard 设置 (如果是 Git 自动部署)
+### 常见问题: "Hello World"
 
-1.  登录 Cloudflare Dashboard -> Pages -> 点击您的项目。
-2.  进入 **Settings** -> **Functions** -> **KV Namespace Bindings**。
-3.  添加绑定:
-    *   Variable name: `NANO_DB`
-    *   Namespace: 选择您的 KV 数据库
-4.  进入 **Deployments** 标签页，点击最新部署右侧的三个点 -> **Retry deployment** (重试部署) 以确保绑定生效。
+如果访问页面只显示 "Hello World"：
+1.  检查项目根目录或 `functions` 目录下是否有 `index.ts` / `helloworld.ts` / `worker.js`。
+2.  **删除这些文件**。Nano Banana 使用 `functions/api` 目录作为后端，根路径 `/` 应该由前端 `index.html` 接管。
 
-## 本地开发预览
+### 常见问题: 构建警告
 
-```bash
-npm run build
-npx wrangler pages dev dist
-```
+日志中的 `warn: Duplicate dependency` 是因为 `package.json` 中重复声明了 `vite` 或插件。这通常不影响部署，但建议手动清理 `package.json` 中的重复项。

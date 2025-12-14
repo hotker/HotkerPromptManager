@@ -70,7 +70,7 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
                 return textContent;
             }
        }
-       return "未生成内容。";
+       return "模型未返回内容 (可能是因为安全过滤或提示词过于简单)。";
 
     } else {
       // Standard Text Generation
@@ -84,10 +84,21 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
         },
       });
 
-      return response.text || "模型未返回文本。";
+      if (!response.text) {
+          if (response.candidates && response.candidates.length > 0 && response.candidates[0].finishReason) {
+              return `生成被中断: ${response.candidates[0].finishReason}`;
+          }
+          return "模型返回了空响应。";
+      }
+
+      return response.text;
     }
   } catch (error: any) {
     console.error("Gemini API Error:", error);
+    // Improve error message for end users
+    if (error.message?.includes('403')) return "API 密钥无效或无权访问该模型。";
+    if (error.message?.includes('429')) return "请求过多 (Rate Limit)，请稍后重试。";
+    if (error.message?.includes('503')) return "模型服务暂时不可用，请稍后重试。";
     throw new Error(error.message || "生成过程中发生未知错误");
   }
 };
