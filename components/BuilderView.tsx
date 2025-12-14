@@ -323,11 +323,17 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
            </button>
          </div>
 
-         <div className="flex-1 overflow-y-auto p-4 bg-zinc-950 font-mono text-sm">
+         <div className="flex-1 overflow-y-auto p-4 bg-zinc-950 font-mono text-sm relative">
             {executionError && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-xs mb-4">
-                <div className="flex items-center gap-2 mb-1 font-bold"><AlertCircle size={14}/> 错误</div>
-                {executionError}
+              <div className="absolute inset-x-4 top-4 z-10 p-4 bg-zinc-900/95 border border-red-500/50 rounded-xl text-red-400 text-xs shadow-xl backdrop-blur animate-in slide-in-from-top-2">
+                <div className="flex justify-between items-start mb-2">
+                   <div className="flex items-center gap-2 font-bold text-red-500"><AlertCircle size={16}/> 生成失败</div>
+                   <button onClick={() => setExecutionError(null)} className="text-zinc-500 hover:text-zinc-300"><X size={14}/></button>
+                </div>
+                <p className="leading-relaxed mb-3">{executionError}</p>
+                <div className="text-[10px] text-zinc-500 bg-black/30 p-2 rounded">
+                   提示: 请检查左下角侧边栏的 API Key 设置，或确认您的账户是否有权使用选定的模型。
+                </div>
               </div>
             )}
             

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { PromptModule, PromptTemplate, RunLog, User } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Zap, Layers, FileCode2, Download, Upload, Database, AlertTriangle } from 'lucide-react';
+import { Zap, Layers, FileCode2, Download, Upload, Database, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface DashboardProps {
   modules: PromptModule[];
@@ -106,7 +106,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="flex justify-between items-end mb-8">
         <div>
           <h2 className="text-3xl font-bold text-zinc-100 mb-2">欢迎回来，{currentUser.username}</h2>
-          <p className="text-zinc-500">Nano Banana 系统运行正常</p>
+          <div className="flex items-center gap-2 text-zinc-500 text-sm">
+             <span className="flex items-center gap-1 text-green-500"><CheckCircle2 size={12}/> 系统运行正常</span>
+             <span>•</span>
+             <span>Cloudflare Pages Mode</span>
+          </div>
         </div>
       </div>
 
@@ -119,20 +123,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex flex-col md:flex-row gap-4">
            <div className="flex-1">
              <p className="text-sm text-zinc-400 mb-4">
-               由于本应用使用浏览器本地存储，更换浏览器会导致数据“丢失”。请定期导出备份。
+               为防止浏览器缓存清除导致数据丢失，建议定期导出备份。
                <br/>
-               <span className="text-zinc-500 text-xs">导出文件包含您的账户信息和所有数据，可用于在其他浏览器中“一键搬家”。</span>
+               <span className="text-zinc-500 text-xs">导出的 JSON 文件可用于在任何设备上恢复您的工作台。</span>
              </p>
              <div className="flex gap-4">
                 <button 
                   onClick={handleExport}
-                  className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-lg font-medium transition-colors border border-zinc-700"
+                  className="flex items-center gap-2 bg-banana-500 hover:bg-banana-400 text-zinc-950 px-4 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-banana-500/20"
                 >
                   <Download size={18} /> 导出完整备份
                 </button>
                 <button 
                   onClick={handleImportClick}
-                  className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-banana-400 px-4 py-2 rounded-lg font-medium transition-colors border border-zinc-700 hover:border-banana-500/50"
+                  className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2 rounded-lg font-medium transition-colors border border-zinc-700 hover:border-zinc-600"
                 >
                   <Upload size={18} /> 导入数据
                 </button>
@@ -150,7 +154,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
              <div>
                <h4 className="text-sm font-bold text-amber-500 mb-1">注意</h4>
                <p className="text-xs text-zinc-500 leading-relaxed">
-                 导入操作将会<strong>覆盖</strong>当前界面显示的数据。如果您是在新浏览器中恢复账户，请使用登录页面的“从备份恢复”功能。
+                 导入操作将会<strong>覆盖</strong>当前界面显示的数据。请确保您上传的是最新的备份文件。
                </p>
              </div>
            </div>
@@ -159,21 +163,21 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-colors">
           <div className="flex justify-between items-center mb-4">
              <div className="p-3 bg-blue-500/10 rounded-lg text-blue-500"><Layers size={24} /></div>
              <span className="text-2xl font-bold text-zinc-100">{modules.length}</span>
           </div>
           <h3 className="text-zinc-400 font-medium">模块总数</h3>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-colors">
           <div className="flex justify-between items-center mb-4">
              <div className="p-3 bg-banana-500/10 rounded-lg text-banana-500"><FileCode2 size={24} /></div>
              <span className="text-2xl font-bold text-zinc-100">{templates.length}</span>
           </div>
           <h3 className="text-zinc-400 font-medium">保存的模板</h3>
         </div>
-        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-colors">
           <div className="flex justify-between items-center mb-4">
              <div className="p-3 bg-purple-500/10 rounded-lg text-purple-500"><Zap size={24} /></div>
              <span className="text-2xl font-bold text-zinc-100">{successRate}%</span>
