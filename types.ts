@@ -12,7 +12,7 @@ export enum ModuleType {
 export interface PromptModule {
   id: string;
   title: string;
-  description?: string;
+  description?: string; // Optional description field
   content: string;
   type: ModuleType;
   tags: string[];
