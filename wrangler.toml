@@ -1,1 +1,8 @@
-���
+name = "hotker-prompt-manager"
+compatibility_date = "2024-12-01"
+
+pages_build_output_dir = "dist"
+
+[[kv_namespaces]]
+binding = "NANO_DB"
+id = "13efc9be5b9441179272d5b6324ee0a6"
