@@ -1,5 +1,5 @@
 {
-  "name": "Nano Banana 提示词工坊",
+  "name": "Hotker Prompt Studio",
   "description": "一个商业级的模块化提示词工程系统，专为管理、组装和测试提示词而设计，具有成功/失败跟踪功能。包含模块库和固定参数管理。",
   "requestFramePermissions": []
 }
