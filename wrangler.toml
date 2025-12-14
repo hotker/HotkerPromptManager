@@ -1,4 +1,4 @@
-name = "nhotker-prompt-manager"
+name = "hotker-prompt-manager"
 compatibility_date = "2025-12-14"
 
 # ⚠️ 关键：这是 Pages，不是 Worker

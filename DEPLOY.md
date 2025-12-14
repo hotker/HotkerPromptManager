@@ -1,30 +1,46 @@
 # Nano Banana 部署求救指南
 
-## 🛑 为什么部署失败？
+## 🚨 紧急：关于部署失败的修复 (ERROR: Workers-specific command)
 
-日志显示 `tsc` 编译时报错 `error TS2688: Cannot find type definition file for 'node'.`。
-这是因为我们在 `vite.config.ts` 中使用了 Node.js 的内置模块（如 `fs`, `path`），但 `package.json` 中缺少了 `@types/node` 依赖，导致 TypeScript 无法识别这些类型。
+如果您的日志显示：
+`[ERROR] It looks like you've run a Workers-specific command in a Pages project.`
 
-**我已经更新了 `package.json` 添加了该依赖。**
+**原因**：
+系统执行了 `npx wrangler deploy`（这是用于部署 Workers 的命令）。
+对于 Nano Banana 这样的 Pages 项目，**必须**使用 `npx wrangler pages deploy`。
 
-## ✅ Cloudflare 必须配置检查
+**解决方案**：
 
-1.  **Build command**: `npm run build`
-2.  **Output directory**: `dist`
-3.  **Environment Variables**:
-    *   (可选) `VITE_API_KEY`: 如果您想配置系统默认 API Key。
+1.  **如果您在本地命令行部署**：
+    请运行：
+    ```bash
+    npm run deploy
+    ```
+    (这个命令已经在 package.json 中配置为使用 correct 的 pages 命令)
 
-推送此代码后，Cloudflare 将自动重新部署。此次部署应该能够通过编译检查。
+2.  **如果您在 Cloudflare Dashboard 设置中**：
+    *   **Build command (构建命令)**: `npm run build`
+    *   **Build output directory (输出目录)**: `dist`
+    *   **不要**在任何自定义部署脚本中填写 `npx wrangler deploy`。Cloudflare Pages 会在构建完成后自动部署 `dist` 目录，不需要额外的部署命令。
 
 ---
 
-## 🛠️ KV 数据库绑定确认
+## 🛠️ KV 数据库绑定 (必须步骤)
 
-请再次确认 `wrangler.toml` 中的 `id` 是否已替换为您自己的 KV 数据库 ID。如果不替换，Functions (后端 API) 将无法正常工作。
+为了让登录和保存功能正常工作，您需要创建一个 KV Namespace 并绑定它。
+
+1.  运行 `npx wrangler kv:namespace create NANO_DB` 创建数据库。
+2.  复制返回的 `id`。
+3.  打开项目根目录下的 `wrangler.toml` 文件。
+4.  将 `id` 替换为您刚刚获得的 ID：
 
 ```toml
-# 示例
 [[kv_namespaces]]
 binding = "NANO_DB"
-id = "请替换为您的真实ID" 
+id = "您的_KV_ID_粘贴在这里" 
 ```
+
+## 环境变量
+如果您想让应用自带默认的 Google API Key (仅供演示或内部使用)，请在 Cloudflare Pages 后台设置环境变量：
+*   `VITE_API_KEY`: `您的_Gemini_API_Key`
+
