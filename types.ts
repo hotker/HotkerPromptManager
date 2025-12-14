@@ -25,6 +25,7 @@ export interface FixedConfig {
   temperature: number;
   topK: number;
   outputFormat: 'text' | 'json';
+  aspectRatio: string; // Image generation aspect ratio
   appendString: string; // The "Fixed Ending Parameters"
 }
 

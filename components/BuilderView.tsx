@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PromptModule, PromptTemplate, RunLog, FixedConfig, ModuleType } from '../types';
 import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
-import { Plus, Save, Play, ChevronRight, X, Settings2, GripVertical, AlertCircle, CheckCircle2, Copy, Download } from 'lucide-react';
+import { Plus, Save, Play, ChevronRight, X, Settings2, GripVertical, AlertCircle, CheckCircle2, Copy, Download, Image as ImageIcon } from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
 
 interface BuilderViewProps {
@@ -199,6 +199,25 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                     />
                  </div>
                </div>
+
+               <div>
+                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider mb-2 block flex items-center gap-1">
+                    <ImageIcon size={12}/> 图片比例 (Aspect Ratio)
+                  </label>
+                  <select 
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded p-2 text-sm text-zinc-300 outline-none"
+                    value={config.aspectRatio || 'auto'}
+                    onChange={(e) => setConfig({...config, aspectRatio: e.target.value})}
+                  >
+                    <option value="auto">Auto (自动)</option>
+                    <option value="1:1">1:1 (正方形)</option>
+                    <option value="16:9">16:9 (横向宽屏)</option>
+                    <option value="9:16">9:16 (手机竖屏)</option>
+                    <option value="4:3">4:3 (标准横向)</option>
+                    <option value="3:4">3:4 (标准竖向)</option>
+                  </select>
+               </div>
+
                <div>
                  <label className="text-xs text-zinc-400 font-bold uppercase tracking-wider mb-2 block">已保存模板</label>
                  <div className="space-y-2">

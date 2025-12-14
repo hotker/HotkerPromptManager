@@ -7,34 +7,34 @@ import { Dashboard } from './components/Dashboard';
 import { ViewState, PromptModule, PromptTemplate, RunLog, ModuleType } from './types';
 import { DEFAULT_CONFIG } from './constants';
 
+// Hook definition moved outside component to prevent runtime errors and ensure stability
+function useLocalStorage<T>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
+  // 1. Initialize State
+  const [storedValue, setStoredValue] = useState<T>(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.error(error);
+      return initialValue;
+    }
+  });
+
+  // 2. Sync to LocalStorage whenever state changes
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(storedValue));
+    } catch (error) {
+      console.error("Error writing to local storage", error);
+    }
+  }, [key, storedValue]);
+
+  return [storedValue, setStoredValue];
+}
+
 const App = () => {
   const [view, setView] = useState<ViewState>('dashboard');
   
-  // Persistence Hook (Refactored to be robust)
-  const useLocalStorage = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
-    // 1. Initialize State
-    const [storedValue, setStoredValue] = useState<T>(() => {
-      try {
-        const item = window.localStorage.getItem(key);
-        return item ? JSON.parse(item) : initialValue;
-      } catch (error) {
-        console.error(error);
-        return initialValue;
-      }
-    });
-
-    // 2. Sync to LocalStorage whenever state changes
-    useEffect(() => {
-      try {
-        window.localStorage.setItem(key, JSON.stringify(storedValue));
-      } catch (error) {
-        console.error("Error writing to local storage", error);
-      }
-    }, [key, storedValue]);
-
-    return [storedValue, setStoredValue];
-  };
-
   // Initial Mock Data
   const initialModules: PromptModule[] = [
     { id: '1', title: '资深 React 工程师角色', content: '担任具有深厚 UI/UX 专业知识的世界级资深前端 React 工程师。', type: ModuleType.ROLE, tags: ['编程', 'react'], createdAt: Date.now() },

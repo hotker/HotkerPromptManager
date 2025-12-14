@@ -5,6 +5,7 @@ export const DEFAULT_CONFIG: FixedConfig = {
   temperature: 0.7,
   topK: 40,
   outputFormat: 'text',
+  aspectRatio: 'auto',
   appendString: '确保输出严格专业，并遵循上述格式。不要包含闲聊或无意义的填充内容。'
 };
 

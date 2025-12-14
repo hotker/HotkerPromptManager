@@ -1,7 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
 import { FixedConfig } from "../types";
 
-const API_KEY = process.env.API_KEY || '';
+// Safely access process.env to prevent "process is not defined" errors in some environments
+const getApiKey = () => {
+  try {
+    return process.env.API_KEY || '';
+  } catch (e) {
+    console.warn("Could not access process.env");
+    return '';
+  }
+};
+
+const API_KEY = getApiKey();
 
 export const generateResponse = async (prompt: string, config: FixedConfig): Promise<string> => {
   if (!API_KEY) {
@@ -13,30 +23,43 @@ export const generateResponse = async (prompt: string, config: FixedConfig): Pro
   try {
     // Handling for Image Generation Model (Nano Banana context)
     if (config.model.includes('image')) {
-       // Note: In a real scenario, this would return an image.
-       // For this prompt manager text interface, we will output the base64 or a success message.
-       // Since the request asks for a text-based prompt manager template primarily, 
-       // but mentions Nano Banana, we handle text generation by default, 
-       // but if they select an image model, we generate an image.
-       
+       // Nano Banana Image Logic
+       const imageConfig: any = {};
+       if (config.aspectRatio && config.aspectRatio !== 'auto') {
+           imageConfig.aspectRatio = config.aspectRatio;
+       }
+
        const response = await ai.models.generateContent({
          model: config.model,
          contents: prompt,
+         config: {
+             imageConfig: Object.keys(imageConfig).length > 0 ? imageConfig : undefined
+         }
        });
        
-       // Handle image response (simple extraction for the demo)
-        const parts = response.candidates?.[0]?.content?.parts;
-        if (parts) {
-            for (const part of parts) {
-                if (part.inlineData) {
-                    // It's an image
-                    return `[IMAGE GENERATED] data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-                } else if (part.text) {
-                    return part.text;
-                }
+       // Handle image response (extract image parts)
+       const parts = response.candidates?.[0]?.content?.parts;
+       if (parts) {
+            // Priority: Check for image first
+            // The model may return text parts (like "Here is the image") before the actual image data.
+            // We must find the part with inlineData, iterating through all parts.
+            const imagePart = parts.find(p => p.inlineData);
+            
+            if (imagePart && imagePart.inlineData) {
+                 return `[IMAGE GENERATED] data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
             }
-        }
-        return "未生成内容。";
+
+            // Fallback: Check for text if no image is found
+            const textContent = parts
+                .filter(p => p.text)
+                .map(p => p.text)
+                .join('\n');
+            
+            if (textContent) {
+                return textContent;
+            }
+       }
+       return "未生成内容。";
 
     } else {
       // Standard Text Generation
