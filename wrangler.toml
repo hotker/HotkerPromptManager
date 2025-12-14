@@ -7,4 +7,4 @@ pages_build_output_dir = "dist"
 # KV 绑定（给 Pages Functions 用）
 [[kv_namespaces]]
 binding = "NANO_DB"
-id = "替49f21b2483a04b529f6a6b44ff9239df"
+id = "49f21b2483a04b529f6a6b44ff9239df"
