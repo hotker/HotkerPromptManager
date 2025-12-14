@@ -1,6 +1,4 @@
-interface Env {
-  NANO_DB: any;
-}
+import { Env, PagesContext } from './types';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,7 +10,7 @@ export const onRequestOptions = async () => {
   return new Response(null, { headers: corsHeaders });
 };
 
-export const onRequestGet = async (context: any) => {
+export const onRequestGet = async (context: PagesContext) => {
   const { request, env } = context;
   
   if (!env.NANO_DB) {
@@ -40,7 +38,7 @@ export const onRequestGet = async (context: any) => {
   }
 }
 
-export const onRequestPost = async (context: any) => {
+export const onRequestPost = async (context: PagesContext) => {
   const { request, env } = context;
 
   if (!env.NANO_DB) {

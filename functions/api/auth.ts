@@ -1,6 +1,4 @@
-interface Env {
-  NANO_DB: any;
-}
+import { Env, PagesContext } from './types';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,13 +10,13 @@ export const onRequestOptions = async () => {
   return new Response(null, { headers: corsHeaders });
 };
 
-export const onRequestPost = async (context: any) => {
+export const onRequestPost = async (context: PagesContext) => {
   try {
     const { request, env } = context;
 
     // 1. Critical DB Check
     if (!env.NANO_DB) {
-      console.error("Critical Error: NANO_DB binding is missing in Cloudflare Dashboard/wrangler.toml");
+      console.error("Critical Error: NANO_DB binding is missing.");
       return new Response(JSON.stringify({ 
         error: '数据库连接失败: NANO_DB 未绑定。请在 Cloudflare 设置中绑定 KV Namespace。' 
       }), {

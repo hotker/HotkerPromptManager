@@ -1,10 +1,9 @@
-interface Env {
-  NANO_DB: any;
-}
+import { Env, PagesContext } from './types';
 
-export const onRequest = async (context: any) => {
+export const onRequest = async (context: PagesContext) => {
   const { env } = context;
-  const isDbBound = !!env.NANO_DB;
+  // Check if env object exists and NANO_DB property is present
+  const isDbBound = env && !!env.NANO_DB;
 
   return new Response(JSON.stringify({ 
     status: isDbBound ? 'healthy' : 'degraded',
