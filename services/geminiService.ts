@@ -2,7 +2,7 @@ import { GoogleGenAI } from "@google/genai";
 import { FixedConfig } from "../types";
 
 // Safely access process.env to prevent "process is not defined" errors in some environments
-const getApiKey = () => {
+const getEnvApiKey = () => {
   try {
     return process.env.API_KEY || '';
   } catch (e) {
@@ -11,14 +11,15 @@ const getApiKey = () => {
   }
 };
 
-const API_KEY = getApiKey();
+export const generateResponse = async (prompt: string, config: FixedConfig, customApiKey?: string): Promise<string> => {
+  // Prioritize custom user key, fall back to env key
+  const finalApiKey = customApiKey || getEnvApiKey();
 
-export const generateResponse = async (prompt: string, config: FixedConfig): Promise<string> => {
-  if (!API_KEY) {
-    throw new Error("API Key 缺失。请设置 process.env.API_KEY。");
+  if (!finalApiKey) {
+    throw new Error("API Key 缺失。请在侧边栏配置您的 Google AI Studio Key，或设置环境变量。");
   }
 
-  const ai = new GoogleGenAI({ apiKey: API_KEY });
+  const ai = new GoogleGenAI({ apiKey: finalApiKey });
 
   try {
     // Handling for Image Generation Model (Nano Banana context)

@@ -9,9 +9,10 @@ interface BuilderViewProps {
   templates: PromptTemplate[];
   saveTemplate: (t: PromptTemplate) => void;
   addLog: (l: RunLog) => void;
+  userApiKey: string;
 }
 
-export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, saveTemplate, addLog }) => {
+export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, saveTemplate, addLog, userApiKey }) => {
   // Builder State
   const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
   const [templateName, setTemplateName] = useState('新建 Nano 模板');
@@ -51,7 +52,8 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
     const startTime = Date.now();
 
     try {
-      const output = await generateResponse(compiledPrompt, config);
+      // Pass the userApiKey to the service
+      const output = await generateResponse(compiledPrompt, config, userApiKey);
       setResult(output);
       
       addLog({

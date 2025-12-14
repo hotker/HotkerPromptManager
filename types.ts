@@ -54,4 +54,14 @@ export interface RunLog {
   durationMs: number;
 }
 
+// Auth Types
+export interface User {
+  id: string;
+  username: string;
+  email?: string;
+  avatarUrl?: string;
+  provider: 'local' | 'google';
+  createdAt: number;
+}
+
 export type ViewState = 'dashboard' | 'library' | 'builder' | 'history';
