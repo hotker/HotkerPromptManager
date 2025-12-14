@@ -74,10 +74,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="w-64 bg-zinc-900 h-full border-r border-zinc-800 flex flex-col relative z-20">
         <div className="p-6 border-b border-zinc-800 flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-banana-400 to-banana-600 flex items-center justify-center text-zinc-950 font-bold text-lg">
-            N
+            H
           </div>
           <div>
-            <h1 className="font-bold text-zinc-100 tracking-tight">Nano Banana</h1>
+            <h1 className="font-bold text-zinc-100 tracking-tight">Hotker Prompt Studio</h1>
             <p className="text-xs text-zinc-500">提示词工坊</p>
           </div>
         </div>

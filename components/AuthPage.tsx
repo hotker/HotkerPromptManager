@@ -104,9 +104,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-banana-400 to-banana-600 mb-4 shadow-lg shadow-banana-500/20">
-              <span className="text-4xl font-bold text-zinc-950">N</span>
+              <span className="text-4xl font-bold text-zinc-950">H</span>
             </div>
-            <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">Nano Banana</h1>
+            <h1 className="text-3xl font-bold text-zinc-100 tracking-tight">Hotker Prompt Studio</h1>
             <p className="text-zinc-500 mt-2">{text.subtitle}</p>
           </div>
 
@@ -218,7 +218,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
             
           </div>
           <p className="text-center text-xs text-zinc-600 mt-6">
-            Nano Banana v2.0 &copy; 2024. All rights reserved.
+            Hotker Prompt Studio v2.0 &copy; 2024. All rights reserved.
           </p>
         </div>
       </div>

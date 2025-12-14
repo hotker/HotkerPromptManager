@@ -91,7 +91,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `nano-banana-backup-${currentUser.username}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `hotker-prompt-backup-${currentUser.username}-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

@@ -48,7 +48,7 @@ const App = () => {
 
   if (isLoadingAuth) {
     return <div className="h-screen bg-zinc-950 flex items-center justify-center text-banana-500">
-      <span className="animate-pulse">Loading Nano Banana...</span>
+      <span className="animate-pulse">Loading Hotker Prompt Studio...</span>
     </div>;
   }
 

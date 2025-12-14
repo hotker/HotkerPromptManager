@@ -90,7 +90,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules })
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-zinc-100">模块库</h2>
-          <p className="text-zinc-400 text-sm mt-1">管理可复用的提示词片段 (Nano Banana 积木)</p>
+          <p className="text-zinc-400 text-sm mt-1">管理可复用的提示词片段 (Hotker 积木)</p>
         </div>
         <button 
           onClick={() => openModal()}

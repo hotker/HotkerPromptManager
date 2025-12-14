@@ -16,7 +16,7 @@ interface BuilderViewProps {
 export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, saveTemplate, addLog, userApiKey, currentUser }) => {
   // Builder State
   const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
-  const [templateName, setTemplateName] = useState('新建 Nano 模板');
+  const [templateName, setTemplateName] = useState('新建 Hotker 模板');
   const [config, setConfig] = useState<FixedConfig>(DEFAULT_CONFIG);
   
   // Execution State
@@ -115,7 +115,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
   const handleDownloadImage = (dataUrl: string) => {
     const link = document.createElement('a');
     link.href = dataUrl;
-    link.download = `nano-banana-gen-${Date.now()}.png`;
+    link.download = `hotker-gen-${Date.now()}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
