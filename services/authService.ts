@@ -1,7 +1,7 @@
 import { User } from '../types';
 import { apiService } from './apiService';
 
-const STORAGE_KEY_SESSION = 'nano_cloud_session';
+const STORAGE_KEY_SESSION = 'hotker_cloud_session';
 
 export const authService = {
   // Login interacting with Cloudflare KV API

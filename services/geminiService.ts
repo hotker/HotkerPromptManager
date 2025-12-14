@@ -34,9 +34,9 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
   const ai = new GoogleGenAI({ apiKey: finalApiKey });
 
   try {
-    // Handling for Image Generation Model (Nano Banana context)
+    // Handling for Image Generation Model (Hotker Prompt Studio context)
     if (config.model.includes('image')) {
-       // Nano Banana Image Logic
+       // Hotker Image Logic
        const imageConfig: any = {};
        if (config.aspectRatio && config.aspectRatio !== 'auto') {
            imageConfig.aspectRatio = config.aspectRatio;

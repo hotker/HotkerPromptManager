@@ -1,4 +1,4 @@
-# Nano Banana 部署指南 (Cloudflare Pages)
+# Hotker Prompt Studio 部署指南 (Cloudflare Pages)
 
 此项目专为 **Cloudflare Pages** 设计。请严格按照以下步骤操作，无需本地配置文件 (wrangler.toml)。
 

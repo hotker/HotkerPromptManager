@@ -22,7 +22,7 @@ export const MODULE_COLORS: Record<ModuleType, string> = {
 export const AVAILABLE_MODELS = [
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (文本/极速)' },
   { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro (复杂推理)' },
-  { id: 'gemini-2.5-flash-image', name: 'Nano Banana (图像生成)' },
+  { id: 'gemini-2.5-flash-image', name: 'Hotker Prompt Studio (图像生成)' },
 ];
 
 // Commercial Grade Initial Data
