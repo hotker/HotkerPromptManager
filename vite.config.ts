@@ -22,6 +22,8 @@ export default defineConfig({
         if (fs.existsSync(indexHtml)) {
           fs.copyFileSync(indexHtml, notFoundHtml);
           console.log('✨ Created 404.html for Cloudflare Pages SPA routing');
+        } else {
+          console.warn('⚠️ index.html not found in dist, skipping 404.html creation');
         }
       }
     }
