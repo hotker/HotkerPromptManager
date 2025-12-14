@@ -1,109 +1,110 @@
-import { Env, PagesContext } from './types';
+import { PagesContext } from './types';
 
-const corsHeaders = {
+const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+const JSON_HEADERS = {
+  ...CORS_HEADERS,
+  'Content-Type': 'application/json'
+};
+
+// Helper to return standardized JSON responses
+const response = (data: any, status = 200) => {
+  return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
+};
+
 export const onRequestOptions = async () => {
-  return new Response(null, { headers: corsHeaders });
+  return new Response(null, { headers: CORS_HEADERS });
 };
 
 export const onRequestPost = async (context: PagesContext) => {
   try {
     const { request, env } = context;
 
-    // 1. Critical DB Check
+    // 1. Environment Check
     if (!env.NANO_DB) {
-      console.error("Critical Error: NANO_DB binding is missing.");
-      return new Response(JSON.stringify({ 
-        error: '数据库连接失败: NANO_DB 未绑定。请在 Cloudflare 设置中绑定 KV Namespace。' 
-      }), {
-        status: 503, // Service Unavailable
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      return response({ error: 'System Error: Database (KV) not bound.' }, 503);
+    }
+
+    // 2. Parse Request
+    let body: any;
+    try {
+      body = await request.json();
+    } catch {
+      return response({ error: 'Invalid JSON body' }, 400);
     }
 
     const url = new URL(request.url);
-    const type = url.searchParams.get('action');
-    let body: any = {};
-    
-    try {
-      body = await request.json();
-    } catch (e) {
-      return new Response(JSON.stringify({ error: '无效的 JSON 请求体' }), { status: 400, headers: corsHeaders });
-    }
+    const action = url.searchParams.get('action');
 
-    // REGISTER
-    if (type === 'register') {
-      const { username, password } = body;
-      
-      if (!username || !password) {
-        return new Response(JSON.stringify({ error: '用户名和密码不能为空' }), { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      const existing = await env.NANO_DB.get(`USER:${username}`);
-      if (existing) {
-        return new Response(JSON.stringify({ error: '该用户名已被注册' }), { 
-          status: 409,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      const newUser = {
-        id: crypto.randomUUID(),
-        username,
-        password, 
-        provider: 'local',
-        createdAt: Date.now(),
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
-      };
-
-      await env.NANO_DB.put(`USER:${username}`, JSON.stringify(newUser));
-      
-      return new Response(JSON.stringify(newUser), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    // 3. Handle Actions
+    if (action === 'register') {
+      return await handleRegister(env, body);
     } 
     
-    // LOGIN
-    if (type === 'login') {
-      const { username, password } = body;
-      const userStr = await env.NANO_DB.get(`USER:${username}`);
-      
-      if (!userStr) {
-        return new Response(JSON.stringify({ error: '用户不存在' }), { 
-          status: 404, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        });
-      }
-      
-      const user = JSON.parse(userStr);
-      if (user.password !== password) {
-        return new Response(JSON.stringify({ error: '密码错误' }), { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        });
-      }
-      
-      return new Response(JSON.stringify(user), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+    if (action === 'login') {
+      return await handleLogin(env, body);
     }
 
-    return new Response(JSON.stringify({ error: 'Invalid action' }), { 
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return response({ error: 'Invalid action parameter' }, 400);
 
   } catch (e: any) {
-    return new Response(JSON.stringify({ error: e.message || 'Server Error' }), { 
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return response({ error: e.message || 'Internal Server Error' }, 500);
   }
+}
+
+// --- Action Handlers ---
+
+async function handleRegister(env: any, body: any) {
+  const { username, password } = body;
+  
+  if (!username || !password || username.length < 3) {
+    return response({ error: 'Validation Error: Username and password are required.' }, 400);
+  }
+
+  const userKey = `USER:${username}`;
+  const existing = await env.NANO_DB.get(userKey);
+  
+  if (existing) {
+    return response({ error: '该用户名已被注册' }, 409);
+  }
+
+  const newUser = {
+    id: crypto.randomUUID(),
+    username,
+    password, // Note: In a real production app, use WebCrypto to hash this before storing!
+    provider: 'local',
+    createdAt: Date.now(),
+    avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
+  };
+
+  await env.NANO_DB.put(userKey, JSON.stringify(newUser));
+  
+  return response(newUser, 201);
+}
+
+async function handleLogin(env: any, body: any) {
+  const { username, password } = body;
+  
+  if (!username || !password) {
+    return response({ error: 'Missing credentials' }, 400);
+  }
+
+  const userStr = await env.NANO_DB.get(`USER:${username}`);
+  
+  if (!userStr) {
+    return response({ error: '用户不存在' }, 404);
+  }
+  
+  const user = JSON.parse(userStr);
+  
+  // Simple comparison. 
+  if (user.password !== password) {
+    return response({ error: '密码错误' }, 401);
+  }
+  
+  return response(user, 200);
 }

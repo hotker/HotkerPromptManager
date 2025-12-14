@@ -1,40 +1,45 @@
-import { Env, PagesContext } from './types';
+import { PagesContext } from './types';
 
-const corsHeaders = {
+const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+const JSON_HEADERS = {
+  ...CORS_HEADERS,
+  'Content-Type': 'application/json'
+};
+
+const response = (data: any, status = 200) => {
+  return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
+};
+
 export const onRequestOptions = async () => {
-  return new Response(null, { headers: corsHeaders });
+  return new Response(null, { headers: CORS_HEADERS });
 };
 
 export const onRequestGet = async (context: PagesContext) => {
   const { request, env } = context;
   
   if (!env.NANO_DB) {
-     console.error("NANO_DB binding missing on GET /data");
-     return new Response(JSON.stringify({ error: '数据库未连接 (NANO_DB)' }), { status: 503, headers: corsHeaders });
+     return response({ error: 'System Error: KV not bound' }, 503);
   }
 
   const url = new URL(request.url);
   const userId = url.searchParams.get('userId');
 
   if (!userId) {
-    return new Response('Missing userId', { status: 400, headers: corsHeaders });
+    return response({ error: 'Missing userId parameter' }, 400);
   }
   
   try {
     const dataStr = await env.NANO_DB.get(`DATA:${userId}`);
-    // If no data exists, return valid empty structure instead of null/error
+    // Return empty shell if no data exists yet (First time load)
     const data = dataStr ? JSON.parse(dataStr) : { modules: [], templates: [], logs: [], apiKey: '' };
-    
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: 'Database Read Error' }), { status: 500, headers: corsHeaders });
+    return response(data);
+  } catch (e: any) {
+    return response({ error: 'Failed to read from KV' }, 500);
   }
 }
 
@@ -42,7 +47,7 @@ export const onRequestPost = async (context: PagesContext) => {
   const { request, env } = context;
 
   if (!env.NANO_DB) {
-     return new Response(JSON.stringify({ error: '数据库未连接 (NANO_DB)' }), { status: 503, headers: corsHeaders });
+     return response({ error: 'System Error: KV not bound' }, 503);
   }
 
   try {
@@ -50,15 +55,14 @@ export const onRequestPost = async (context: PagesContext) => {
     const { userId, data } = body;
     
     if (!userId || !data) {
-      return new Response('Missing data', { status: 400, headers: corsHeaders });
+      return response({ error: 'Invalid payload: userId and data required' }, 400);
     }
     
+    // KV 'put' is eventually consistent, but fast enough for this use case
     await env.NANO_DB.put(`DATA:${userId}`, JSON.stringify(data));
     
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-  } catch (e) {
-    return new Response('Error processing request', { status: 400, headers: corsHeaders });
+    return response({ success: true, timestamp: Date.now() });
+  } catch (e: any) {
+    return response({ error: 'Failed to save to KV' }, 500);
   }
 }

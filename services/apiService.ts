@@ -9,80 +9,84 @@ export interface UserData {
 
 const API_BASE = '/api';
 
-export const apiService = {
-  // Auth
-  register: async (username: string, password: string): Promise<User> => {
-    try {
-      const res = await fetch(`${API_BASE}/auth?action=register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.error || '注册失败');
+/**
+ * Helper to handle fetch requests consistently
+ */
+async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+  };
+
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...options.headers,
+      },
+    });
+
+    // Handle generic HTTP errors
+    if (!res.ok) {
+      let errorMsg = `API Error: ${res.status}`;
+      try {
+        const errJson = await res.json();
+        errorMsg = errJson.error || errorMsg;
+      } catch {
+        // Fallback for non-JSON errors (like 503 from Cloudflare infrastructure)
+        if (res.status === 503) errorMsg = '服务暂时不可用 (数据库连接中...)';
+        else if (res.status === 500) errorMsg = '服务器内部错误';
       }
-      return data;
-    } catch (e: any) {
-      // Handle network errors (e.g., API unreachable)
-      throw new Error(e.message || '连接服务器失败，请检查网络');
+      throw new Error(errorMsg);
     }
+
+    // Handle 204 No Content or empty bodies
+    if (res.status === 204) {
+      return {} as T;
+    }
+
+    return await res.json();
+  } catch (e: any) {
+    // If it's already an Error object with a message, rethrow it
+    // Otherwise, wrap it in a generic network error
+    throw new Error(e.message || '网络连接失败，请检查您的互联网连接');
+  }
+}
+
+export const apiService = {
+  // --- Auth ---
+  
+  register: async (username: string, password: string): Promise<User> => {
+    return request<User>('/auth?action=register', {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
   },
 
   login: async (username: string, password: string): Promise<User> => {
-    try {
-      const res = await fetch(`${API_BASE}/auth?action=login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || '登录失败');
-      }
-      return data;
-    } catch (e: any) {
-      throw new Error(e.message || '连接服务器失败，请检查网络');
-    }
+    return request<User>('/auth?action=login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
   },
 
-  // Data Sync
+  // --- Data Sync ---
+
   loadData: async (userId: string): Promise<UserData | null> => {
     try {
-      const res = await fetch(`${API_BASE}/data?userId=${userId}`);
-      if (!res.ok) {
-        // If 503 (DB missing) or 500, we log it but return null so the app can still work in "Offline/Demo" mode locally
-        console.warn(`Cloud data load failed (${res.status}):`, await res.text());
-        return null;
-      }
-      return res.json();
+      return await request<UserData>(`/data?userId=${userId}`);
     } catch (e) {
-      console.error("Failed to load cloud data", e);
+      // For loadData specifically, we often want to fail gracefully (return null) 
+      // rather than crashing the UI, allowing the app to fall back to "Offline/Demo" mode.
+      console.warn("Cloud data sync unavailable:", e);
       return null;
     }
   },
 
   saveData: async (userId: string, data: UserData): Promise<void> => {
-    const res = await fetch(`${API_BASE}/data`, {
+    await request<void>('/data', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, data })
     });
-    
-    if (!res.ok) {
-        let errorMsg = '同步失败';
-        try {
-            const errJson = await res.json();
-            errorMsg = errJson.error || errorMsg;
-        } catch(e) {
-            if (res.status === 503) errorMsg = '云端数据库未连接 (KV Not Bound)';
-            else errorMsg = `Server Error: ${res.status}`;
-        }
-        throw new Error(errorMsg);
-    }
   }
 };
