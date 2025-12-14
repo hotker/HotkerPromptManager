@@ -11,12 +11,28 @@ const getEnvApiKey = () => {
   }
 };
 
-export const generateResponse = async (prompt: string, config: FixedConfig, customApiKey?: string): Promise<string> => {
-  // Prioritize custom user key, fall back to env key
-  const finalApiKey = customApiKey || getEnvApiKey();
+interface ApiKeyOptions {
+  apiKey?: string;
+  allowSystemKey: boolean;
+}
+
+export const generateResponse = async (prompt: string, config: FixedConfig, options: ApiKeyOptions): Promise<string> => {
+  // Logic: 
+  // 1. If user provides a custom key, use it.
+  // 2. If no custom key, check if system key fallback is allowed.
+  // 3. If allowed, use env key.
+  
+  let finalApiKey = options.apiKey;
+
+  if (!finalApiKey && options.allowSystemKey) {
+    finalApiKey = getEnvApiKey();
+  }
 
   if (!finalApiKey) {
-    throw new Error("API Key 缺失。请在侧边栏配置您的 Google AI Studio Key，或设置环境变量。");
+    if (!options.apiKey && !options.allowSystemKey) {
+       throw new Error("权限受限：当前账户无权使用系统默认 Key。请在侧边栏设置您自己的 Google AI Studio API Key。");
+    }
+    throw new Error("API Key 缺失。请在侧边栏配置您的 API Key。");
   }
 
   const ai = new GoogleGenAI({ apiKey: finalApiKey });

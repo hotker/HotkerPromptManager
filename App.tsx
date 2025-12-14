@@ -143,6 +143,7 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
             saveTemplate={handleSaveTemplate}
             addLog={handleAddLog}
             userApiKey={userApiKey}
+            currentUser={currentUser}
           />
         )}
         {view === 'history' && <HistoryView logs={logs} updateLog={handleUpdateLog} />}

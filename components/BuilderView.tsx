@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { PromptModule, PromptTemplate, RunLog, FixedConfig, ModuleType } from '../types';
+import { PromptModule, PromptTemplate, RunLog, FixedConfig, ModuleType, User } from '../types';
 import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
 import { Plus, Save, Play, ChevronRight, X, Settings2, GripVertical, AlertCircle, CheckCircle2, Copy, Download, Image as ImageIcon } from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
@@ -10,9 +10,10 @@ interface BuilderViewProps {
   saveTemplate: (t: PromptTemplate) => void;
   addLog: (l: RunLog) => void;
   userApiKey: string;
+  currentUser: User;
 }
 
-export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, saveTemplate, addLog, userApiKey }) => {
+export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, saveTemplate, addLog, userApiKey, currentUser }) => {
   // Builder State
   const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
   const [templateName, setTemplateName] = useState('新建 Nano 模板');
@@ -51,9 +52,16 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
     setExecutionError(null);
     const startTime = Date.now();
 
+    // Check Permissions
+    const isPrivilegedUser = currentUser.username === 'hotker@gmail.com';
+
     try {
-      // Pass the userApiKey to the service
-      const output = await generateResponse(compiledPrompt, config, userApiKey);
+      // Call service with explicit permissions
+      const output = await generateResponse(compiledPrompt, config, {
+        apiKey: userApiKey,
+        allowSystemKey: isPrivilegedUser
+      });
+
       setResult(output);
       
       addLog({

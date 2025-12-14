@@ -29,7 +29,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'history', label: '运行历史', icon: <History size={20} /> },
   ];
 
-  const hasValidKey = !!userApiKey || !!process.env.API_KEY;
+  const isPrivilegedUser = currentUser?.username === 'hotker@gmail.com';
+  
+  // Status check: Valid if User has their own key, OR (User is privileged AND System has a key)
+  const hasValidKey = !!userApiKey || (isPrivilegedUser && !!process.env.API_KEY);
 
   const handleSaveKey = () => {
     setUserApiKey(tempKey.trim());
@@ -112,7 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {userApiKey ? (
                 <span className="text-banana-400/80">已使用自定义 Key</span>
               ) : (
-                process.env.API_KEY ? '系统默认 Key' : '未配置 Key'
+                (isPrivilegedUser && process.env.API_KEY) ? '系统默认 Key' : <span className="text-red-400">需配置 Key</span>
               )}
             </div>
             <button 
