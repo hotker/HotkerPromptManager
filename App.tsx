@@ -28,6 +28,16 @@ function useDebounce<T>(value: T, delay: number): T {
 const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+  
+  // Lifted Language State with Persistence
+  const [lang, setLangState] = useState<Language>(() => {
+    return (localStorage.getItem('hotker_lang') as Language) || 'zh';
+  });
+
+  const setLang = (l: Language) => {
+    setLangState(l);
+    localStorage.setItem('hotker_lang', l);
+  };
 
   // Check for existing session on mount
   useEffect(() => {
@@ -48,23 +58,33 @@ const App = () => {
   };
 
   if (isLoadingAuth) {
-    return <div className="h-screen bg-zinc-950 flex items-center justify-center text-banana-500">
-      <span className="animate-pulse">Loading Hotker Prompt Studio...</span>
+    return <div className="h-screen bg-cyber-bg flex flex-col items-center justify-center text-cyber-primary">
+       <div className="w-16 h-16 border-4 border-cyber-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+       <span className="font-mono tracking-widest animate-pulse">SYSTEM INITIALIZING...</span>
     </div>;
   }
 
   if (!currentUser) {
-    return <AuthPage onLogin={handleLogin} />;
+    return <AuthPage onLogin={handleLogin} lang={lang} setLang={setLang} />;
   }
 
   return (
-    <AuthenticatedApp currentUser={currentUser} onLogout={handleLogout} />
+    <AuthenticatedApp 
+      currentUser={currentUser} 
+      onLogout={handleLogout} 
+      lang={lang} 
+      setLang={setLang} 
+    />
   );
 };
 
-const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = ({ currentUser, onLogout }) => {
+const AuthenticatedApp: React.FC<{ 
+  currentUser: User, 
+  onLogout: () => void,
+  lang: Language,
+  setLang: (l: Language) => void
+}> = ({ currentUser, onLogout, lang, setLang }) => {
   const [view, setView] = useState<ViewState>('dashboard');
-  const [lang, setLang] = useState<Language>('zh');
   
   // Data State
   const [modules, setModules] = useState<PromptModule[]>([]);
@@ -140,9 +160,12 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
 
   if (!isDataLoaded) {
     return (
-      <div className="h-screen bg-zinc-950 flex flex-col items-center justify-center gap-4 text-zinc-400">
-        <div className="w-8 h-8 border-2 border-banana-500 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm">正在同步云端数据...</p>
+      <div className="h-screen bg-cyber-bg flex flex-col items-center justify-center gap-4 text-cyber-primary">
+        <div className="relative">
+          <div className="w-12 h-12 border-2 border-cyber-primary rounded-full animate-ping absolute inset-0"></div>
+          <div className="w-12 h-12 border-2 border-cyber-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <p className="text-sm font-mono tracking-widest">SYNCING DATA STREAM...</p>
       </div>
     );
   }
@@ -160,7 +183,10 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
   };
 
   return (
-    <div className="flex h-screen bg-zinc-950 text-zinc-100 font-sans animate-in fade-in duration-500 flex-col md:flex-row">
+    <div className="flex h-screen bg-cyber-bg text-cyber-text font-sans animate-in fade-in duration-500 flex-col md:flex-row bg-grid-pattern overflow-hidden">
+      {/* Background Overlay for Scanline */}
+      <div className="fixed inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-[1] bg-[length:100%_2px,3px_100%] opacity-20"></div>
+
       <Sidebar 
         currentView={view} 
         setView={setView} 
@@ -174,12 +200,7 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
         setLang={setLang}
       />
       
-      {/* 
-        Main Content Area 
-        - Mobile: pt-16 (for top bar), pb-20 (for bottom bar)
-        - Desktop: pt-0, pb-0
-      */}
-      <main className="flex-1 h-full overflow-hidden relative pt-16 pb-20 md:pt-0 md:pb-0">
+      <main className="flex-1 h-full overflow-hidden relative pt-16 pb-20 md:pt-0 md:pb-0 z-10">
         {view === 'dashboard' && (
           <Dashboard 
             modules={modules} 

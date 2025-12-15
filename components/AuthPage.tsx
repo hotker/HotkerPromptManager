@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { User } from '../types';
 import { authService } from '../services/authService';
-import { ArrowRight, Loader2, AlertCircle, Globe, Cloud } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle, Globe, Hexagon, ShieldCheck, Cpu } from 'lucide-react';
 import { AUTHOR_INFO } from '../constants';
+import { Language } from '../translations';
 
 interface AuthPageProps {
   onLogin: (user: User) => void;
+  lang: Language;
+  setLang: (l: Language) => void;
 }
 
-export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
+export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [lang, setLang] = useState<'zh' | 'en'>('zh');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -18,28 +20,28 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   
   const t = {
     zh: {
-      subtitle: 'Enterprise Prompt Engineering',
-      loginTab: '登录',
-      registerTab: '注册',
-      usernamePlaceholder: '用户名',
-      passwordPlaceholder: '密码',
-      enterBtn: '进入控制台',
-      createBtn: '创建账户',
-      googleBtn: '使用 Google 继续',
-      defaultError: '认证失败',
-      googleError: 'Google 登录失败',
+      subtitle: 'NEURAL LINK ESTABLISHED',
+      loginTab: 'ACCESS',
+      registerTab: 'INITIATE',
+      usernamePlaceholder: 'CODENAME',
+      passwordPlaceholder: 'PASSPHRASE',
+      enterBtn: 'JACK IN',
+      createBtn: 'CREATE IDENTITY',
+      googleBtn: 'LINK GOOGLE NETWORK',
+      defaultError: 'ACCESS DENIED',
+      googleError: 'NETWORK ERROR',
     },
     en: {
-      subtitle: 'Enterprise Prompt Engineering',
-      loginTab: 'Log in',
-      registerTab: 'Sign up',
-      usernamePlaceholder: 'Username',
-      passwordPlaceholder: 'Password',
-      enterBtn: 'Log in',
-      createBtn: 'Sign up',
-      googleBtn: 'Continue with Google',
-      defaultError: 'Authentication failed',
-      googleError: 'Google login failed',
+      subtitle: 'NEURAL LINK ESTABLISHED',
+      loginTab: 'ACCESS',
+      registerTab: 'INITIATE',
+      usernamePlaceholder: 'CODENAME',
+      passwordPlaceholder: 'PASSPHRASE',
+      enterBtn: 'JACK IN',
+      createBtn: 'CREATE IDENTITY',
+      googleBtn: 'LINK GOOGLE NETWORK',
+      defaultError: 'ACCESS DENIED',
+      googleError: 'NETWORK ERROR',
     }
   };
 
@@ -78,111 +80,127 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#0e0e10] flex flex-col items-center justify-center p-4">
-      {/* Subtle Background Pattern */}
-      <div className="fixed inset-0 pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-5"></div>
+    <div className="min-h-screen w-full bg-cyber-bg flex flex-col items-center justify-center p-4 relative overflow-hidden font-mono">
+      {/* Sci-fi Background Elements */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-30"></div>
+      <div className="absolute top-0 left-0 w-full h-1 bg-cyber-primary/50 shadow-[0_0_20px_#00f0ff]"></div>
+      <div className="absolute bottom-0 right-0 w-full h-1 bg-cyber-primary/50 shadow-[0_0_20px_#00f0ff]"></div>
       
-      {/* Main Container */}
-      <div className="w-full max-w-[420px] relative z-10">
+      {/* Animated Orb */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyber-primary/10 rounded-full blur-[100px] animate-pulse-glow"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-cyber-secondary/10 rounded-full blur-[80px] animate-pulse-glow" style={{animationDelay: '1s'}}></div>
+
+      {/* Main Container - HUD Style */}
+      <div className="w-full max-w-[450px] relative z-10 hud-panel hud-corners p-10 rounded-xl">
         
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <Cloud size={64} className="text-banana-500" fill="currentColor" />
+        <div className="text-center mb-10 relative">
+          <div className="flex justify-center mb-4">
+            <div className="relative">
+               <Hexagon size={64} className="text-cyber-primary animate-spin-slow" strokeWidth={1} />
+               <Cpu size={32} className="text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            </div>
           </div>
-          <h1 className="text-3xl font-semibold text-white mb-2">Hotker Studio</h1>
-          <p className="text-zinc-500 text-sm">{text.subtitle}</p>
+          <h1 className="text-4xl font-bold text-white mb-2 tracking-tighter text-glow">HOTKER<span className="text-cyber-primary">.SYS</span></h1>
+          <p className="text-cyber-primary/60 text-xs tracking-[0.3em] uppercase">{text.subtitle}</p>
         </div>
 
-        {/* Card */}
-        <div className="bg-[#18181b] border border-white/5 rounded-lg shadow-xl p-8">
-           
-           {/* Toggle */}
-           <div className="flex border-b border-white/10 mb-6">
-              <button 
-                onClick={() => setMode('login')} 
-                className={`flex-1 pb-3 text-sm font-medium transition-colors border-b-2 ${mode === 'login' ? 'border-banana-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
-              >
-                {text.loginTab}
-              </button>
-              <button 
-                onClick={() => setMode('register')} 
-                className={`flex-1 pb-3 text-sm font-medium transition-colors border-b-2 ${mode === 'register' ? 'border-banana-500 text-white' : 'border-transparent text-zinc-500 hover:text-zinc-300'}`}
-              >
-                {text.registerTab}
-              </button>
+        {/* Tab Switcher */}
+        <div className="flex mb-8 border-b border-white/10 relative">
+           <div className={`absolute bottom-0 h-0.5 bg-cyber-primary transition-all duration-300 ${mode === 'login' ? 'left-0 w-1/2' : 'left-1/2 w-1/2'}`}></div>
+           <button 
+             onClick={() => setMode('login')} 
+             className={`flex-1 pb-3 text-xs font-bold tracking-widest transition-colors ${mode === 'login' ? 'text-cyber-primary text-glow' : 'text-gray-500 hover:text-gray-300'}`}
+           >
+             {text.loginTab}
+           </button>
+           <button 
+             onClick={() => setMode('register')} 
+             className={`flex-1 pb-3 text-xs font-bold tracking-widest transition-colors ${mode === 'register' ? 'text-cyber-primary text-glow' : 'text-gray-500 hover:text-gray-300'}`}
+           >
+             {text.registerTab}
+           </button>
+        </div>
+
+        {error && (
+         <div className="mb-6 bg-red-500/10 border border-red-500/50 p-3 flex items-center gap-3 text-red-400 animate-pulse">
+            <AlertCircle size={16} />
+            <span className="text-xs font-bold tracking-wide">{error}</span>
+         </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+           <div className="relative group">
+             <input
+               type="text"
+               required
+               className="w-full cyber-input px-4 py-3 rounded-none text-sm"
+               value={username}
+               onChange={(e) => setUsername(e.target.value)}
+               placeholder=" "
+             />
+             <label className={`absolute left-4 top-3 text-xs text-gray-500 pointer-events-none transition-all duration-300 ${username ? '-top-5 text-cyber-primary text-[10px]' : ''}`}>
+               {text.usernamePlaceholder}
+             </label>
+             {/* Corner markers for input */}
+             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyber-primary/30"></div>
+             <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyber-primary/30"></div>
            </div>
 
-           {error && (
-            <div className="mb-6 bg-red-500/10 border-l-2 border-red-500 p-3 flex items-start gap-3">
-               <AlertCircle size={16} className="text-red-500 mt-0.5 shrink-0" />
-               <p className="text-red-400 text-xs leading-relaxed">{error}</p>
-            </div>
-           )}
-
-           <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1.5">{text.usernamePlaceholder}</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full bg-[#0e0e10] border border-zinc-700 rounded-md px-3 py-2 text-white focus:border-banana-500 focus:ring-1 focus:ring-banana-500 outline-none transition-all text-sm"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1.5">{text.passwordPlaceholder}</label>
-                <input
-                  type="password"
-                  required
-                  className="w-full bg-[#0e0e10] border border-zinc-700 rounded-md px-3 py-2 text-white focus:border-banana-500 focus:ring-1 focus:ring-banana-500 outline-none transition-all text-sm"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-banana-500 hover:bg-banana-600 text-white font-medium py-2.5 rounded-md transition-all flex items-center justify-center gap-2 mt-2 text-sm disabled:opacity-70 disabled:cursor-not-allowed"
-              >
-                {isLoading ? <Loader2 className="animate-spin" size={16} /> : (
-                  <>
-                    {mode === 'login' ? text.enterBtn : text.createBtn}
-                    <ArrowRight size={16} />
-                  </>
-                )}
-              </button>
-           </form>
-
-           <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-zinc-800"></div></div>
-              <div className="relative flex justify-center text-xs text-zinc-500"><span className="bg-[#18181b] px-2">OR</span></div>
+           <div className="relative group">
+             <input
+               type="password"
+               required
+               className="w-full cyber-input px-4 py-3 rounded-none text-sm"
+               value={password}
+               onChange={(e) => setPassword(e.target.value)}
+               placeholder=" "
+             />
+             <label className={`absolute left-4 top-3 text-xs text-gray-500 pointer-events-none transition-all duration-300 ${password ? '-top-5 text-cyber-primary text-[10px]' : ''}`}>
+               {text.passwordPlaceholder}
+             </label>
+             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyber-primary/30"></div>
+             <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyber-primary/30"></div>
            </div>
 
            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={isLoading}
-              className="w-full bg-white text-black hover:bg-zinc-200 font-medium py-2.5 rounded-md transition-all flex items-center justify-center gap-3 text-sm"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-              {text.googleBtn}
-            </button>
+             type="submit"
+             disabled={isLoading}
+             className="w-full btn-primary py-3 flex items-center justify-center gap-2 group relative overflow-hidden"
+           >
+             {isLoading ? <Loader2 className="animate-spin" size={16} /> : (
+               <>
+                 <span className="relative z-10 group-hover:tracking-[0.2em] transition-all">{mode === 'login' ? text.enterBtn : text.createBtn}</span>
+                 <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+               </>
+             )}
+             <div className="absolute inset-0 bg-cyber-primary/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+           </button>
+        </form>
+
+        <div className="relative my-8">
+           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
+           <div className="relative flex justify-center text-[10px] tracking-widest text-gray-500"><span className="bg-[#0a0f16] px-2">SYSTEM_OVERRIDE</span></div>
         </div>
 
+        <button
+           type="button"
+           onClick={handleGoogleLogin}
+           disabled={isLoading}
+           className="w-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/30 text-gray-300 text-xs font-bold py-3 tracking-wide transition-all flex items-center justify-center gap-3"
+         >
+           <ShieldCheck size={14} className="text-cyber-secondary" />
+           {text.googleBtn}
+         </button>
+
         {/* Footer */}
-        <div className="mt-8 flex justify-center gap-6">
-            <button onClick={() => setLang(l => l === 'zh' ? 'en' : 'zh')} className="text-zinc-600 hover:text-zinc-400 text-xs transition-colors flex items-center gap-1.5">
-               <Globe size={12} /> {lang === 'zh' ? 'English' : '中文'}
+        <div className="mt-8 flex justify-between items-center pt-4 border-t border-white/5">
+            <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className="text-gray-500 hover:text-cyber-primary text-xs transition-colors flex items-center gap-2 font-bold tracking-widest">
+               <Globe size={12} /> {lang === 'zh' ? 'EN' : '中文'}
             </button>
-            <a href={AUTHOR_INFO.website} target="_blank" className="text-zinc-600 hover:text-zinc-400 text-xs transition-colors">
-              Help
-            </a>
-            <a href={AUTHOR_INFO.website} target="_blank" className="text-zinc-600 hover:text-zinc-400 text-xs transition-colors">
-              Terms
-            </a>
+            <div className="flex gap-4">
+              <a href={AUTHOR_INFO.website} target="_blank" className="text-gray-500 hover:text-cyber-primary text-[10px] transition-colors tracking-widest">HELP</a>
+            </div>
         </div>
       </div>
     </div>

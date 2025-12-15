@@ -56,7 +56,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     { name: t.dashboard.success, value: logs.filter(l => l.status === 'success').length },
     { name: t.dashboard.failure, value: logs.filter(l => l.status === 'failure').length },
   ];
-  const COLORS = ['#10b981', '#ef4444'];
+  // Updated colors: Neon Green & Glitch Red
+  const COLORS = ['#00ff9d', '#ff2a6d'];
 
   const activityData = logs.slice(0, 20).map((l, i) => ({
     name: i.toString(),
@@ -111,27 +112,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="p-6 md:p-10 h-full overflow-y-auto">
+    <div className="p-6 md:p-10 h-full overflow-y-auto font-mono">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
         <div>
-          <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-zinc-500 mb-2 tracking-tight">{t.dashboard.welcome}, {currentUser.username}</h2>
-          <div className="flex flex-wrap items-center gap-4 text-xs font-mono">
-             <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-500/20">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
-                <span>{t.dashboard.systemOnline}</span>
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter text-glow uppercase">
+             CMD: {t.dashboard.welcome}, <span className="text-cyber-primary">{currentUser.username}</span>
+          </h2>
+          <div className="flex flex-wrap items-center gap-4 text-xs">
+             <div className="flex items-center gap-1.5 text-green-400 bg-green-900/20 px-2 py-1 border border-green-500/30">
+                <div className="w-1.5 h-1.5 rounded-none bg-green-400 animate-pulse"></div>
+                <span className="tracking-wider">SYS_ONLINE</span>
              </div>
 
              {dbStatus === 'connected' ? (
-                <div className="flex items-center gap-1.5 text-blue-400 bg-blue-500/10 px-2 py-1 rounded-full border border-blue-500/20">
+                <div className="flex items-center gap-1.5 text-blue-400 bg-blue-900/20 px-2 py-1 border border-blue-500/30">
                     <Database size={10}/>
-                    <span>{t.dashboard.dbConnected}</span>
+                    <span className="tracking-wider">DB_LINK_ACTIVE</span>
                 </div>
              ) : (
-                <div className="flex items-center gap-1.5 text-red-400 bg-red-500/10 px-2 py-1 rounded-full border border-red-500/20 animate-pulse">
+                <div className="flex items-center gap-1.5 text-red-400 bg-red-900/20 px-2 py-1 border border-red-500/30 animate-pulse">
                     <AlertTriangle size={10}/>
-                    <span>{t.dashboard.dbDisconnected}</span>
+                    <span className="tracking-wider">DB_LINK_SEVERED</span>
                 </div>
              )}
           </div>
@@ -141,19 +144,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {[
-          { icon: <Layers size={20} />, label: t.dashboard.statsModules, value: modules.length, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-          { icon: <FileCode2 size={20} />, label: t.dashboard.statsTemplates, value: templates.length, color: 'text-banana-400', bg: 'bg-banana-500/10' },
-          { icon: <Zap size={20} />, label: t.dashboard.statsSuccess, value: `${successRate}%`, color: 'text-purple-400', bg: 'bg-purple-500/10' }
+          { icon: <Layers size={20} />, label: t.dashboard.statsModules, value: modules.length, color: 'text-cyber-primary', bg: 'bg-cyber-primary/10', border: 'border-cyber-primary/30' },
+          { icon: <FileCode2 size={20} />, label: t.dashboard.statsTemplates, value: templates.length, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
+          { icon: <Zap size={20} />, label: t.dashboard.statsSuccess, value: `${successRate}%`, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' }
         ].map((stat, i) => (
-          <div key={i} className="glass-card rounded-2xl p-6 relative overflow-hidden group">
+          <div key={i} className={`hud-panel p-6 relative overflow-hidden group ${stat.border}`}>
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
               {stat.icon}
             </div>
-            <div className={`w-10 h-10 rounded-xl ${stat.bg} ${stat.color} flex items-center justify-center mb-4 border border-white/5`}>
+            <div className={`w-10 h-10 ${stat.bg} ${stat.color} flex items-center justify-center mb-4 border border-white/5`}>
                {stat.icon}
             </div>
-            <div className="text-3xl font-bold text-white mb-1 tracking-tight">{stat.value}</div>
-            <div className="text-xs text-zinc-500 font-medium uppercase tracking-wider">{stat.label}</div>
+            <div className="text-3xl font-bold text-white mb-1 tracking-tight text-shadow">{stat.value}</div>
+            <div className="text-xs text-gray-400 font-bold uppercase tracking-widest">{stat.label}</div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-white/20"></div>
           </div>
         ))}
       </div>
@@ -161,11 +165,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         
         {/* Main Chart */}
-        <div className="lg:col-span-2 glass-panel rounded-2xl p-6">
+        <div className="lg:col-span-2 hud-panel p-6 rounded-lg">
           <div className="flex items-center justify-between mb-6">
              <div className="flex items-center gap-2">
-                <Activity size={16} className="text-banana-400" />
-                <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">{t.dashboard.chartLatency}</h3>
+                <Activity size={16} className="text-cyber-primary" />
+                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">{t.dashboard.chartLatency}</h3>
              </div>
           </div>
           <div className="h-64">
@@ -174,11 +178,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <XAxis dataKey="name" hide />
                 <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  cursor={{fill: 'rgba(255,255,255,0.05)'}}
-                  contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', color: '#fff', borderRadius: '8px', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}
-                  itemStyle={{ color: '#fbbf24', fontSize: '12px' }}
+                  cursor={{fill: 'rgba(0, 240, 255, 0.05)'}}
+                  contentStyle={{ backgroundColor: '#0a0f16', borderColor: '#00f0ff', color: '#fff', fontFamily: 'monospace' }}
+                  itemStyle={{ color: '#00f0ff', fontSize: '12px' }}
                 />
-                <Bar dataKey="duration" fill="#fbbf24" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar dataKey="duration" fill="#00f0ff" barSize={15} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -186,10 +190,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Pie Chart & Backup */}
         <div className="flex flex-col gap-6">
-           <div className="glass-panel rounded-2xl p-6 flex-1 min-h-[200px]">
+           <div className="hud-panel p-6 flex-1 min-h-[200px] rounded-lg">
               <div className="flex items-center gap-2 mb-4">
-                 <Cpu size={16} className="text-emerald-400" />
-                 <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">{t.dashboard.chartQuality}</h3>
+                 <Cpu size={16} className="text-green-400" />
+                 <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">{t.dashboard.chartQuality}</h3>
               </div>
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
@@ -208,24 +212,24 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', color: '#fff', borderRadius: '8px', fontSize: '12px' }}/>
+                    <Tooltip contentStyle={{ backgroundColor: '#0a0f16', borderColor: '#333', color: '#fff', fontSize: '12px', fontFamily: 'monospace' }}/>
                   </PieChart>
                 </ResponsiveContainer>
               </div>
            </div>
 
            {/* Backup Mini Panel */}
-           <div className="glass-panel rounded-2xl p-6">
+           <div className="hud-panel p-6 rounded-lg">
               <div className="flex items-center gap-2 mb-4">
-                 <Server size={16} className="text-zinc-400" />
-                 <h3 className="text-sm font-bold text-zinc-300 uppercase tracking-wider">{t.dashboard.backupTitle}</h3>
+                 <Server size={16} className="text-gray-400" />
+                 <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">{t.dashboard.backupTitle}</h3>
               </div>
               <div className="flex gap-2">
-                 <button onClick={handleExport} className="flex-1 py-2 text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg transition-colors border border-white/5 flex items-center justify-center gap-1">
-                   <Download size={12}/> {t.dashboard.exportBtn}
+                 <button onClick={handleExport} className="flex-1 py-3 text-[10px] font-bold bg-white/5 hover:bg-white/10 text-gray-200 border border-white/5 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/30 transition-all">
+                   <Download size={12}/> EXPORT
                  </button>
-                 <button onClick={handleImportClick} className="flex-1 py-2 text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 rounded-lg transition-colors border border-white/5 flex items-center justify-center gap-1">
-                   <Upload size={12}/> {t.dashboard.importBtn}
+                 <button onClick={handleImportClick} className="flex-1 py-3 text-[10px] font-bold bg-white/5 hover:bg-white/10 text-gray-200 border border-white/5 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/30 transition-all">
+                   <Upload size={12}/> IMPORT
                  </button>
               </div>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json"/>
@@ -234,8 +238,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       <div className="py-6 border-t border-white/5 text-center">
-          <p className="text-[10px] text-zinc-600 font-mono">
-            {AUTHOR_INFO.name} <span className="mx-2">|</span> v2.0.0
+          <p className="text-[10px] text-gray-600 font-mono tracking-widest">
+             SYS_KERNEL v2.0.5 | {AUTHOR_INFO.name.toUpperCase()}
           </p>
       </div>
     </div>

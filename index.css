@@ -2,56 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global Styles for Cloudflare-esque Tech Feel */
+/* Import a Tech font if possible, otherwise rely on system */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap');
+
 body {
-  background-color: #0e0e10; /* Deep dark background */
-  color: #f4f4f5; /* zinc-100 */
-  /* Subtle mesh gradient: Orange (Top Left) mixed with Deep Blue (Bottom Right) */
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(243, 128, 32, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(37, 99, 235, 0.08) 0%, transparent 40%);
-  background-attachment: fixed;
+  background-color: #030508;
+  color: #e0f7fa;
+  font-family: 'Rajdhani', sans-serif;
+  overflow: hidden; /* Prevent body scroll, handle in app */
+}
+
+/* Sci-fi Grid Background */
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
 }
 
 @layer utilities {
-  .glass-panel {
-    @apply bg-[#161618]/90 backdrop-blur-md border border-white/10 shadow-xl;
-  }
-  
-  .glass-card {
-    @apply bg-[#161618] border border-white/5 hover:border-banana-500/50 transition-all duration-200;
+  /* HUD Panel: Glassy, with a tech border */
+  .hud-panel {
+    @apply bg-[#0a0f16]/80 backdrop-blur-md border border-cyber-primary/20 shadow-[0_0_15px_rgba(0,240,255,0.05)];
+    position: relative;
   }
 
-  .tech-border {
-    @apply border border-white/10;
+  /* Corner Accents for HUD feeling */
+  .hud-corners::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; width: 10px; height: 10px;
+    border-top: 2px solid #00f0ff;
+    border-left: 2px solid #00f0ff;
+    z-index: 10;
+  }
+  .hud-corners::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; right: -1px; width: 10px; height: 10px;
+    border-bottom: 2px solid #00f0ff;
+    border-right: 2px solid #00f0ff;
+    z-index: 10;
+  }
+
+  /* Interactive Card */
+  .cyber-card {
+    @apply relative overflow-hidden bg-[#0e1520] border border-white/5 transition-all duration-300;
+  }
+  .cyber-card:hover {
+    @apply border-cyber-primary/50 shadow-[0_0_20px_rgba(0,240,255,0.2)] -translate-y-1;
+  }
+
+  /* Inputs */
+  .cyber-input {
+    @apply bg-black/50 border border-cyber-primary/20 text-cyber-text placeholder-gray-600 focus:border-cyber-primary focus:shadow-[0_0_10px_rgba(0,240,255,0.3)] outline-none transition-all duration-300;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply bg-cyber-primary/10 border border-cyber-primary/50 text-cyber-primary hover:bg-cyber-primary hover:text-black font-bold uppercase tracking-widest transition-all duration-300 shadow-[0_0_10px_rgba(0,240,255,0.1)] hover:shadow-[0_0_20px_rgba(0,240,255,0.5)];
   }
 
   .text-glow {
-    text-shadow: 0 0 15px rgba(243, 128, 32, 0.4);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
   }
 }
 
-/* Custom Scrollbar - Minimalist */
+/* Custom Scrollbar - Slim Tech */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
-
 ::-webkit-scrollbar-track {
-  background: #0e0e10; 
+  background: #030508; 
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #27272a; 
-  border-radius: 3px;
+  background: #00f0ff; 
+  border-radius: 0px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: #f38020; 
+  background: #fff; 
+  box-shadow: 0 0 10px #00f0ff;
 }
 
-/* Selection Color - Brand Orange */
 ::selection {
-  background-color: rgba(243, 128, 32, 0.3);
-  color: #ffffff;
+  background-color: #00f0ff;
+  color: #000;
 }
