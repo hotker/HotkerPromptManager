@@ -90,7 +90,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   });
 
   return (
-    <div className="h-full flex flex-col p-6 font-mono overflow-hidden">
+    <div className="h-full flex flex-col p-4 md:p-6 font-mono overflow-hidden">
       {/* Header Area */}
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-6 shrink-0">
         <div className="relative">
@@ -108,7 +108,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                 placeholder={t.library.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-800/50 border-b border-white/20 px-0 py-2 pl-8 text-sm focus:border-cyber-primary outline-none transition-colors text-white placeholder-slate-500"
+                className="w-full bg-slate-800/50 border-b border-white/20 px-0 py-2 pl-8 text-base md:text-sm focus:border-cyber-primary outline-none transition-colors text-white placeholder-slate-500"
               />
               <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-primary transition-colors" size={16} />
            </div>
@@ -261,7 +261,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                 <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest">{t.library.labelContent}</label>
                 <div className="relative group">
                   <textarea 
-                    className="w-full cyber-input h-40 resize-none bg-slate-950/50 border border-white/10 focus:border-cyber-primary transition-colors leading-relaxed p-4 font-mono text-xs"
+                    className="w-full cyber-input h-40 resize-none bg-slate-950/50 border border-white/10 focus:border-cyber-primary transition-colors leading-relaxed p-4 font-mono text-base md:text-sm"
                     value={content} onChange={e => setContent(e.target.value)} placeholder={t.library.placeholderContent}
                   />
                   <div className="absolute top-0 right-0 p-1 bg-cyber-primary/10 text-cyber-primary text-[9px] font-bold opacity-50 group-hover:opacity-100">{t.library.rawInput}</div>

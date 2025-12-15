@@ -70,8 +70,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Top Header - Lighter Slate */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-30">
+      {/* Mobile Top Header - High z-index to sit above content */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-50">
         <div className="flex items-center gap-3">
            <Hexagon className="text-cyber-primary animate-pulse" size={24} strokeWidth={1.5} />
            <span className="font-bold text-white tracking-widest text-lg font-mono">HOTKER</span>
@@ -84,9 +84,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay - Very high z-index */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-xl animate-in fade-in" onClick={() => setIsMobileMenuOpen(false)}>
+        <div className="md:hidden fixed inset-0 z-[60] bg-slate-900/95 backdrop-blur-xl animate-in fade-in" onClick={() => setIsMobileMenuOpen(false)}>
            <div className="absolute top-0 bottom-0 right-0 w-72 bg-slate-800 border-l border-white/10 p-6 flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
                <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
                 <h3 className="font-bold text-cyber-primary tracking-widest">SYSTEM_OPTS</h3>
@@ -177,7 +177,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* API Key Modal */}
       {isKeyModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
           <div className="bg-slate-900 border border-white/10 w-full max-w-md p-8 clip-tech relative shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <button onClick={() => setIsKeyModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-cyber-primary"><X size={20} /></button>
             <div className="mb-6 flex items-center gap-4">
@@ -192,7 +192,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             
             <input 
               type="password"
-              className="w-full cyber-input mb-6 font-mono text-sm bg-slate-950"
+              className="w-full cyber-input mb-6"
               value={tempKey}
               onChange={(e) => setTempKey(e.target.value)}
               placeholder={t.sidebar.enterKey}

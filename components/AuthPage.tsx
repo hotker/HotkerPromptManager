@@ -107,7 +107,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
              <input
                type="text"
                required
-               className="w-full bg-slate-950/50 border-b border-white/20 text-white placeholder-transparent focus:border-cyber-primary outline-none transition-all duration-300 px-4 py-3 rounded-none text-sm"
+               className="w-full bg-slate-950/50 border-b border-white/20 text-white placeholder-transparent focus:border-cyber-primary outline-none transition-all duration-300 px-4 py-3 rounded-none text-base md:text-sm"
                value={username}
                onChange={(e) => setUsername(e.target.value)}
                placeholder=" "
@@ -124,7 +124,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
              <input
                type="password"
                required
-               className="w-full bg-slate-950/50 border-b border-white/20 text-white placeholder-transparent focus:border-cyber-primary outline-none transition-all duration-300 px-4 py-3 rounded-none text-sm"
+               className="w-full bg-slate-950/50 border-b border-white/20 text-white placeholder-transparent focus:border-cyber-primary outline-none transition-all duration-300 px-4 py-3 rounded-none text-base md:text-sm"
                value={password}
                onChange={(e) => setPassword(e.target.value)}
                placeholder=" "
