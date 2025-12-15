@@ -100,13 +100,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* Mobile Top Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-black/80 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 z-30">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-[#0e0e10]/90 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-4 z-30">
         <div className="flex items-center gap-3">
-           <div className="relative">
-             <div className="absolute inset-0 bg-banana-500/20 blur-md rounded-full"></div>
-             <div className="w-8 h-8 rounded-lg border border-banana-500/20 bg-zinc-900/50 flex items-center justify-center text-banana-500 font-bold text-lg relative z-10">
-               H
-             </div>
+           <div className="w-8 h-8 flex items-center justify-center text-banana-500 font-bold text-xl">
+             <Cloud size={24} fill="currentColor" className="text-banana-500" />
            </div>
           <span className="font-bold text-zinc-100 tracking-tight text-lg">Hotker</span>
         </div>
@@ -121,19 +118,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-xl animate-in fade-in" onClick={() => setIsMobileMenuOpen(false)}>
-           <div className="absolute top-0 bottom-0 right-0 w-72 bg-zinc-950 border-l border-zinc-800 p-6 flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-              {/* Mobile menu content omitted for brevity - styling follows the main theme */}
+           <div className="absolute top-0 bottom-0 right-0 w-72 bg-[#161618] border-l border-zinc-800 p-6 flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
                <div className="flex justify-between items-center mb-8">
                 <h3 className="font-bold text-zinc-100">{t.sidebar.settings}</h3>
                 <button onClick={() => setIsMobileMenuOpen(false)}><X size={20} className="text-zinc-400"/></button>
               </div>
               
-              {/* Controls */}
               <div className="space-y-3">
-                 <button onClick={openKeyModal} className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-900/50 border border-zinc-800 rounded-xl text-zinc-300">
+                 <button onClick={openKeyModal} className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-md text-zinc-300">
                     <KeyRound size={16} /> <span>API Key</span>
                  </button>
-                 <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400">
+                 <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 bg-zinc-900 border border-zinc-800 rounded-md text-red-400">
                     <LogOut size={16} /> <span>{t.sidebar.logout}</span>
                  </button>
               </div>
@@ -141,42 +136,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* Desktop Sidebar - Minimalist Tech */}
-      <div className="hidden md:flex w-20 lg:w-64 bg-black/20 backdrop-blur-xl h-full border-r border-white/5 flex-col relative z-20 transition-all duration-300">
+      {/* Desktop Sidebar - Enterprise Tech Style */}
+      <div className="hidden md:flex w-20 lg:w-64 bg-[#0e0e10] h-full border-r border-white/5 flex-col relative z-20">
         
         {/* Logo Area */}
-        <div className="p-6 flex items-center gap-4 mb-6">
-          <div className="relative group cursor-pointer">
-             <div className="absolute inset-0 bg-banana-500/20 blur-xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
-             <div className="w-8 h-8 rounded-xl border border-white/10 bg-zinc-900/80 flex items-center justify-center text-banana-400 font-bold text-xl relative z-10 shadow-lg group-hover:border-banana-500/50 transition-colors">
-               H
-             </div>
-          </div>
+        <div className="h-16 flex items-center gap-3 px-6 border-b border-white/5">
+          <Cloud size={24} className="text-banana-500" fill="currentColor" />
           <div className="hidden lg:block">
-            <h1 className="font-bold text-zinc-100 tracking-tight leading-none">Hotker</h1>
-            <p className="text-[10px] text-zinc-500 uppercase tracking-widest mt-1">Prompt Studio</p>
+            <h1 className="font-bold text-zinc-100 tracking-tight text-lg">Hotker</h1>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 space-y-1">
+        <nav className="flex-1 px-3 py-6 space-y-1">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setView(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-300 group relative overflow-hidden ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all duration-200 group ${
                 currentView === item.id
-                  ? 'bg-white/5 text-banana-400'
-                  : 'text-zinc-500 hover:text-zinc-200 hover:bg-white/5'
+                  ? 'bg-banana-500 text-white font-medium shadow-lg shadow-banana-500/20'
+                  : 'text-zinc-400 hover:text-zinc-100 hover:bg-white/5'
               }`}
             >
-              {currentView === item.id && (
-                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-6 bg-banana-500 rounded-r-full shadow-[0_0_10px_#fbbf24]"></div>
-              )}
-              <span className={`relative z-10 transition-transform duration-300 ${currentView === item.id ? 'scale-110' : 'group-hover:scale-110'}`}>
+              <span className={`transition-transform duration-200`}>
                 {item.icon}
               </span>
-              <span className={`hidden lg:block text-sm font-medium relative z-10 ${currentView === item.id ? 'text-zinc-100' : ''}`}>
+              <span className={`hidden lg:block text-sm ${currentView === item.id ? 'text-white' : ''}`}>
                 {item.label}
               </span>
             </button>
@@ -184,80 +170,78 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Bottom Section: User & Config */}
-        <div className="p-4 border-t border-white/5 space-y-3">
+        <div className="p-4 border-t border-white/5 bg-[#121214]">
            {/* API Status Indicator */}
-           <div className="flex items-center justify-between px-2">
+           <div className="flex items-center justify-between px-2 mb-3">
               <div className="flex items-center gap-2">
-                 <div className={`w-1.5 h-1.5 rounded-full ${hasValidKey ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'}`}></div>
+                 <div className={`w-1.5 h-1.5 rounded-full ${hasValidKey ? 'bg-green-500' : 'bg-red-500'}`}></div>
                  <span className="hidden lg:block text-[10px] text-zinc-500 uppercase tracking-wider font-mono">API Status</span>
               </div>
-              <button onClick={openKeyModal} className="text-zinc-600 hover:text-banana-400 transition-colors">
+              <button onClick={openKeyModal} className="text-zinc-600 hover:text-banana-500 transition-colors">
                  <Settings size={14} />
               </button>
            </div>
 
            {/* User Profile Card */}
-           <div className="glass-panel p-3 rounded-xl flex items-center gap-3 group">
-              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center overflow-hidden border border-white/5 group-hover:border-white/20 transition-colors">
-                  {currentUser?.avatarUrl ? <img src={currentUser.avatarUrl} className="w-full h-full object-cover"/> : <UserIcon size={14} className="text-zinc-500"/>}
+           <div className="p-2 rounded-md flex items-center gap-3 hover:bg-white/5 transition-colors cursor-default">
+              <div className="w-8 h-8 rounded bg-zinc-800 flex items-center justify-center overflow-hidden border border-white/10 text-xs font-bold text-zinc-400">
+                  {currentUser?.avatarUrl ? <img src={currentUser.avatarUrl} className="w-full h-full object-cover"/> : currentUser?.username.substring(0,2).toUpperCase()}
               </div>
               <div className="hidden lg:block min-w-0">
                  <p className="text-xs font-bold text-zinc-300 truncate">{currentUser?.username}</p>
-                 <div className="flex items-center gap-2">
-                    <button onClick={onLogout} className="text-[10px] text-zinc-500 hover:text-red-400 transition-colors flex items-center gap-1">
-                       <LogOut size={10} /> Logout
+                 <div className="flex items-center gap-2 mt-0.5">
+                    <button onClick={onLogout} className="text-[10px] text-zinc-500 hover:text-white transition-colors flex items-center gap-1">
+                       Sign out
                     </button>
                  </div>
               </div>
            </div>
            
-           <div className="hidden lg:flex justify-center gap-3 text-[10px] text-zinc-600 pt-2">
-              <a href={AUTHOR_INFO.github} target="_blank" className="hover:text-banana-400 transition-colors">GitHub</a>
-              <span>•</span>
-              <a href={AUTHOR_INFO.website} target="_blank" className="hover:text-banana-400 transition-colors">Web</a>
+           <div className="hidden lg:flex justify-center gap-3 text-[10px] text-zinc-600 pt-4 border-t border-white/5 mt-3">
+              <a href={AUTHOR_INFO.github} target="_blank" className="hover:text-banana-500 transition-colors">GitHub</a>
+              <span className="text-zinc-800">|</span>
+              <a href={AUTHOR_INFO.website} target="_blank" className="hover:text-banana-500 transition-colors">Web</a>
            </div>
         </div>
       </div>
 
-      {/* Global Modals (kept functional but styled simplified) */}
+      {/* Global Modals */}
       {isKeyModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="glass-panel w-full max-w-md p-8 rounded-2xl relative">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-[#161618] w-full max-w-md p-8 rounded-lg border border-white/10 shadow-2xl relative">
             <button onClick={() => setIsKeyModalOpen(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white"><X size={20} /></button>
             <div className="mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 flex items-center justify-center text-banana-400 mb-4 shadow-lg">
-                <KeyRound size={24} />
+              <div className="w-10 h-10 rounded bg-banana-500/10 flex items-center justify-center text-banana-500 mb-4">
+                <KeyRound size={20} />
               </div>
-              <h3 className="text-xl font-bold text-white">API Configuration</h3>
+              <h3 className="text-lg font-bold text-white">API Configuration</h3>
               <p className="text-zinc-500 text-sm mt-1">Connect your Google AI Studio key</p>
             </div>
             <input 
               type="password"
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-banana-500/50 outline-none transition-colors font-mono text-sm mb-4"
+              className="w-full bg-black/20 border border-white/10 rounded px-4 py-2.5 text-white focus:border-banana-500 outline-none transition-colors font-mono text-sm mb-4"
               value={tempKey}
               onChange={(e) => setTempKey(e.target.value)}
               placeholder="AIzaSy..."
             />
-            <button onClick={handleSaveKey} className="w-full bg-banana-500 hover:bg-banana-400 text-black font-bold py-3 rounded-xl transition-all shadow-[0_0_20px_rgba(251,191,36,0.2)]">
+            <button onClick={handleSaveKey} className="w-full bg-banana-500 hover:bg-banana-600 text-white font-medium py-2.5 rounded transition-all">
               Connect API
             </button>
           </div>
         </div>
       )}
       
-      {/* Password Modal omitted for brevity, logic remains same */}
       {isPwModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-           {/* Same style as Key Modal */}
-           <div className="glass-panel w-full max-w-md p-8 rounded-2xl relative">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+           <div className="bg-[#161618] w-full max-w-md p-8 rounded-lg border border-white/10 shadow-2xl relative">
               <button onClick={() => setIsPwModalOpen(false)} className="absolute top-4 right-4 text-zinc-500 hover:text-white"><X size={20} /></button>
-              <h3 className="text-xl font-bold text-white mb-6">{t.password.title}</h3>
+              <h3 className="text-lg font-bold text-white mb-6">{t.password.title}</h3>
               <form onSubmit={handleChangePassword} className="space-y-4">
-                <input type="password" placeholder={t.password.current} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-banana-500/50 outline-none text-sm" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
-                <input type="password" placeholder={t.password.new} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-banana-500/50 outline-none text-sm" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-                <input type="password" placeholder={t.password.confirm} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-banana-500/50 outline-none text-sm" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                <input type="password" placeholder={t.password.current} className="w-full bg-black/20 border border-white/10 rounded px-4 py-2.5 text-white focus:border-banana-500 outline-none text-sm" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} />
+                <input type="password" placeholder={t.password.new} className="w-full bg-black/20 border border-white/10 rounded px-4 py-2.5 text-white focus:border-banana-500 outline-none text-sm" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+                <input type="password" placeholder={t.password.confirm} className="w-full bg-black/20 border border-white/10 rounded px-4 py-2.5 text-white focus:border-banana-500 outline-none text-sm" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
                 {pwMsg && <p className={`text-xs ${pwMsg === t.password.success ? 'text-green-400' : 'text-red-400'}`}>{pwMsg}</p>}
-                <button type="submit" className="w-full bg-zinc-100 hover:bg-white text-black font-bold py-3 rounded-xl transition-all mt-2">{t.password.submit}</button>
+                <button type="submit" className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-medium py-2.5 rounded transition-all mt-2">{t.password.submit}</button>
               </form>
            </div>
         </div>

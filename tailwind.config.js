@@ -7,26 +7,28 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Replaced Banana Yellow with Cloudflare Orange style
         banana: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
-          950: '#451a03',
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f38020', // Cloudflare Brand Orange
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+          950: '#431407',
         },
         zinc: {
           850: '#1f2025',
-          950: '#09090b',
+          950: '#0e0e10', // Darker, cleaner background
         }
       },
       fontFamily: {
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
+        sans: ['Inter', 'system-ui', 'sans-serif'], // Cloudflare uses Inter/Sans primarily
       }
     },
   },

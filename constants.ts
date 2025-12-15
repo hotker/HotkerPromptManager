@@ -9,14 +9,15 @@ export const DEFAULT_CONFIG: FixedConfig = {
   appendString: '确保输出严格专业，并遵循上述格式。不要包含闲聊或无意义的填充内容。'
 };
 
+// Updated to cleaner, solid colors for Cloudflare-like aesthetic
 export const MODULE_COLORS: Record<ModuleType, string> = {
-  [ModuleType.ROLE]: 'bg-blue-500/20 text-blue-400 border-blue-500/50',
-  [ModuleType.CONTEXT]: 'bg-purple-500/20 text-purple-400 border-purple-500/50',
-  [ModuleType.TASK]: 'bg-green-500/20 text-green-400 border-green-500/50',
-  [ModuleType.CONSTRAINT]: 'bg-red-500/20 text-red-400 border-red-500/50',
-  [ModuleType.FORMAT]: 'bg-banana-500/20 text-banana-400 border-banana-500/50',
-  [ModuleType.TONE]: 'bg-pink-500/20 text-pink-400 border-pink-500/50',
-  [ModuleType.OTHER]: 'bg-zinc-500/20 text-zinc-400 border-zinc-500/50',
+  [ModuleType.ROLE]: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+  [ModuleType.CONTEXT]: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+  [ModuleType.TASK]: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+  [ModuleType.CONSTRAINT]: 'bg-red-500/10 text-red-400 border-red-500/30',
+  [ModuleType.FORMAT]: 'bg-banana-500/10 text-banana-500 border-banana-500/30', // Using the orange brand color
+  [ModuleType.TONE]: 'bg-pink-500/10 text-pink-400 border-pink-500/30',
+  [ModuleType.OTHER]: 'bg-zinc-700/30 text-zinc-300 border-zinc-600/50',
 };
 
 export const AVAILABLE_MODELS = [
