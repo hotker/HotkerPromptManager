@@ -65,7 +65,9 @@ This project was conceived and developed by **hotker**.
 
 *   **Author**: hotker
 *   **X (Twitter)**: [@hotker_ai](https://x.com/hotker_ai)
+*   **GitHub**: [https://github.com/hotker/HotkerPromptManager](https://github.com/hotker/HotkerPromptManager)
 *   **Website**: [https://hotker.com](https://hotker.com)
+*   **Email**: hotker@gmail.com
 
 Follow my X account for more shares on AI prompt engineering, indie development, and productivity tools! If you like this project, please give it a ⭐️!
 

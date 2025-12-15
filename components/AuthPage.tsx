@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User } from '../types';
 import { authService } from '../services/authService';
 import { ArrowRight, Loader2, AlertCircle, Globe } from 'lucide-react';
+import { AUTHOR_INFO } from '../constants';
 
 interface AuthPageProps {
   onLogin: (user: User) => void;
@@ -217,9 +218,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
             </button>
             
           </div>
-          <p className="text-center text-xs text-zinc-600 mt-6">
-            Hotker Prompt Studio v2.0 &copy; 2025. All rights reserved.
-          </p>
+          <div className="mt-8 text-center">
+            <p className="text-xs text-zinc-600 mb-2">
+              Hotker Prompt Studio v2.0 &copy; 2025. All rights reserved.
+            </p>
+            <div className="flex items-center justify-center gap-4 text-[10px] text-zinc-600 uppercase tracking-wider font-medium">
+               <a href={AUTHOR_INFO.website} target="_blank" className="hover:text-banana-500 transition-colors">Website</a>
+               <a href={AUTHOR_INFO.github} target="_blank" className="hover:text-banana-500 transition-colors">GitHub</a>
+               <a href={AUTHOR_INFO.twitterUrl} target="_blank" className="hover:text-banana-500 transition-colors">Twitter</a>
+               <a href={`mailto:${AUTHOR_INFO.email}`} className="hover:text-banana-500 transition-colors">Email</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { PromptModule, PromptTemplate, RunLog, User } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Zap, Layers, FileCode2, Download, Upload, Database, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
 import { Language, translations } from '../translations';
+import { AUTHOR_INFO } from '../constants';
 
 interface DashboardProps {
   modules: PromptModule[];
@@ -286,6 +287,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </PieChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      <div className="mt-12 py-6 border-t border-zinc-900 flex flex-col items-center justify-center text-zinc-600 text-sm gap-2">
+          <div className="flex items-center gap-2">
+            <span>Built by</span>
+            <a href={AUTHOR_INFO.website} target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-banana-400 font-medium transition-colors">{AUTHOR_INFO.name}</a>
+          </div>
+          <div className="flex items-center gap-4 text-xs">
+            <a href={AUTHOR_INFO.github} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">GitHub</a>
+            <span className="text-zinc-800">•</span>
+            <a href={AUTHOR_INFO.twitterUrl} target="_blank" rel="noopener noreferrer" className="hover:text-zinc-300 transition-colors">X (Twitter)</a>
+            <span className="text-zinc-800">•</span>
+            <a href={`mailto:${AUTHOR_INFO.email}`} className="hover:text-zinc-300 transition-colors">Contact</a>
+            <span className="text-zinc-800">•</span>
+            <span className="opacity-50">v2.0</span>
+          </div>
       </div>
     </div>
   );

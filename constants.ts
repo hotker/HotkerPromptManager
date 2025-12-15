@@ -25,6 +25,15 @@ export const AVAILABLE_MODELS = [
   { id: 'gemini-2.5-flash-image', name: 'Hotker Prompt Studio (图像生成)' },
 ];
 
+export const AUTHOR_INFO = {
+  name: 'hotker',
+  twitter: '@hotker_ai',
+  twitterUrl: 'https://x.com/hotker_ai',
+  github: 'https://github.com/hotker/HotkerPromptManager',
+  website: 'https://hotker.com',
+  email: 'hotker@gmail.com'
+};
+
 // Commercial Grade Initial Data
 export const INITIAL_MODULES: PromptModule[] = [
   { 

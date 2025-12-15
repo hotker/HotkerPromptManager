@@ -3,6 +3,7 @@ import { LayoutGrid, Library, TestTube2, History, LogOut, User as UserIcon, Sett
 import { ViewState, User } from '../types';
 import { Language, translations } from '../translations';
 import { authService } from '../services/authService';
+import { AUTHOR_INFO } from '../constants';
 
 interface SidebarProps {
   currentView: ViewState;
@@ -175,6 +176,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <LogOut size={18} />
                   <span>{t.sidebar.logout}</span>
                 </button>
+              </div>
+              
+              <div className="mt-auto pt-6 border-t border-zinc-800 text-xs text-zinc-500 text-center">
+                 <p className="mb-2 text-[10px] uppercase tracking-wider font-bold">Created by {AUTHOR_INFO.name}</p>
+                 <div className="flex justify-center gap-3 text-[10px]">
+                   <a href={AUTHOR_INFO.website} target="_blank" className="hover:text-zinc-300">Website</a>
+                   <span className="text-zinc-800">|</span>
+                   <a href={AUTHOR_INFO.github} target="_blank" className="hover:text-zinc-300">GitHub</a>
+                   <span className="text-zinc-800">|</span>
+                   <a href={AUTHOR_INFO.twitterUrl} target="_blank" className="hover:text-zinc-300">Twitter</a>
+                 </div>
               </div>
            </div>
         </div>

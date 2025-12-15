@@ -65,7 +65,9 @@ npm run dev
 
 *   **作者**: hotker
 *   **X (Twitter)**: [@hotker_ai](https://x.com/hotker_ai)
+*   **GitHub**: [https://github.com/hotker/HotkerPromptManager](https://github.com/hotker/HotkerPromptManager)
 *   **个人网站**: [https://hotker.com](https://hotker.com)
+*   **邮箱**: hotker@gmail.com
 
 欢迎关注我的 X 账号获取更多关于 AI 提示词工程、独立开发与效率工具的分享！如果你喜欢这个项目，请给它一个 ⭐️！
 
