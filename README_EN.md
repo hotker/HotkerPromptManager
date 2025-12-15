@@ -71,4 +71,4 @@ Follow my X account for more shares on AI prompt engineering, indie development,
 
 ---
 
-© 2024 Hotker Prompt Studio. All rights reserved.
+© 2025 Hotker Prompt Studio. All rights reserved.

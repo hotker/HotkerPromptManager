@@ -218,7 +218,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
             
           </div>
           <p className="text-center text-xs text-zinc-600 mt-6">
-            Hotker Prompt Studio v2.0 &copy; 2024. All rights reserved.
+            Hotker Prompt Studio v2.0 &copy; 2025. All rights reserved.
           </p>
         </div>
       </div>

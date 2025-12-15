@@ -71,4 +71,4 @@ npm run dev
 
 ---
 
-© 2024 Hotker Prompt Studio. All rights reserved.
+© 2025 Hotker Prompt Studio. All rights reserved.
