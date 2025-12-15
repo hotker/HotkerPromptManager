@@ -7,23 +7,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Future Tech Palette
+        // Future Tech Palette - Lightened & Refined (Slate/Navy Base)
         cyber: {
-          bg: '#030508', // Deep space black
-          panel: '#0a0f16', // Dark blue-ish grey
-          primary: '#00f0ff', // Neon Cyan
-          secondary: '#7000ff', // Neon Purple
-          accent: '#ff2a6d', // Glitch Red/Pink
-          text: '#e0f7fa', // Pale Cyan White
-          dim: 'rgba(0, 240, 255, 0.1)',
+          bg: '#0f172a', // Slate 900 - Rich Deep Blue/Grey (was #030508)
+          panel: '#1e293b', // Slate 800 - Lighter panel background
+          card: '#334155', // Slate 700 - Lighter card background
+          primary: '#22d3ee', // Cyan 400 - Slightly brighter/softer cyan
+          secondary: '#818cf8', // Indigo 400
+          accent: '#f472b6', // Pink 400
+          text: '#f1f5f9', // Slate 100 - High contrast white
+          dim: 'rgba(34, 211, 238, 0.1)',
         },
         banana: {
-          500: '#f38020', // Keep for brand continuity but use sparingly
+          500: '#f97316', // Orange 500
         },
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
-        sans: ['"Rajdhani"', 'Inter', 'system-ui', 'sans-serif'], // Rajdhani is great for sci-fi, falling back to Inter
+        sans: ['"Rajdhani"', 'Inter', 'system-ui', 'sans-serif'],
       },
       animation: {
         'scan': 'scan 4s linear infinite',
@@ -36,8 +37,8 @@ export default {
           '100%': { transform: 'translateY(100%)' },
         },
         'pulse-glow': {
-          '0%, 100%': { opacity: 1, boxShadow: '0 0 10px #00f0ff' },
-          '50%': { opacity: .5, boxShadow: '0 0 20px #00f0ff' },
+          '0%, 100%': { opacity: 1, boxShadow: '0 0 10px #22d3ee' },
+          '50%': { opacity: .5, boxShadow: '0 0 20px #22d3ee' },
         },
         float: {
           '0%, 100%': { transform: 'translateY(0)' },

@@ -58,7 +58,7 @@ const App = () => {
   };
 
   if (isLoadingAuth) {
-    return <div className="h-screen bg-cyber-bg flex flex-col items-center justify-center text-cyber-primary">
+    return <div className="h-screen bg-slate-900 flex flex-col items-center justify-center text-cyber-primary">
        <div className="w-16 h-16 border-4 border-cyber-primary border-t-transparent rounded-full animate-spin mb-4"></div>
        <span className="font-mono tracking-widest animate-pulse">SYSTEM INITIALIZING...</span>
     </div>;
@@ -160,7 +160,7 @@ const AuthenticatedApp: React.FC<{
 
   if (!isDataLoaded) {
     return (
-      <div className="h-screen bg-cyber-bg flex flex-col items-center justify-center gap-4 text-cyber-primary">
+      <div className="h-screen bg-slate-900 flex flex-col items-center justify-center gap-4 text-cyber-primary">
         <div className="relative">
           <div className="w-12 h-12 border-2 border-cyber-primary rounded-full animate-ping absolute inset-0"></div>
           <div className="w-12 h-12 border-2 border-cyber-primary border-t-transparent rounded-full animate-spin"></div>
@@ -183,7 +183,7 @@ const AuthenticatedApp: React.FC<{
   };
 
   return (
-    <div className="flex h-screen bg-cyber-bg text-cyber-text font-sans animate-in fade-in duration-500 flex-col md:flex-row bg-grid-pattern overflow-hidden">
+    <div className="flex h-screen bg-slate-900 text-slate-200 font-sans animate-in fade-in duration-500 flex-col md:flex-row bg-grid-pattern overflow-hidden">
       {/* Background Overlay for Scanline */}
       <div className="fixed inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-[1] bg-[length:100%_2px,3px_100%] opacity-20"></div>
 

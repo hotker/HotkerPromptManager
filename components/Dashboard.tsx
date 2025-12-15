@@ -56,8 +56,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     { name: t.dashboard.success, value: logs.filter(l => l.status === 'success').length },
     { name: t.dashboard.failure, value: logs.filter(l => l.status === 'failure').length },
   ];
-  // Updated colors: Neon Green & Glitch Red
-  const COLORS = ['#00ff9d', '#ff2a6d'];
+  // Colors: Neon Green & Soft Red
+  const COLORS = ['#22d3ee', '#f472b6'];
 
   const activityData = logs.slice(0, 20).map((l, i) => ({
     name: i.toString(),
@@ -121,8 +121,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
              <span className="text-cyber-primary">CMD:</span> {t.dashboard.welcome}
           </h2>
           <div className="flex flex-wrap items-center gap-4 text-xs mt-4">
-             <div className="flex items-center gap-1.5 text-green-400 bg-green-900/10 px-3 py-1 border border-green-500/30 clip-tech">
-                <div className="w-1.5 h-1.5 rounded-none bg-green-400 animate-pulse"></div>
+             <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-900/10 px-3 py-1 border border-emerald-500/30 clip-tech">
+                <div className="w-1.5 h-1.5 rounded-none bg-emerald-400 animate-pulse"></div>
                 <span className="tracking-wider font-bold">SYS_ONLINE</span>
              </div>
 
@@ -146,17 +146,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
         {[
           { icon: <Layers size={20} />, label: t.dashboard.statsModules, value: modules.length, color: 'text-cyber-primary', bg: 'bg-cyber-primary/10', border: 'border-cyber-primary/30' },
           { icon: <FileCode2 size={20} />, label: t.dashboard.statsTemplates, value: templates.length, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
-          { icon: <Zap size={20} />, label: t.dashboard.statsSuccess, value: `${successRate}%`, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' }
+          { icon: <Zap size={20} />, label: t.dashboard.statsSuccess, value: `${successRate}%`, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30' }
         ].map((stat, i) => (
-          <div key={i} className={`hud-panel p-6 relative overflow-hidden group ${stat.border} clip-tech transition-all hover:bg-white/5`}>
+          <div key={i} className={`hud-panel p-6 relative overflow-hidden group ${stat.border} clip-tech transition-all hover:bg-slate-800`}>
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity transform scale-150">
               {stat.icon}
             </div>
-            <div className={`w-12 h-12 ${stat.bg} ${stat.color} flex items-center justify-center mb-4 border border-white/5 clip-tech`}>
+            <div className={`w-12 h-12 ${stat.bg} ${stat.color} flex items-center justify-center mb-4 border border-white/5 clip-tech backdrop-blur-md`}>
                {stat.icon}
             </div>
             <div className="text-4xl font-bold text-white mb-1 tracking-tight text-shadow">{stat.value}</div>
-            <div className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em]">{stat.label}</div>
+            <div className="text-xs text-slate-400 font-bold uppercase tracking-[0.2em]">{stat.label}</div>
           </div>
         ))}
       </div>
@@ -169,20 +169,20 @@ export const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center justify-between mb-6">
              <div className="flex items-center gap-2">
                 <Activity size={16} className="text-cyber-primary" />
-                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-[0.2em]">{t.dashboard.chartLatency}</h3>
+                <h3 className="text-sm font-bold text-slate-300 uppercase tracking-[0.2em]">{t.dashboard.chartLatency}</h3>
              </div>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={activityData}>
                 <XAxis dataKey="name" hide />
-                <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#64748b" fontSize={10} tickLine={false} axisLine={false} />
                 <Tooltip 
-                  cursor={{fill: 'rgba(0, 240, 255, 0.05)'}}
-                  contentStyle={{ backgroundColor: '#0a0f16', borderColor: '#00f0ff', color: '#fff', fontFamily: 'monospace' }}
-                  itemStyle={{ color: '#00f0ff', fontSize: '12px' }}
+                  cursor={{fill: 'rgba(34, 211, 238, 0.05)'}}
+                  contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff', fontFamily: 'monospace' }}
+                  itemStyle={{ color: '#22d3ee', fontSize: '12px' }}
                 />
-                <Bar dataKey="duration" fill="#00f0ff" barSize={4} />
+                <Bar dataKey="duration" fill="#22d3ee" barSize={4} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -192,8 +192,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="flex flex-col gap-6">
            <div className="hud-panel p-6 flex-1 min-h-[200px] clip-tech">
               <div className="flex items-center gap-2 mb-4">
-                 <Cpu size={16} className="text-green-400" />
-                 <h3 className="text-sm font-bold text-gray-300 uppercase tracking-[0.2em]">{t.dashboard.chartQuality}</h3>
+                 <Cpu size={16} className="text-emerald-400" />
+                 <h3 className="text-sm font-bold text-slate-300 uppercase tracking-[0.2em]">{t.dashboard.chartQuality}</h3>
               </div>
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
@@ -212,23 +212,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#0a0f16', borderColor: '#333', color: '#fff', fontSize: '12px', fontFamily: 'monospace' }}/>
+                    <Tooltip contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff', fontSize: '12px', fontFamily: 'monospace' }}/>
                   </PieChart>
                 </ResponsiveContainer>
               </div>
            </div>
 
            {/* Backup Mini Panel */}
-           <div className="hud-panel p-6 clip-tech bg-white/5 border-dashed border-white/10">
+           <div className="hud-panel p-6 clip-tech bg-slate-800/40 border-dashed border-white/10">
               <div className="flex items-center gap-2 mb-4">
-                 <Server size={16} className="text-gray-400" />
-                 <h3 className="text-sm font-bold text-gray-300 uppercase tracking-[0.2em]">{t.dashboard.backupTitle}</h3>
+                 <Server size={16} className="text-slate-400" />
+                 <h3 className="text-sm font-bold text-slate-300 uppercase tracking-[0.2em]">{t.dashboard.backupTitle}</h3>
               </div>
               <div className="flex gap-2">
-                 <button onClick={handleExport} className="flex-1 py-3 text-[10px] font-bold bg-black text-white border border-white/10 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/50 transition-all clip-tech hover:bg-cyber-primary hover:text-black">
+                 <button onClick={handleExport} className="flex-1 py-3 text-[10px] font-bold bg-slate-900 text-white border border-white/10 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/50 transition-all clip-tech hover:bg-cyber-primary hover:text-slate-900">
                    <Download size={12}/> EXPORT
                  </button>
-                 <button onClick={handleImportClick} className="flex-1 py-3 text-[10px] font-bold bg-black text-white border border-white/10 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/50 transition-all clip-tech hover:bg-cyber-primary hover:text-black">
+                 <button onClick={handleImportClick} className="flex-1 py-3 text-[10px] font-bold bg-slate-900 text-white border border-white/10 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/50 transition-all clip-tech hover:bg-cyber-primary hover:text-slate-900">
                    <Upload size={12}/> IMPORT
                  </button>
               </div>
@@ -238,8 +238,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       <div className="py-6 border-t border-white/5 text-center">
-          <p className="text-[10px] text-gray-600 font-mono tracking-widest">
-             SYS_KERNEL v2.0.5 | {AUTHOR_INFO.name.toUpperCase()}
+          <p className="text-[10px] text-slate-600 font-mono tracking-widest">
+             SYS_KERNEL v2.1.0 | {AUTHOR_INFO.name.toUpperCase()}
           </p>
       </div>
     </div>
