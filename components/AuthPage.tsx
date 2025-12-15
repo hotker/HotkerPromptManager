@@ -29,7 +29,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       orContinue: '或',
       googleBtn: 'Google 账户登录',
       defaultError: '认证失败',
-      googleError: 'Google 登录模拟失败',
+      googleError: 'Google 登录失败',
     },
     en: {
       subtitle: 'Enterprise Prompt Engineering System',
@@ -44,7 +44,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin }) => {
       orContinue: 'OR',
       googleBtn: 'Sign in with Google',
       defaultError: 'Authentication failed',
-      googleError: 'Google login simulation failed',
+      googleError: 'Google login failed',
     }
   };
 

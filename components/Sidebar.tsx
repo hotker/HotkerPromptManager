@@ -49,9 +49,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'history', label: t.sidebar.history, icon: <History size={20} /> },
   ];
 
-  const isPrivilegedUser = currentUser?.username === 'hotker@gmail.com';
-  const systemKey = (import.meta as any).env.VITE_API_KEY;
-  const hasValidKey = !!userApiKey || (isPrivilegedUser && !!systemKey);
+  // Strictly enforce BYOK (Bring Your Own Key) - Removed hardcoded privileged user check
+  const hasValidKey = !!userApiKey;
 
   const handleSaveKey = () => {
     setUserApiKey(tempKey.trim());

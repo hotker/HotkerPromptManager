@@ -76,14 +76,11 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
     setExecutionError(null);
     const startTime = Date.now();
 
-    // Check Permissions
-    const isPrivilegedUser = currentUser.username === 'hotker@gmail.com';
-
     try {
       // Call service with explicit permissions
       const output = await generateResponse(compiledPrompt, config, {
         apiKey: userApiKey,
-        allowSystemKey: isPrivilegedUser
+        allowSystemKey: false // Disable system key for everyone
       });
 
       setResult(output);
