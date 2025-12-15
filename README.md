@@ -1,3 +1,5 @@
+[English](./README_EN.md) | [中文](./README.md)
+
 # Hotker Prompt Studio 🚀
 
 **商业级模块化提示词工程系统 (Enterprise Modular Prompt Engineering System)**

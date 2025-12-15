@@ -1,3 +1,5 @@
+[English](./DEPLOY_EN.md) | [中文](./DEPLOY.md)
+
 # Hotker Prompt Studio 部署指南 (Cloudflare Pages)
 
 此项目专为 **Cloudflare Pages** 设计。支持使用 Cloudflare KV (轻量级) 或 Cloudflare D1 (SQL 数据库，推荐用于生产环境) 存储数据。
