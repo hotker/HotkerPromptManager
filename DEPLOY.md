@@ -61,7 +61,30 @@ npm run kv:create
 
    *注意：您可以同时绑定两者，或者只绑定其中一个。*
 
-## 3. 常见问题 (FAQ)
+## 3. 配置 Google 登录 (OAuth)
+
+要启用 Google 登录功能，您需要配置环境变量。
+
+1. **获取 Google 凭证**:
+   * 访问 [Google Cloud Console](https://console.cloud.google.com/).
+   * 创建一个新项目或选择现有项目。
+   * 进入 **APIs & Services** > **Credentials**.
+   * 点击 **Create Credentials** > **OAuth client ID**.
+   * 应用类型选择 **Web application**.
+   * **Authorized redirect URIs** 添加: `https://<你的域名>.pages.dev/api/auth?action=google-callback`
+     * *注意: 确保添加你的生产域名和预览域名（如果需要测试）。*
+   * 创建后，复制 **Client ID** 和 **Client Secret**.
+
+2. **设置环境变量**:
+   * 在 Cloudflare Pages 项目设置 > **Environment variables**。
+   * 添加变量 `GOOGLE_CLIENT_ID`: 填入你的 Google Client ID。
+   * 添加变量 `GOOGLE_CLIENT_SECRET`: 填入你的 Google Client Secret。
+   * (为了安全，建议点击 "Encrypt" 按钮加密 Secret)
+
+3. **重新部署**:
+   保存环境变量后，您可能需要重新部署一次 (Retry deployment) 以使变量生效。
+
+## 4. 常见问题 (FAQ)
 
 **Q: 为什么没有 `wrangler.toml` 文件？**
 A: Cloudflare Pages 推荐在 Dashboard 界面中管理配置（如环境变量和 KV/D1 绑定），这样更安全且利于团队协作。
@@ -69,12 +92,5 @@ A: Cloudflare Pages 推荐在 Dashboard 界面中管理配置（如环境变量�
 **Q: 遇到 "Deploy command cannot be empty" 错误？**
 A: 请检查您是否在某些第三方 CI/CD 工具中。在 Cloudflare Pages 的原生 Git 集成中，您只需要填写 **Build command** (`npm run build`)。
 
-**Q: 本地开发如何连接数据库？**
-A: 
-如果您使用 KV:
-```bash
-npm run dev:full
-```
-
-如果您使用 D1 (需要本地有对应的 wrangler 配置或模拟):
-您可以编辑 `package.json` 中的 `dev:full` 命令，添加 `--d1 DB` 参数，或者直接使用 Cloudflare Dashboard 预览部署。
+**Q: Google 登录报错 "redirect_uri_mismatch"?**
+A: 请确保你在 Google Cloud Console 中配置的 Redirect URI 与浏览器地址栏中的域名完全一致（包括协议 https）。

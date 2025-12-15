@@ -1,6 +1,8 @@
 export interface Env {
   NANO_DB: any;
   DB?: any; // Optional D1 support
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
 }
 
 export type PagesContext = {

@@ -18,23 +18,15 @@ export const authService = {
     return user;
   },
 
-  // Mock Google Login
-  loginWithGoogle: async (): Promise<User> => {
-    // For demo purposes, we simulate a delay.
-    // In a real implementation, this would involve OAuth redirects.
-    await new Promise(resolve => setTimeout(resolve, 800));
+  // Real Google Login
+  loginWithGoogle: async (): Promise<never> => {
+    // Redirects browser to backend to start OAuth flow
+    // The backend will handle the redirect to Google, verify the token,
+    // and return a script to save the session and redirect back to dashboard.
+    window.location.href = '/api/auth?action=google-login';
     
-    // We treat this as a special "local" user for now unless we implement full OAuth backend
-    const googleUser: User = {
-      id: 'google_demo_user',
-      username: 'Google User',
-      provider: 'google',
-      createdAt: Date.now(),
-      avatarUrl: 'https://lh3.googleusercontent.com/a/default-user=s96-c'
-    };
-    
-    localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(googleUser));
-    return googleUser;
+    // Return a never-resolving promise to keep the UI in "loading" state until redirect happens
+    return new Promise(() => {});
   },
 
   changePassword: async (username: string, currentPass: string, newPass: string): Promise<void> => {
@@ -58,9 +50,6 @@ export const authService = {
 
   // Restore is now handled by the API sync, but we keep this signature if needed for manual imports
   restoreBackup: async (backup: any): Promise<User> => {
-    // With Cloudflare KV, we might just want to load the data and save it to the cloud
-    // For now, we'll assume the standard login flow handles restoration.
-    // This function can be deprecated or used to force-upload a local backup to the cloud.
     throw new Error("请直接登录，数据将自动同步。使用仪表盘的导入功能上传旧备份。");
   }
 };
