@@ -112,7 +112,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="p-6 md:p-10 h-full overflow-y-auto font-mono custom-scrollbar">
+    <div className="p-6 md:p-10 h-full overflow-y-auto font-mono custom-scrollbar pb-32 md:pb-10">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6 border-b border-white/5 pb-6">

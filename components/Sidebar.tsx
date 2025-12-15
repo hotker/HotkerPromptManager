@@ -71,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* Mobile Top Header - High z-index to sit above content */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-50">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-50 shadow-lg">
         <div className="flex items-center gap-3">
            <Hexagon className="text-cyber-primary animate-pulse" size={24} strokeWidth={1.5} />
            <span className="font-bold text-white tracking-widest text-lg font-mono">HOTKER</span>
@@ -79,26 +79,62 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="flex items-center gap-4">
           <div className="text-[10px] opacity-70">{renderSyncStatus()}</div>
           <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-cyber-primary hover:text-white">
-             <Menu size={20} />
+             <Menu size={24} />
           </button>
         </div>
       </div>
 
       {/* Mobile Menu Overlay - Very high z-index */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-[60] bg-slate-900/95 backdrop-blur-xl animate-in fade-in" onClick={() => setIsMobileMenuOpen(false)}>
-           <div className="absolute top-0 bottom-0 right-0 w-72 bg-slate-800 border-l border-white/10 p-6 flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
-               <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-                <h3 className="font-bold text-cyber-primary tracking-widest">SYSTEM_OPTS</h3>
-                <button onClick={() => setIsMobileMenuOpen(false)}><X size={20} className="text-slate-300 hover:text-white"/></button>
+        <div className="md:hidden fixed inset-0 z-[60] bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-200" onClick={() => setIsMobileMenuOpen(false)}>
+           <div className="absolute top-0 bottom-0 right-0 w-80 bg-slate-900 border-l border-white/10 p-6 flex flex-col shadow-2xl h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
+               <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4 shrink-0">
+                <div className="flex items-center gap-2">
+                   <Settings size={18} className="text-cyber-primary" />
+                   <h3 className="font-bold text-white tracking-widest text-sm">SYSTEM_MENU</h3>
+                </div>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-1"><X size={24} className="text-slate-400 hover:text-white"/></button>
+              </div>
+
+              {/* Navigation Items (Added for Mobile) */}
+              <div className="space-y-3 mb-8 shrink-0">
+                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 px-2">NAVIGATION</div>
+                {navItems.map((item) => (
+                    <button
+                        key={item.id}
+                        onClick={() => {
+                            setView(item.id);
+                            setIsMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-4 px-4 py-3.5 border-l-2 transition-all clip-tech text-sm font-bold tracking-wider ${
+                            currentView === item.id 
+                            ? 'bg-cyber-primary/10 border-cyber-primary text-cyber-primary' 
+                            : 'bg-white/5 border-transparent text-slate-300 hover:text-white'
+                        }`}
+                    >
+                        {item.icon}
+                        <span>{item.label}</span>
+                    </button>
+                ))}
               </div>
               
-              <div className="space-y-3 font-mono">
+              <div className="mt-auto space-y-4 font-mono border-t border-white/10 pt-6 shrink-0">
+                 {/* User Info */}
+                 <div className="flex items-center gap-3 px-2 mb-2 bg-slate-800/50 p-3 rounded border border-white/5">
+                     <div className="w-10 h-10 bg-slate-950 border border-cyber-primary/50 flex items-center justify-center text-sm font-bold text-cyber-primary shrink-0">
+                        {currentUser?.username.substring(0,1).toUpperCase()}
+                     </div>
+                     <div className="min-w-0">
+                        <div className="text-xs text-slate-400 uppercase tracking-wider mb-0.5">Operator</div>
+                        <div className="text-sm font-bold text-white truncate">{currentUser?.username}</div>
+                     </div>
+                 </div>
+
                  <button onClick={openKeyModal} className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-none text-white hover:bg-white/10 hover:border-cyber-primary/50 transition-all clip-tech">
-                    <KeyRound size={16} /> <span>{t.sidebar.apiKeyConfig}</span>
+                    <KeyRound size={18} className="text-cyber-primary" /> <span>{t.sidebar.apiKeyConfig}</span>
                  </button>
                  <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-none text-red-400 hover:bg-red-500/20 clip-tech">
-                    <LogOut size={16} /> <span>{t.sidebar.logout}</span>
+                    <LogOut size={18} /> <span>{t.sidebar.logout}</span>
                  </button>
               </div>
            </div>
