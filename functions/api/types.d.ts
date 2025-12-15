@@ -1,7 +1,13 @@
-import { KVNamespace, EventContext } from '@cloudflare/workers-types';
-
 export interface Env {
-  NANO_DB: KVNamespace;
+  NANO_DB: any;
+  DB?: any; // Optional D1 support
 }
 
-export type PagesContext = EventContext<Env, any, any>;
+export type PagesContext = {
+  request: Request;
+  env: Env;
+  params: Record<string, string | string[]>;
+  data: Record<string, unknown>;
+  next: () => Promise<Response>;
+  waitUntil: (promise: Promise<unknown>) => void;
+};

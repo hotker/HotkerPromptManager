@@ -30,7 +30,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     if (!res.ok) {
       let errorMsg = `API Error: ${res.status}`;
       try {
-        const errJson = await res.json();
+        const errJson = await res.json() as any;
         errorMsg = errJson.error || errorMsg;
       } catch {
         // Fallback for non-JSON errors (like 503 from Cloudflare infrastructure)
@@ -67,6 +67,13 @@ export const apiService = {
     return request<User>('/auth?action=login', {
       method: 'POST',
       body: JSON.stringify({ username, password })
+    });
+  },
+
+  changePassword: async (username: string, currentPassword: string, newPassword: string): Promise<void> => {
+    return request<void>('/auth?action=change-password', {
+      method: 'POST',
+      body: JSON.stringify({ username, currentPassword, newPassword })
     });
   },
 

@@ -37,6 +37,10 @@ export const authService = {
     return googleUser;
   },
 
+  changePassword: async (username: string, currentPass: string, newPass: string): Promise<void> => {
+    return apiService.changePassword(username, currentPass, newPass);
+  },
+
   // Logout
   logout: () => {
     localStorage.removeItem(STORAGE_KEY_SESSION);

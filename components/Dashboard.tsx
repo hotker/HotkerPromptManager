@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { PromptModule, PromptTemplate, RunLog, User } from '../types';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Zap, Layers, FileCode2, Download, Upload, Database, AlertTriangle, CheckCircle2, Activity } from 'lucide-react';
+import { Language, translations } from '../translations';
 
 interface DashboardProps {
   modules: PromptModule[];
@@ -11,6 +12,7 @@ interface DashboardProps {
   setTemplates: React.Dispatch<React.SetStateAction<PromptTemplate[]>>;
   setLogs: React.Dispatch<React.SetStateAction<RunLog[]>>;
   currentUser: User;
+  lang: Language;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ 
@@ -20,10 +22,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
   setModules,
   setTemplates,
   setLogs,
-  currentUser
+  currentUser,
+  lang
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
+  const t = translations[lang];
 
   useEffect(() => {
     // Commercial-grade health check pattern
@@ -32,7 +36,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         // First try the dedicated health endpoint
         const healthRes = await fetch('/api/health');
         if (healthRes.ok) {
-           const healthData = await healthRes.json();
+           const healthData: any = await healthRes.json();
            if (healthData.services?.database === 'connected') {
              setDbStatus('connected');
              return;
@@ -64,8 +68,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Chart Data Preparation
   const statusData = [
-    { name: '成功', value: logs.filter(l => l.status === 'success').length },
-    { name: '失败', value: logs.filter(l => l.status === 'failure').length },
+    { name: t.dashboard.success, value: logs.filter(l => l.status === 'success').length },
+    { name: t.dashboard.failure, value: logs.filter(l => l.status === 'failure').length },
   ];
   const COLORS = ['#22c55e', '#ef4444'];
 
@@ -114,19 +118,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         // Basic validation
         if (!parsed.data || !Array.isArray(parsed.data.modules)) {
-          alert("无效的备份文件格式");
+          alert("Invalid backup format");
           return;
         }
 
-        if (confirm(`确定要导入备份吗？\n这将覆盖当前数据：\n• ${parsed.data.modules.length} 个模块\n• ${parsed.data.templates.length} 个模板`)) {
+        if (confirm(`${t.dashboard.importWarningDesc}`)) {
           setModules(parsed.data.modules);
           setTemplates(parsed.data.templates);
           setLogs(parsed.data.logs || []);
-          alert("数据恢复成功！");
+          alert(t.dashboard.success);
         }
       } catch (err) {
         console.error(err);
-        alert("读取文件失败，请确保是有效的 JSON 文件。");
+        alert("Failed to read file.");
       } finally {
         // Reset input so same file can be selected again if needed
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -139,22 +143,22 @@ export const Dashboard: React.FC<DashboardProps> = ({
     <div className="p-4 md:p-8 h-full overflow-y-auto bg-zinc-950">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-zinc-100 mb-2">欢迎回来，{currentUser.username}</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-zinc-100 mb-2">{t.dashboard.welcome}, {currentUser.username}</h2>
           <div className="flex flex-wrap items-center gap-4 text-sm">
              <div className="flex items-center gap-1.5 text-zinc-500 bg-zinc-900 px-2 py-1 rounded border border-zinc-800">
                 <Activity size={12} className="text-green-500" />
-                <span>System Online</span>
+                <span>{t.dashboard.systemOnline}</span>
              </div>
 
              {dbStatus === 'connected' ? (
                 <div className="flex items-center gap-1.5 text-green-500 bg-green-500/10 px-2 py-1 rounded border border-green-500/20">
                     <Database size={12}/>
-                    <span>KV 数据库已连接</span>
+                    <span>{t.dashboard.dbConnected}</span>
                 </div>
              ) : (
                 <div className="flex items-center gap-1.5 text-red-400 bg-red-500/10 px-2 py-1 rounded border border-red-500/20 animate-pulse" title="KV 绑定未配置">
                     <AlertTriangle size={12}/>
-                    <span>KV 数据库未连接</span>
+                    <span>{t.dashboard.dbDisconnected}</span>
                 </div>
              )}
           </div>
@@ -165,11 +169,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
         <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-xl p-4 flex items-start gap-3">
            <AlertTriangle className="text-red-400 shrink-0 mt-0.5" size={20} />
            <div>
-             <h4 className="font-bold text-red-400">数据库连接错误</h4>
+             <h4 className="font-bold text-red-400">{t.dashboard.dbErrorTitle}</h4>
              <p className="text-sm text-red-400/80 mt-1">
-               后端 API 报告数据库不可用。这通常意味着 Cloudflare KV Namespace 未正确绑定。
-               <br/>
-               数据将暂时存储在浏览器内存中，刷新页面后将会丢失。
+               {t.dashboard.dbErrorDesc}
              </p>
            </div>
         </div>
@@ -179,27 +181,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 mb-8">
         <div className="flex items-center gap-3 mb-4">
            <Database className="text-banana-500" size={24} />
-           <h3 className="text-lg font-bold text-zinc-200">数据迁移与备份</h3>
+           <h3 className="text-lg font-bold text-zinc-200">{t.dashboard.backupTitle}</h3>
         </div>
         <div className="flex flex-col md:flex-row gap-4">
            <div className="flex-1">
              <p className="text-sm text-zinc-400 mb-4">
-               为防止意外丢失，请养成定期备份的习惯。
-               <br/>
-               <span className="text-zinc-500 text-xs">导出的 JSON 文件包含您所有的模块、模板和历史记录。</span>
+               {t.dashboard.backupDesc}
              </p>
              <div className="flex flex-wrap gap-4">
                 <button 
                   onClick={handleExport}
                   className="flex items-center gap-2 bg-banana-500 hover:bg-banana-400 text-zinc-950 px-4 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-banana-500/20 text-sm"
                 >
-                  <Download size={16} /> 导出完整备份
+                  <Download size={16} /> {t.dashboard.exportBtn}
                 </button>
                 <button 
                   onClick={handleImportClick}
                   className="flex items-center gap-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-4 py-2 rounded-lg font-medium transition-colors border border-zinc-700 hover:border-zinc-600 text-sm"
                 >
-                  <Upload size={16} /> 导入数据
+                  <Upload size={16} /> {t.dashboard.importBtn}
                 </button>
                 <input 
                   type="file" 
@@ -213,9 +213,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
            <div className="flex-1 bg-zinc-950/50 rounded-lg p-4 border border-zinc-800 flex items-start gap-3">
              <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={18} />
              <div>
-               <h4 className="text-sm font-bold text-amber-500 mb-1">注意</h4>
+               <h4 className="text-sm font-bold text-amber-500 mb-1">{t.dashboard.importWarningTitle}</h4>
                <p className="text-xs text-zinc-500 leading-relaxed">
-                 导入操作将会<strong>覆盖</strong>当前界面显示的数据。请确保您上传的是最新的备份文件。
+                 {t.dashboard.importWarningDesc}
                </p>
              </div>
            </div>
@@ -229,28 +229,28 @@ export const Dashboard: React.FC<DashboardProps> = ({
              <div className="p-3 bg-blue-500/10 rounded-lg text-blue-500"><Layers size={24} /></div>
              <span className="text-2xl font-bold text-zinc-100">{modules.length}</span>
           </div>
-          <h3 className="text-zinc-400 font-medium">模块总数</h3>
+          <h3 className="text-zinc-400 font-medium">{t.dashboard.statsModules}</h3>
         </div>
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-colors">
           <div className="flex justify-between items-center mb-4">
              <div className="p-3 bg-banana-500/10 rounded-lg text-banana-500"><FileCode2 size={24} /></div>
              <span className="text-2xl font-bold text-zinc-100">{templates.length}</span>
           </div>
-          <h3 className="text-zinc-400 font-medium">保存的模板</h3>
+          <h3 className="text-zinc-400 font-medium">{t.dashboard.statsTemplates}</h3>
         </div>
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 hover:border-zinc-700 transition-colors">
           <div className="flex justify-between items-center mb-4">
              <div className="p-3 bg-purple-500/10 rounded-lg text-purple-500"><Zap size={24} /></div>
              <span className="text-2xl font-bold text-zinc-100">{successRate}%</span>
           </div>
-          <h3 className="text-zinc-400 font-medium">成功率</h3>
+          <h3 className="text-zinc-400 font-medium">{t.dashboard.statsSuccess}</h3>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
         {/* Activity Chart */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 h-64 md:h-80">
-          <h3 className="text-lg font-bold text-zinc-200 mb-4">延迟 (最近运行)</h3>
+          <h3 className="text-lg font-bold text-zinc-200 mb-4">{t.dashboard.chartLatency}</h3>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={activityData}>
               <XAxis dataKey="name" hide />
@@ -266,7 +266,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Success/Fail Chart */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 h-64 md:h-80">
-          <h3 className="text-lg font-bold text-zinc-200 mb-4">质量控制</h3>
+          <h3 className="text-lg font-bold text-zinc-200 mb-4">{t.dashboard.chartQuality}</h3>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie

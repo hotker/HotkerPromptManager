@@ -9,6 +9,7 @@ import { ViewState, PromptModule, PromptTemplate, RunLog, User } from './types';
 import { authService } from './services/authService';
 import { apiService, UserData } from './services/apiService';
 import { INITIAL_MODULES } from './constants';
+import { Language } from './translations';
 
 // Debounce Hook to prevent API spamming
 function useDebounce<T>(value: T, delay: number): T {
@@ -63,6 +64,7 @@ const App = () => {
 
 const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = ({ currentUser, onLogout }) => {
   const [view, setView] = useState<ViewState>('dashboard');
+  const [lang, setLang] = useState<Language>('zh');
   
   // Data State
   const [modules, setModules] = useState<PromptModule[]>([]);
@@ -168,6 +170,8 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
         setUserApiKey={setUserApiKey}
         syncStatus={syncStatus}
         syncErrorMsg={syncErrorMsg}
+        lang={lang}
+        setLang={setLang}
       />
       
       {/* 
@@ -185,9 +189,10 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
             setTemplates={setTemplates}
             setLogs={setLogs}
             currentUser={currentUser}
+            lang={lang}
           />
         )}
-        {view === 'library' && <LibraryView modules={modules} setModules={setModules} />}
+        {view === 'library' && <LibraryView modules={modules} setModules={setModules} lang={lang} />}
         {view === 'builder' && (
           <BuilderView 
             modules={modules} 
@@ -196,9 +201,10 @@ const AuthenticatedApp: React.FC<{ currentUser: User, onLogout: () => void }> = 
             addLog={handleAddLog}
             userApiKey={userApiKey}
             currentUser={currentUser}
+            lang={lang}
           />
         )}
-        {view === 'history' && <HistoryView logs={logs} updateLog={handleUpdateLog} />}
+        {view === 'history' && <HistoryView logs={logs} updateLog={handleUpdateLog} lang={lang} />}
       </main>
     </div>
   );
