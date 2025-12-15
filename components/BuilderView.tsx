@@ -245,7 +245,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
            </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 space-y-8 relative z-10">
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 relative z-10 custom-scrollbar">
            {selectedModuleIds.length === 0 && (
              <div className="h-full flex flex-col items-center justify-center opacity-30">
                <div className="w-24 h-24 border border-dashed border-cyber-primary flex items-center justify-center mb-4 rotate-45">
@@ -259,7 +259,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
              const module = modules.find(m => m.id === id);
              if(!module) return null;
              return (
-               <div key={`${id}-${index}`} className="group relative bg-[#0c121d] border-l-2 border-cyber-primary p-5 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all animate-in slide-in-from-bottom-4 clip-tech-border">
+               <div key={`${id}-${index}`} className="group relative bg-[#0c121d] border-l-2 border-cyber-primary p-5 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all animate-in slide-in-from-bottom-4 clip-tech-border hover:shadow-cyber-primary/20">
                   {/* Energy Line Visual */}
                   {index < selectedModuleIds.length - 1 && (
                     <div className="absolute left-6 -bottom-8 w-0.5 h-8 bg-cyber-primary/30 z-0">

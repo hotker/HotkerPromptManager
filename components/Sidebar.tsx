@@ -163,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <div className="hidden lg:block min-w-0 z-10">
                  <p className="text-xs font-bold text-gray-300 truncate font-mono">{currentUser?.username}</p>
                  <button onClick={onLogout} className="text-[10px] text-gray-600 hover:text-red-400 transition-colors flex items-center gap-1 mt-1 tracking-wider uppercase">
-                    >> LOGOUT
+                    &gt;&gt; LOGOUT
                  </button>
               </div>
            </div>

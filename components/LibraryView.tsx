@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PromptModule, ModuleType } from '../types';
 import { MODULE_COLORS } from '../constants';
-import { Plus, Trash2, Edit2, Search, Tag, Image as ImageIcon, Copy, Check, Filter, Database, Box, X, Maximize2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Search, Image as ImageIcon, Copy, Check, Filter, Box, X, Grid, List } from 'lucide-react';
 import { Language, translations } from '../translations';
 
 interface LibraryViewProps {
@@ -95,9 +95,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-6 shrink-0">
         <div className="relative">
           <h2 className="text-4xl font-bold text-white tracking-tighter flex items-center gap-3">
-             <span className="text-cyber-primary opacity-50">/</span> LIBRARY
+             <span className="text-cyber-primary opacity-50 text-2xl">/</span> LIBRARY
           </h2>
-          <div className="absolute -bottom-2 left-0 w-1/3 h-0.5 bg-cyber-primary"></div>
+          <div className="absolute -bottom-2 left-0 w-1/3 h-0.5 bg-cyber-primary shadow-[0_0_10px_#00f0ff]"></div>
         </div>
         
         <div className="flex items-center gap-4 w-full md:w-auto">
@@ -115,7 +115,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
            <button 
              onClick={() => openModal()}
-             className="btn-tech text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(0,240,255,0.2)]"
+             className="btn-tech text-xs flex items-center gap-2 shadow-[0_0_15px_rgba(0,240,255,0.15)]"
            >
              <Plus size={16} /> <span className="hidden sm:inline">{t.library.createBtn}</span>
            </button>
@@ -123,18 +123,19 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex gap-1 mb-6 overflow-x-auto pb-2 shrink-0 custom-scrollbar">
+      <div className="flex gap-1 mb-6 overflow-x-auto pb-2 shrink-0 custom-scrollbar items-center">
+        <Filter size={14} className="text-gray-500 mr-2 shrink-0" />
         <button 
           onClick={() => setFilterType('ALL')}
-          className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all border border-transparent ${filterType === 'ALL' ? 'text-black bg-cyber-primary border-cyber-primary' : 'text-gray-500 hover:text-white hover:border-white/20'}`}
+          className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all border border-transparent clip-tech ${filterType === 'ALL' ? 'text-black bg-cyber-primary' : 'text-gray-500 bg-white/5 hover:text-white hover:bg-white/10'}`}
         >
-          ALL_DATA
+          ALL
         </button>
         {Object.values(ModuleType).map(type => (
            <button 
              key={type}
              onClick={() => setFilterType(type)}
-             className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all border border-transparent whitespace-nowrap ${filterType === type ? 'text-black bg-cyber-primary border-cyber-primary' : 'text-gray-500 hover:text-white hover:border-white/20'}`}
+             className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all border border-transparent whitespace-nowrap clip-tech ${filterType === type ? 'text-black bg-cyber-primary' : 'text-gray-500 bg-white/5 hover:text-white hover:bg-white/10'}`}
            >
              {type}
            </button>
@@ -144,7 +145,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       {/* Grid - High Tech Image Focus */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pb-20 pr-2 custom-scrollbar">
         {filteredModules.map(module => (
-          <div key={module.id} className="group relative bg-[#0a0e17] hover:bg-[#0f1522] transition-colors clip-tech shadow-lg hover:shadow-cyber-primary/10 flex flex-col h-[320px]">
+          <div key={module.id} className="group relative bg-[#0a0e17] hover:bg-[#0f1522] transition-colors clip-tech shadow-lg hover:shadow-cyber-primary/10 flex flex-col h-[340px] border border-transparent hover:border-cyber-primary/30">
              
              {/* Top: Image / Visual Area (65%) */}
              <div className="h-[65%] relative overflow-hidden bg-black/50 w-full group">
@@ -152,58 +153,59 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                   <img 
                     src={module.imageUrl} 
                     alt={module.title} 
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500" 
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out" 
                   />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden">
-                     {/* Generative Pattern */}
-                     <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.02)_25%,rgba(255,255,255,0.02)_50%,transparent_50%,transparent_75%,rgba(255,255,255,0.02)_75%,rgba(255,255,255,0.02)_100%)] bg-[length:20px_20px] opacity-20"></div>
-                     <Box size={40} className="text-gray-700 mb-2 group-hover:text-cyber-primary transition-colors duration-500" strokeWidth={1} />
-                     <span className="text-[10px] text-gray-700 font-mono tracking-[0.2em] group-hover:text-cyber-primary/50">NO_IMG_DATA</span>
+                  <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-[#0a0f16] to-[#05080c]">
+                     {/* Generative Tech Pattern */}
+                     <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(0,240,255,0.03)_25%,rgba(0,240,255,0.03)_50%,transparent_50%,transparent_75%,rgba(0,240,255,0.03)_75%,rgba(0,240,255,0.03)_100%)] bg-[length:20px_20px]"></div>
+                     <Box size={40} className="text-gray-800 mb-2 group-hover:text-cyber-primary/50 transition-colors duration-500" strokeWidth={1} />
+                     <span className="text-[10px] text-gray-700 font-mono tracking-[0.2em] group-hover:text-cyber-primary/40">NO_VISUAL_DATA</span>
                   </div>
                 )}
                 
                 {/* Overlay Type Tag */}
-                <div className="absolute top-0 left-0 p-3 flex justify-between w-full">
-                   <span className={`text-[10px] font-bold px-2 py-0.5 bg-black/60 backdrop-blur-sm border-l-2 ${MODULE_COLORS[module.type].replace('text-', 'border-').replace('bg-', '')} text-white`}>
+                <div className="absolute top-0 left-0 p-0">
+                   <span className={`text-[10px] font-bold px-3 py-1 bg-black/80 backdrop-blur-md border-b border-r border-white/10 text-white clip-tech-alt block`}>
                       {module.type}
                    </span>
                 </div>
 
                 {/* Hover Actions Overlay */}
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
-                   <button onClick={() => handleCopy(module.content, module.id)} className="p-3 rounded-full bg-white/10 hover:bg-cyber-primary hover:text-black text-white transition-all transform hover:scale-110 border border-white/10">
+                   <button onClick={() => handleCopy(module.content, module.id)} className="p-3 rounded-none bg-white/5 hover:bg-cyber-primary hover:text-black text-white transition-all border border-white/20 clip-tech">
                       {copiedId === module.id ? <Check size={20} /> : <Copy size={20} />}
                    </button>
-                   <button onClick={() => openModal(module)} className="p-3 rounded-full bg-white/10 hover:bg-white hover:text-black text-white transition-all transform hover:scale-110 border border-white/10">
+                   <button onClick={() => openModal(module)} className="p-3 rounded-none bg-white/5 hover:bg-white hover:text-black text-white transition-all border border-white/20 clip-tech">
                       <Edit2 size={20} />
                    </button>
-                   <button onClick={() => handleDelete(module.id)} className="p-3 rounded-full bg-white/10 hover:bg-red-500 hover:text-white text-white transition-all transform hover:scale-110 border border-white/10">
+                   <button onClick={() => handleDelete(module.id)} className="p-3 rounded-none bg-white/5 hover:bg-red-500 hover:text-white text-white transition-all border border-white/20 clip-tech">
                       <Trash2 size={20} />
                    </button>
                 </div>
              </div>
 
              {/* Bottom: Info Area (35%) */}
-             <div className="h-[35%] p-4 flex flex-col justify-between border-t border-white/5 relative bg-gradient-to-b from-transparent to-black/40">
+             <div className="h-[35%] p-4 flex flex-col justify-between border-t border-white/5 relative bg-[#0c121d]">
                 <div>
-                   <h3 className="text-base font-bold text-white leading-tight mb-1 truncate group-hover:text-cyber-primary transition-colors">{module.title}</h3>
-                   <p className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed h-8">
-                     {module.description || module.content.substring(0, 60)}...
-                   </p>
+                   <h3 className="text-base font-bold text-white leading-tight mb-2 truncate group-hover:text-cyber-primary transition-colors">{module.title}</h3>
+                   <div className="text-[11px] text-gray-500 line-clamp-2 leading-relaxed h-8 font-sans">
+                     {module.description || module.content.substring(0, 60)}
+                   </div>
                 </div>
                 
-                <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center justify-between mt-3">
                    <div className="flex gap-1 overflow-hidden">
                       {module.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="text-[9px] text-gray-400 bg-white/5 px-1.5 py-0.5 rounded-sm">#{tag}</span>
+                        <span key={tag} className="text-[9px] text-gray-400 bg-white/5 px-1.5 py-0.5 border border-white/5">#{tag}</span>
                       ))}
                    </div>
-                   <div className="w-2 h-2 bg-cyber-primary/20 group-hover:bg-cyber-primary transition-colors rounded-full shadow-[0_0_5px_rgba(0,240,255,0.5)]"></div>
+                   {/* Status Dot */}
+                   <div className="w-1.5 h-1.5 bg-gray-700 group-hover:bg-cyber-primary transition-colors shadow-[0_0_5px_rgba(0,240,255,0.5)]"></div>
                 </div>
 
-                {/* Tech Deco */}
-                <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-white/10 group-hover:border-cyber-primary/50 transition-colors"></div>
+                {/* Tech Corner Decoration */}
+                <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-white/20 group-hover:border-cyber-primary/80 transition-colors"></div>
              </div>
           </div>
         ))}
@@ -212,10 +214,10 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       {/* Modal - Tech Interface */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-[#0c121d] border border-white/10 w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto clip-tech relative shadow-[0_0_50px_rgba(0,0,0,0.8)]">
+          <div className="bg-[#0c121d] border border-white/10 w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto clip-tech relative shadow-[0_0_50px_rgba(0,0,0,0.8)] border-t border-cyber-primary/30">
             <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
                <h3 className="text-xl font-bold text-white tracking-widest flex items-center gap-3">
-                  <span className="w-1 h-6 bg-cyber-primary"></span>
+                  <Box size={20} className="text-cyber-primary"/>
                   {editingModule ? 'EDIT_PROTOCOL' : 'INIT_NEW_PROTOCOL'}
                </h3>
                <button onClick={() => setIsModalOpen(false)} className="text-gray-500 hover:text-cyber-primary transition-colors"><X size={24}/></button>
@@ -253,7 +255,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                 <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest">{t.library.labelContent}</label>
                 <div className="relative group">
                   <textarea 
-                    className="w-full cyber-input h-40 resize-none bg-black/60 border border-white/10 focus:border-cyber-primary transition-colors leading-relaxed p-4"
+                    className="w-full cyber-input h-40 resize-none bg-black/60 border border-white/10 focus:border-cyber-primary transition-colors leading-relaxed p-4 font-mono text-xs"
                     value={content} onChange={e => setContent(e.target.value)} placeholder={t.library.placeholderContent}
                   />
                   <div className="absolute top-0 right-0 p-1 bg-cyber-primary/10 text-cyber-primary text-[9px] font-bold opacity-50 group-hover:opacity-100">RAW_INPUT</div>

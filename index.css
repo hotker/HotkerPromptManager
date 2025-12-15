@@ -13,58 +13,71 @@ body {
 
 /* Sci-fi Grid - Fainter, more subtle */
 .bg-grid-pattern {
-  background-size: 50px 50px;
-  background-image: linear-gradient(to right, rgba(0, 240, 255, 0.02) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(0, 240, 255, 0.02) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
   mask-image: radial-gradient(circle at center, black 60%, transparent 100%);
 }
 
 @layer utilities {
-  /* Angled Corners for Cyber Look */
+  /* Angled Corners for Cyber Look - The signature style */
   .clip-tech {
     clip-path: polygon(
       0 0, 
       100% 0, 
-      100% calc(100% - 15px), 
-      calc(100% - 15px) 100%, 
+      100% calc(100% - 12px), 
+      calc(100% - 12px) 100%, 
       0 100%
+    );
+  }
+  
+  /* Reverse clip for bottom-left/top-right accent */
+  .clip-tech-alt {
+    clip-path: polygon(
+      12px 0, 
+      100% 0, 
+      100% 100%, 
+      0 100%, 
+      0 12px
     );
   }
   
   .clip-tech-border {
     position: relative;
   }
-  .clip-tech-border::before {
+  /* Simulated border for clipped area */
+  .clip-tech-border::after {
     content: '';
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 15px;
+    bottom: -1px;
+    right: -1px;
+    width: 18px;
     height: 1px;
     background: #00f0ff;
     transform: rotate(45deg);
     transform-origin: bottom right;
     opacity: 0.5;
+    z-index: 20;
   }
 
   /* HUD Panel Clean */
   .hud-panel {
     @apply bg-[#080c14]/90 backdrop-blur-md border border-white/5;
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.02);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.03);
   }
 
   /* Interactive Card */
   .cyber-card {
-    @apply relative overflow-hidden bg-[#0c121d] border-l border-t border-white/5 transition-all duration-300;
+    @apply relative overflow-hidden bg-[#0c121d] border-t border-l border-white/5 transition-all duration-300;
   }
   .cyber-card:hover {
-    @apply border-cyber-primary/30 bg-[#111827];
-    box-shadow: 0 10px 30px -10px rgba(0, 240, 255, 0.1);
+    @apply border-cyber-primary/40 bg-[#111827];
+    box-shadow: 0 10px 40px -10px rgba(0, 240, 255, 0.15);
   }
 
   /* Inputs */
   .cyber-input {
-    @apply bg-black/40 border-b border-white/10 text-cyber-text placeholder-gray-700 focus:border-cyber-primary outline-none transition-all duration-300 px-3 py-2 font-mono text-sm;
+    @apply bg-black/40 border-b border-white/10 text-cyber-text placeholder-gray-600 focus:border-cyber-primary outline-none transition-all duration-300 px-3 py-2 font-mono text-sm;
   }
 
   /* Buttons */
@@ -73,7 +86,7 @@ body {
   }
   
   .text-glow {
-    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.6);
   }
 
   /* Scrollbar */
