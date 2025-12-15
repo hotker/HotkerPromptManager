@@ -112,29 +112,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="p-6 md:p-10 h-full overflow-y-auto font-mono">
+    <div className="p-6 md:p-10 h-full overflow-y-auto font-mono custom-scrollbar">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6 border-b border-white/5 pb-6">
         <div>
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-tighter text-glow uppercase">
-             CMD: {t.dashboard.welcome}, <span className="text-cyber-primary">{currentUser.username}</span>
+          <h2 className="text-4xl font-bold text-white mb-2 tracking-tighter text-glow uppercase flex items-center gap-3">
+             <span className="text-cyber-primary">CMD:</span> {t.dashboard.welcome}
           </h2>
-          <div className="flex flex-wrap items-center gap-4 text-xs">
-             <div className="flex items-center gap-1.5 text-green-400 bg-green-900/20 px-2 py-1 border border-green-500/30">
+          <div className="flex flex-wrap items-center gap-4 text-xs mt-4">
+             <div className="flex items-center gap-1.5 text-green-400 bg-green-900/10 px-3 py-1 border border-green-500/30 clip-tech">
                 <div className="w-1.5 h-1.5 rounded-none bg-green-400 animate-pulse"></div>
-                <span className="tracking-wider">SYS_ONLINE</span>
+                <span className="tracking-wider font-bold">SYS_ONLINE</span>
              </div>
 
              {dbStatus === 'connected' ? (
-                <div className="flex items-center gap-1.5 text-blue-400 bg-blue-900/20 px-2 py-1 border border-blue-500/30">
+                <div className="flex items-center gap-1.5 text-cyber-primary bg-cyan-900/10 px-3 py-1 border border-cyan-500/30 clip-tech">
                     <Database size={10}/>
-                    <span className="tracking-wider">DB_LINK_ACTIVE</span>
+                    <span className="tracking-wider font-bold">DB_LINK_ACTIVE</span>
                 </div>
              ) : (
-                <div className="flex items-center gap-1.5 text-red-400 bg-red-900/20 px-2 py-1 border border-red-500/30 animate-pulse">
+                <div className="flex items-center gap-1.5 text-red-400 bg-red-900/10 px-3 py-1 border border-red-500/30 animate-pulse clip-tech">
                     <AlertTriangle size={10}/>
-                    <span className="tracking-wider">DB_LINK_SEVERED</span>
+                    <span className="tracking-wider font-bold">DB_LINK_SEVERED</span>
                 </div>
              )}
           </div>
@@ -148,16 +148,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
           { icon: <FileCode2 size={20} />, label: t.dashboard.statsTemplates, value: templates.length, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/30' },
           { icon: <Zap size={20} />, label: t.dashboard.statsSuccess, value: `${successRate}%`, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' }
         ].map((stat, i) => (
-          <div key={i} className={`hud-panel p-6 relative overflow-hidden group ${stat.border}`}>
-            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+          <div key={i} className={`hud-panel p-6 relative overflow-hidden group ${stat.border} clip-tech transition-all hover:bg-white/5`}>
+            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity transform scale-150">
               {stat.icon}
             </div>
-            <div className={`w-10 h-10 ${stat.bg} ${stat.color} flex items-center justify-center mb-4 border border-white/5`}>
+            <div className={`w-12 h-12 ${stat.bg} ${stat.color} flex items-center justify-center mb-4 border border-white/5 clip-tech`}>
                {stat.icon}
             </div>
-            <div className="text-3xl font-bold text-white mb-1 tracking-tight text-shadow">{stat.value}</div>
-            <div className="text-xs text-gray-400 font-bold uppercase tracking-widest">{stat.label}</div>
-            <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-white/20"></div>
+            <div className="text-4xl font-bold text-white mb-1 tracking-tight text-shadow">{stat.value}</div>
+            <div className="text-xs text-gray-400 font-bold uppercase tracking-[0.2em]">{stat.label}</div>
           </div>
         ))}
       </div>
@@ -165,11 +164,12 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         
         {/* Main Chart */}
-        <div className="lg:col-span-2 hud-panel p-6 rounded-lg">
+        <div className="lg:col-span-2 hud-panel p-6 clip-tech relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyber-primary/50 to-transparent"></div>
           <div className="flex items-center justify-between mb-6">
              <div className="flex items-center gap-2">
                 <Activity size={16} className="text-cyber-primary" />
-                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">{t.dashboard.chartLatency}</h3>
+                <h3 className="text-sm font-bold text-gray-300 uppercase tracking-[0.2em]">{t.dashboard.chartLatency}</h3>
              </div>
           </div>
           <div className="h-64">
@@ -182,7 +182,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   contentStyle={{ backgroundColor: '#0a0f16', borderColor: '#00f0ff', color: '#fff', fontFamily: 'monospace' }}
                   itemStyle={{ color: '#00f0ff', fontSize: '12px' }}
                 />
-                <Bar dataKey="duration" fill="#00f0ff" barSize={15} />
+                <Bar dataKey="duration" fill="#00f0ff" barSize={4} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -190,10 +190,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
         {/* Pie Chart & Backup */}
         <div className="flex flex-col gap-6">
-           <div className="hud-panel p-6 flex-1 min-h-[200px] rounded-lg">
+           <div className="hud-panel p-6 flex-1 min-h-[200px] clip-tech">
               <div className="flex items-center gap-2 mb-4">
                  <Cpu size={16} className="text-green-400" />
-                 <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">{t.dashboard.chartQuality}</h3>
+                 <h3 className="text-sm font-bold text-gray-300 uppercase tracking-[0.2em]">{t.dashboard.chartQuality}</h3>
               </div>
               <div className="h-40">
                 <ResponsiveContainer width="100%" height="100%">
@@ -219,16 +219,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
            </div>
 
            {/* Backup Mini Panel */}
-           <div className="hud-panel p-6 rounded-lg">
+           <div className="hud-panel p-6 clip-tech bg-white/5 border-dashed border-white/10">
               <div className="flex items-center gap-2 mb-4">
                  <Server size={16} className="text-gray-400" />
-                 <h3 className="text-sm font-bold text-gray-300 uppercase tracking-widest">{t.dashboard.backupTitle}</h3>
+                 <h3 className="text-sm font-bold text-gray-300 uppercase tracking-[0.2em]">{t.dashboard.backupTitle}</h3>
               </div>
               <div className="flex gap-2">
-                 <button onClick={handleExport} className="flex-1 py-3 text-[10px] font-bold bg-white/5 hover:bg-white/10 text-gray-200 border border-white/5 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/30 transition-all">
+                 <button onClick={handleExport} className="flex-1 py-3 text-[10px] font-bold bg-black text-white border border-white/10 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/50 transition-all clip-tech hover:bg-cyber-primary hover:text-black">
                    <Download size={12}/> EXPORT
                  </button>
-                 <button onClick={handleImportClick} className="flex-1 py-3 text-[10px] font-bold bg-white/5 hover:bg-white/10 text-gray-200 border border-white/5 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/30 transition-all">
+                 <button onClick={handleImportClick} className="flex-1 py-3 text-[10px] font-bold bg-black text-white border border-white/10 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/50 transition-all clip-tech hover:bg-cyber-primary hover:text-black">
                    <Upload size={12}/> IMPORT
                  </button>
               </div>

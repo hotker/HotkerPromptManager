@@ -94,10 +94,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               
               <div className="space-y-3 font-mono">
-                 <button onClick={openKeyModal} className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-none text-cyber-text hover:bg-white/10 hover:border-cyber-primary/50 transition-all">
+                 <button onClick={openKeyModal} className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-none text-cyber-text hover:bg-white/10 hover:border-cyber-primary/50 transition-all clip-tech">
                     <KeyRound size={16} /> <span>API_CONFIG</span>
                  </button>
-                 <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/10 border border-red-500/20 rounded-none text-red-400 hover:bg-red-900/20">
+                 <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 bg-red-900/10 border border-red-500/20 rounded-none text-red-400 hover:bg-red-900/20 clip-tech">
                     <LogOut size={16} /> <span>DISCONNECT</span>
                  </button>
               </div>
@@ -106,33 +106,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* Desktop Sidebar - Vertical HUD */}
-      <div className="hidden md:flex w-20 lg:w-64 bg-[#05080c] h-full border-r border-cyber-primary/20 flex-col relative z-20 shadow-[5px_0_30px_rgba(0,0,0,0.5)]">
+      <div className="hidden md:flex w-20 lg:w-64 bg-[#050608] h-full border-r border-white/5 flex-col relative z-20 shadow-[5px_0_30px_rgba(0,0,0,0.5)]">
         
         {/* Logo Area */}
-        <div className="h-20 flex items-center gap-3 px-6 border-b border-cyber-primary/10 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-cyber-primary/20"></div>
-          <Hexagon className="text-cyber-primary drop-shadow-[0_0_5px_rgba(0,240,255,0.8)]" size={28} strokeWidth={1.5} />
+        <div className="h-24 flex items-center gap-3 px-6 border-b border-white/5 relative overflow-hidden group">
+          <div className="absolute top-0 left-0 w-1 h-full bg-cyber-primary/20 group-hover:bg-cyber-primary transition-colors"></div>
+          <Hexagon className="text-cyber-primary drop-shadow-[0_0_5px_rgba(0,240,255,0.8)]" size={32} strokeWidth={1} />
           <div className="hidden lg:block">
-            <h1 className="font-bold text-white tracking-[0.2em] text-lg font-mono">HOTKER</h1>
+            <h1 className="font-bold text-white tracking-[0.2em] text-xl font-mono">HOTKER</h1>
             <div className="text-[9px] text-cyber-primary/60 tracking-widest mt-[-2px]">PROMPT_STUDIO</div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-6 space-y-2">
+        <nav className="flex-1 px-4 py-8 space-y-3">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setView(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm transition-all duration-300 group relative overflow-hidden ${
+              className={`w-full flex items-center gap-3 px-4 py-4 transition-all duration-300 group relative clip-tech ${
                 currentView === item.id
-                  ? 'bg-cyber-primary/10 text-cyber-primary border-l-2 border-cyber-primary'
-                  : 'text-gray-500 hover:text-gray-200 hover:bg-white/5 border-l-2 border-transparent'
+                  ? 'bg-cyber-primary/10 text-cyber-primary'
+                  : 'text-gray-500 hover:text-gray-200 hover:bg-white/5'
               }`}
             >
-              {/* Scan effect on hover */}
-              <div className={`absolute inset-0 bg-gradient-to-r from-cyber-primary/0 via-cyber-primary/10 to-cyber-primary/0 translate-x-[-100%] transition-transform duration-700 ${currentView === item.id ? 'translate-x-[100%]' : 'group-hover:translate-x-[100%]'}`}></div>
-
+              <div className={`absolute left-0 top-0 bottom-0 w-1 bg-cyber-primary transition-opacity ${currentView === item.id ? 'opacity-100' : 'opacity-0'}`}></div>
+              
               <span className={`relative z-10 transition-transform duration-300 ${currentView === item.id ? 'scale-110 drop-shadow-[0_0_5px_rgba(0,240,255,0.8)]' : 'group-hover:text-cyber-primary'}`}>
                 {item.icon}
               </span>
@@ -144,7 +143,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Bottom Section: User & Config */}
-        <div className="p-4 border-t border-cyber-primary/10 bg-[#030508]">
+        <div className="p-4 border-t border-white/5 bg-[#030508]">
            {/* API Status Indicator */}
            <div className="flex items-center justify-between px-2 mb-4">
               <div className="flex items-center gap-2">
@@ -157,7 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
            </div>
 
            {/* User Profile Card - Tech Chip Style */}
-           <div className="p-3 border border-white/5 bg-white/5 flex items-center gap-3 hover:border-cyber-primary/30 transition-all cursor-default group relative overflow-hidden">
+           <div className="p-3 border border-white/5 bg-white/5 flex items-center gap-3 hover:border-cyber-primary/30 transition-all cursor-default group relative overflow-hidden clip-tech">
               <div className="w-8 h-8 bg-black border border-cyber-primary/50 flex items-center justify-center text-xs font-bold text-cyber-primary">
                   {currentUser?.username.substring(0,1).toUpperCase()}
               </div>
@@ -167,12 +166,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     >> LOGOUT
                  </button>
               </div>
-              {/* Corner Accent */}
-              <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-cyber-primary/50"></div>
            </div>
            
            <div className="hidden lg:flex justify-between text-[9px] text-gray-700 pt-3 font-mono tracking-tighter">
-              <span>V.2.0.4.BUILD.2025</span>
+              <span>V.2.0.4</span>
               <a href={AUTHOR_INFO.github} target="_blank" className="hover:text-cyber-primary transition-colors">GITHUB</a>
            </div>
         </div>
@@ -181,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* API Key Modal - Sci-fi Popup */}
       {isKeyModalOpen && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="hud-panel hud-corners w-full max-w-md p-8 animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-[#0c121d] border border-white/10 w-full max-w-md p-8 clip-tech relative shadow-[0_0_50px_rgba(0,0,0,0.8)] animate-in fade-in zoom-in-95 duration-200">
             <button onClick={() => setIsKeyModalOpen(false)} className="absolute top-4 right-4 text-gray-500 hover:text-cyber-primary"><X size={20} /></button>
             <div className="mb-6 flex items-center gap-4">
               <div className="w-12 h-12 bg-cyber-primary/10 border border-cyber-primary flex items-center justify-center text-cyber-primary shadow-[0_0_15px_rgba(0,240,255,0.2)]">
@@ -195,12 +192,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
             
             <input 
               type="password"
-              className="w-full cyber-input px-4 py-3 mb-6 font-mono text-sm"
+              className="w-full cyber-input mb-6 font-mono text-sm"
               value={tempKey}
               onChange={(e) => setTempKey(e.target.value)}
               placeholder="ENTER_API_KEY_HERE"
             />
-            <button onClick={handleSaveKey} className="w-full btn-primary py-3">
+            <button onClick={handleSaveKey} className="w-full btn-tech">
               ESTABLISH CONNECTION
             </button>
           </div>

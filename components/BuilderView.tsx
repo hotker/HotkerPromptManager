@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PromptModule, PromptTemplate, RunLog, FixedConfig, ModuleType, User } from '../types';
 import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
-import { Plus, Save, Play, ChevronRight, X, Settings2, GripVertical, AlertCircle, CheckCircle2, Copy, Download, Image as ImageIcon, Box, Layout, Eye, Trash2 } from 'lucide-react';
+import { Plus, Save, Play, ChevronRight, X, Settings2, GripVertical, AlertCircle, CheckCircle2, Copy, Download, Image as ImageIcon, Box, Layout, Eye, Trash2, Cpu } from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
 import { Language, translations } from '../translations';
 
@@ -125,10 +125,10 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
   const imageSource = isImageResult ? result?.replace('[IMAGE GENERATED] ', '') : '';
 
   return (
-    <div className="h-full flex flex-col md:flex-row bg-zinc-950 overflow-hidden relative">
+    <div className="h-full flex flex-col md:flex-row bg-[#030508] overflow-hidden relative font-mono">
       
       {/* Mobile Tab Switcher */}
-      <div className="md:hidden flex border-b border-zinc-800 bg-black shrink-0 z-20">
+      <div className="md:hidden flex border-b border-white/10 bg-[#080c14] shrink-0 z-20">
         {[
           { id: 'resources', icon: Box, label: t.builder.tabResources },
           { id: 'assembly', icon: Layout, label: t.builder.tabAssembly },
@@ -137,20 +137,20 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
            <button 
             key={tab.id}
             onClick={() => setMobileSection(tab.id as any)}
-            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${mobileSection === tab.id ? 'text-banana-400 bg-white/5' : 'text-zinc-500'}`}
+            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${mobileSection === tab.id ? 'text-cyber-primary bg-white/5 border-b-2 border-cyber-primary' : 'text-gray-500'}`}
           >
             <tab.icon size={14}/> {tab.label}
-            {tab.id === 'assembly' && <span className="bg-zinc-800 text-zinc-300 px-1.5 rounded-full text-[10px]">{selectedModuleIds.length}</span>}
+            {tab.id === 'assembly' && <span className="bg-cyber-primary text-black font-bold px-1.5 rounded text-[9px]">{selectedModuleIds.length}</span>}
           </button>
         ))}
       </div>
 
 
       {/* LEFT: Resources (Glass Sidebar) */}
-      <div className={`w-full md:w-80 border-r border-white/5 flex flex-col bg-zinc-900/30 backdrop-blur-sm ${mobileSection === 'resources' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
+      <div className={`w-full md:w-80 border-r border-white/5 flex flex-col bg-[#0a0e17]/50 backdrop-blur-sm ${mobileSection === 'resources' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
         <div className="p-4 border-b border-white/5 flex gap-2">
-           <button onClick={() => setActiveTab('modules')} className={`flex-1 py-2 text-xs font-bold uppercase rounded-lg transition-colors ${activeTab === 'modules' ? 'bg-white/10 text-banana-400' : 'text-zinc-500 hover:text-zinc-300'}`}>{t.builder.tabModules}</button>
-           <button onClick={() => setActiveTab('config')} className={`flex-1 py-2 text-xs font-bold uppercase rounded-lg transition-colors ${activeTab === 'config' ? 'bg-white/10 text-banana-400' : 'text-zinc-500 hover:text-zinc-300'}`}>{t.builder.tabConfig}</button>
+           <button onClick={() => setActiveTab('modules')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest clip-tech transition-colors ${activeTab === 'modules' ? 'bg-cyber-primary/20 text-cyber-primary' : 'bg-black/20 text-gray-500 hover:text-white'}`}>{t.builder.tabModules}</button>
+           <button onClick={() => setActiveTab('config')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest clip-tech transition-colors ${activeTab === 'config' ? 'bg-cyber-primary/20 text-cyber-primary' : 'bg-black/20 text-gray-500 hover:text-white'}`}>{t.builder.tabConfig}</button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
@@ -160,20 +160,20 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                   <input 
                     type="text" 
                     placeholder={t.builder.searchModules}
-                    className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-xs focus:border-banana-500/50 outline-none text-zinc-300"
+                    className="w-full bg-black/40 border border-white/10 px-3 py-2 text-xs focus:border-cyber-primary outline-none text-zinc-300 clip-tech"
                     value={searchModule}
                     onChange={e => setSearchModule(e.target.value)}
                   />
                </div>
                <div className="space-y-2">
                   {modules.filter(m => m.title.toLowerCase().includes(searchModule.toLowerCase())).map(module => (
-                    <div key={module.id} className="bg-black/40 border border-white/5 p-3 rounded-lg group hover:border-banana-500/50 hover:bg-zinc-900/60 transition-all cursor-pointer select-none" onClick={() => handleAddModule(module.id)}>
+                    <div key={module.id} className="bg-black/40 border-l-2 border-white/10 p-3 hover:border-l-cyber-primary hover:bg-white/5 transition-all cursor-pointer select-none group" onClick={() => handleAddModule(module.id)}>
                       <div className="flex justify-between items-center mb-1">
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded border ${MODULE_COLORS[module.type]}`}>{module.type}</span>
-                        <Plus size={12} className="text-zinc-600 group-hover:text-banana-400" />
+                        <span className={`text-[9px] font-bold uppercase tracking-wider ${MODULE_COLORS[module.type].split(' ')[1]}`}>{module.type}</span>
+                        <Plus size={12} className="text-gray-600 group-hover:text-cyber-primary" />
                       </div>
-                      <p className="text-xs text-zinc-300 font-bold">{module.title}</p>
-                      <p className="text-[10px] text-zinc-500 line-clamp-2 mt-1 font-mono opacity-70">{module.content}</p>
+                      <p className="text-xs text-gray-300 font-bold truncate">{module.title}</p>
+                      <p className="text-[10px] text-gray-600 line-clamp-1 mt-0.5 font-mono">{module.content.substring(0, 40)}</p>
                     </div>
                   ))}
                </div>
@@ -182,29 +182,29 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
             <div className="space-y-6">
                <div className="space-y-4">
                   <div>
-                    <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.model}</label>
+                    <label className="text-[10px] text-cyber-primary font-bold uppercase tracking-wider mb-2 block">{t.builder.model}</label>
                     <select 
-                      className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-zinc-300 outline-none focus:border-banana-500/50"
+                      className="w-full bg-black/40 border-b border-white/10 py-2 text-xs text-gray-300 outline-none focus:border-cyber-primary"
                       value={config.model}
                       onChange={(e) => setConfig({...config, model: e.target.value})}
                     >
-                      {AVAILABLE_MODELS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                      {AVAILABLE_MODELS.map(m => <option key={m.id} value={m.id} className="bg-black">{m.name}</option>)}
                     </select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.temperature}</label>
-                        <input type="number" step="0.1" min="0" max="2" className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-zinc-300 outline-none focus:border-banana-500/50" value={config.temperature} onChange={(e) => setConfig({...config, temperature: parseFloat(e.target.value)})} />
+                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.temperature}</label>
+                        <input type="number" step="0.1" min="0" max="2" className="w-full bg-black/40 border-b border-white/10 py-2 text-xs text-gray-300 outline-none focus:border-cyber-primary" value={config.temperature} onChange={(e) => setConfig({...config, temperature: parseFloat(e.target.value)})} />
                     </div>
                     <div>
-                        <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.topK}</label>
-                        <input type="number" className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs text-zinc-300 outline-none focus:border-banana-500/50" value={config.topK} onChange={(e) => setConfig({...config, topK: parseInt(e.target.value)})} />
+                        <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.topK}</label>
+                        <input type="number" className="w-full bg-black/40 border-b border-white/10 py-2 text-xs text-gray-300 outline-none focus:border-cyber-primary" value={config.topK} onChange={(e) => setConfig({...config, topK: parseInt(e.target.value)})} />
                     </div>
                   </div>
                   <div>
-                      <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.fixedEnding}</label>
+                      <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.fixedEnding}</label>
                       <textarea 
-                        className="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs font-mono text-zinc-400 h-24 focus:border-banana-500/50 outline-none resize-none"
+                        className="w-full bg-black/40 border border-white/10 p-2 text-xs font-mono text-gray-400 h-24 focus:border-cyber-primary outline-none resize-none"
                         value={config.appendString}
                         onChange={(e) => setConfig({...config, appendString: e.target.value})}
                       />
@@ -212,11 +212,11 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                </div>
 
                <div className="pt-4 border-t border-white/5">
-                 <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.savedTemplates}</label>
+                 <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.savedTemplates}</label>
                  <div className="space-y-1">
                    {templates.map(tmpl => (
-                     <button key={tmpl.id} onClick={() => loadTemplate(tmpl)} className="w-full text-left text-xs text-zinc-400 hover:text-white px-2 py-1.5 rounded hover:bg-white/5 truncate transition-colors">
-                       {tmpl.name}
+                     <button key={tmpl.id} onClick={() => loadTemplate(tmpl)} className="w-full text-left text-xs text-gray-400 hover:text-cyber-primary px-2 py-2 border-b border-white/5 hover:bg-white/5 transition-colors flex items-center gap-2">
+                       <Box size={10}/> {tmpl.name}
                      </button>
                    ))}
                  </div>
@@ -227,32 +227,31 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
       </div>
 
       {/* MIDDLE: Assembly Area (Blueprint Grid) */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-[#050505] relative ${mobileSection === 'assembly' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 bg-[#050608] relative ${mobileSection === 'assembly' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
         {/* Tech Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)] pointer-events-none"></div>
+        <div className="absolute inset-0 bg-grid-pattern opacity-50 pointer-events-none"></div>
 
-        <div className="p-4 border-b border-white/5 flex justify-between items-center relative z-10 bg-black/50 backdrop-blur-sm">
+        <div className="p-4 border-b border-white/5 flex justify-between items-center relative z-10 bg-[#0a0e17]/80 backdrop-blur-sm">
            <div className="flex items-center gap-3 w-full">
-              <div className="w-2 h-2 rounded-full bg-banana-500 shadow-[0_0_10px_#fbbf24]"></div>
+              <Cpu size={18} className="text-cyber-primary animate-pulse"/>
               <input 
-                className="bg-transparent text-lg font-bold text-zinc-200 outline-none placeholder-zinc-700 w-full font-mono" 
+                className="bg-transparent text-lg font-bold text-white outline-none placeholder-gray-700 w-full tracking-wider" 
                 value={templateName} 
                 onChange={e => setTemplateName(e.target.value)} 
               />
            </div>
-           <button onClick={handleSaveTemplate} className="flex-shrink-0 flex items-center gap-2 text-xs font-bold bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-4 py-2 rounded-lg transition-colors border border-white/10">
+           <button onClick={handleSaveTemplate} className="flex-shrink-0 flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 text-white px-4 py-2 clip-tech transition-colors border border-white/10 hover:border-cyber-primary">
              <Save size={14} /> <span className="hidden sm:inline">{t.builder.saveTemplateBtn}</span>
            </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 relative z-10">
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 relative z-10">
            {selectedModuleIds.length === 0 && (
-             <div className="h-full flex flex-col items-center justify-center opacity-40">
-               <div className="w-20 h-20 rounded-full border-2 border-dashed border-zinc-700 flex items-center justify-center mb-4">
-                 <Plus size={32} className="text-zinc-700" />
+             <div className="h-full flex flex-col items-center justify-center opacity-30">
+               <div className="w-24 h-24 border border-dashed border-cyber-primary flex items-center justify-center mb-4 rotate-45">
+                 <div className="-rotate-45"><Plus size={32} className="text-cyber-primary" /></div>
                </div>
-               <p className="text-zinc-500 font-mono text-sm uppercase tracking-widest">{t.builder.dragTip}</p>
+               <p className="text-cyber-primary font-mono text-xs uppercase tracking-[0.2em]">{t.builder.dragTip}</p>
              </div>
            )}
 
@@ -260,23 +259,24 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
              const module = modules.find(m => m.id === id);
              if(!module) return null;
              return (
-               <div key={`${id}-${index}`} className="group relative bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 hover:border-banana-500/50 hover:shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all animate-in slide-in-from-bottom-2 backdrop-blur-md">
-                  {/* Connector Line Visual */}
+               <div key={`${id}-${index}`} className="group relative bg-[#0c121d] border-l-2 border-cyber-primary p-5 shadow-[0_0_20px_rgba(0,0,0,0.5)] transition-all animate-in slide-in-from-bottom-4 clip-tech-border">
+                  {/* Energy Line Visual */}
                   {index < selectedModuleIds.length - 1 && (
-                    <div className="absolute left-1/2 -bottom-6 w-px h-6 bg-gradient-to-b from-zinc-800 to-zinc-800/0 z-0"></div>
+                    <div className="absolute left-6 -bottom-8 w-0.5 h-8 bg-cyber-primary/30 z-0">
+                       <div className="w-full h-2 bg-cyber-primary animate-float blur-[2px]"></div>
+                    </div>
                   )}
                   
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="flex justify-between items-start mb-3">
                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${module.type === ModuleType.ROLE ? 'bg-blue-500' : module.type === ModuleType.TASK ? 'bg-green-500' : 'bg-zinc-500'}`}></span>
-                        <span className="text-xs font-mono text-zinc-500 uppercase">{module.type}</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 border ${MODULE_COLORS[module.type]}`}>{module.type}</span>
                      </div>
-                     <button onClick={() => handleRemoveModule(index)} className="text-zinc-600 hover:text-red-400 transition-colors">
+                     <button onClick={() => handleRemoveModule(index)} className="text-gray-600 hover:text-red-500 transition-colors">
                         <X size={14} />
                      </button>
                   </div>
-                  <h4 className="text-sm font-bold text-zinc-200 mb-2">{module.title}</h4>
-                  <div className="bg-black/40 rounded p-3 border border-white/5 font-mono text-xs text-zinc-400 leading-relaxed whitespace-pre-wrap">
+                  <h4 className="text-sm font-bold text-white mb-2 tracking-wide">{module.title}</h4>
+                  <div className="bg-black/30 p-3 border border-white/5 text-[11px] text-gray-400 font-mono leading-relaxed whitespace-pre-wrap">
                     {module.content}
                   </div>
                </div>
@@ -285,22 +285,22 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
 
            {/* Fixed Ending Node */}
            {config.appendString && (
-             <div className="opacity-70 mt-4 relative">
-                <div className="bg-zinc-900/40 border border-zinc-800 border-dashed rounded-xl p-4">
+             <div className="opacity-60 mt-8 relative pl-8 border-l border-dashed border-gray-700 ml-4">
+                <div className="bg-black/20 border border-white/5 p-4 rounded-sm">
                   <div className="flex items-center gap-2 mb-2">
-                     <Settings2 size={12} className="text-banana-500" />
-                     <span className="text-xs uppercase font-bold tracking-wider text-banana-500">{t.builder.fixedEnding}</span>
+                     <Settings2 size={12} className="text-gray-500" />
+                     <span className="text-[10px] uppercase font-bold tracking-wider text-gray-500">{t.builder.fixedEnding}</span>
                   </div>
-                  <p className="text-xs font-mono text-zinc-500 whitespace-pre-wrap">{config.appendString}</p>
+                  <p className="text-[10px] font-mono text-gray-600 whitespace-pre-wrap">{config.appendString}</p>
                 </div>
              </div>
            )}
            
-           <div className="h-20 md:hidden"></div>
+           <div className="h-24 md:hidden"></div>
            <button 
              onClick={handleRun}
              disabled={isRunning || selectedModuleIds.length === 0}
-             className="md:hidden fixed bottom-24 right-6 bg-banana-500 text-black rounded-2xl p-4 shadow-[0_0_30px_rgba(251,191,36,0.4)] z-50 disabled:opacity-50 disabled:shadow-none"
+             className="md:hidden fixed bottom-24 right-6 bg-cyber-primary text-black rounded-none p-4 shadow-[0_0_30px_rgba(0,240,255,0.4)] z-50 disabled:opacity-50 disabled:shadow-none clip-tech"
            >
              {isRunning ? <div className="animate-spin w-6 h-6 border-2 border-black border-t-transparent rounded-full"></div> : <Play fill="currentColor" size={24} />}
            </button>
@@ -308,48 +308,51 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
       </div>
 
       {/* RIGHT: Output / Preview (Terminal Style) */}
-      <div className={`w-full md:w-96 border-l border-white/5 flex flex-col bg-[#0a0a0b] ${mobileSection === 'preview' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
-         <div className="p-4 border-b border-white/5 bg-zinc-900/20">
+      <div className={`w-full md:w-[450px] border-l border-white/5 flex flex-col bg-[#080c14] ${mobileSection === 'preview' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
+         <div className="p-4 border-b border-white/5 bg-[#0a0e17]">
            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xs font-bold text-zinc-500 uppercase tracking-widest flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
-                Console Output
+              <h3 className="text-xs font-bold text-cyber-primary uppercase tracking-[0.2em] flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-cyber-primary shadow-[0_0_5px_#00f0ff] animate-pulse"></span>
+                TERMINAL_OUTPUT
               </h3>
            </div>
            
            <button 
              onClick={handleRun}
              disabled={isRunning || selectedModuleIds.length === 0}
-             className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all text-sm ${
-               isRunning ? 'bg-zinc-800 text-zinc-500 cursor-wait' : 'bg-zinc-100 hover:bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.1)]'
+             className={`w-full py-3 font-bold flex items-center justify-center gap-2 transition-all text-xs tracking-widest uppercase clip-tech ${
+               isRunning ? 'bg-white/5 text-gray-500 cursor-wait' : 'btn-tech shadow-[0_0_20px_rgba(0,240,255,0.2)]'
              }`}
            >
-             {isRunning ? 'PROCESSING...' : <><Play size={14} fill="currentColor" /> {t.builder.runBtn}</>}
+             {isRunning ? 'PROCESSING_DATA...' : <><Play size={14} fill="currentColor" /> {t.builder.runBtn}</>}
            </button>
          </div>
 
-         <div className="flex-1 overflow-y-auto p-4 font-mono text-xs custom-scrollbar relative bg-black/50">
+         <div className="flex-1 overflow-y-auto p-6 font-mono text-xs custom-scrollbar relative bg-[#050608]">
             {executionError && (
-              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 mb-4 animate-in slide-in-from-top-2">
-                <div className="flex items-center gap-2 font-bold mb-1"><AlertCircle size={14}/> Error</div>
-                <p className="opacity-80">{executionError}</p>
+              <div className="p-4 bg-red-900/10 border border-red-500/50 text-red-400 mb-4 animate-in slide-in-from-top-2 flex items-start gap-3">
+                <AlertCircle size={16} className="shrink-0 mt-0.5"/> 
+                <div>
+                   <div className="font-bold mb-1">SYSTEM_ERROR</div>
+                   <p className="opacity-80 leading-relaxed">{executionError}</p>
+                </div>
               </div>
             )}
             
             {!result && !isRunning && !executionError && (
-              <div className="absolute inset-0 flex items-center justify-center text-zinc-700 pointer-events-none">
+              <div className="absolute inset-0 flex items-center justify-center text-gray-800 pointer-events-none select-none">
                  <div className="text-center">
-                    <div className="text-4xl mb-2 opacity-20">_</div>
-                    <p>Ready for input</p>
+                    <div className="text-6xl mb-4 opacity-10 font-black">_</div>
+                    <p className="tracking-[0.2em] text-[10px]">AWAITING_INPUT_STREAM</p>
                  </div>
               </div>
             )}
 
             {result && (
               <div className="animate-in fade-in duration-500 pb-10">
-                <div className="flex justify-between items-center mb-4 sticky top-0 bg-[#0a0a0b]/90 backdrop-blur py-2 border-b border-white/5 z-10">
-                   <span className="text-green-500 font-bold flex items-center gap-2">
-                     <CheckCircle2 size={14}/> Status: OK
+                <div className="flex justify-between items-center mb-6 sticky top-0 bg-[#050608]/90 backdrop-blur py-2 border-b border-white/5 z-10">
+                   <span className="text-green-400 font-bold flex items-center gap-2 text-[10px] tracking-wider">
+                     <CheckCircle2 size={12}/> PROCESS_COMPLETE
                    </span>
                    <div className="flex gap-2">
                      {isImageResult && (
@@ -358,21 +361,21 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                           link.href = imageSource;
                           link.download = `hotker-${Date.now()}.png`;
                           link.click();
-                       }} className="text-zinc-500 hover:text-white"><Download size={14}/></button>
+                       }} className="text-gray-500 hover:text-white transition-colors"><Download size={14}/></button>
                      )}
-                     <button onClick={() => navigator.clipboard.writeText(result)} className="text-zinc-500 hover:text-white"><Copy size={14}/></button>
+                     <button onClick={() => navigator.clipboard.writeText(result)} className="text-gray-500 hover:text-white transition-colors"><Copy size={14}/></button>
                    </div>
                 </div>
                 
                 {isImageResult ? (
-                   <div className="rounded-xl overflow-hidden border border-white/10 shadow-2xl">
+                   <div className="overflow-hidden border border-white/10 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
                       <img src={imageSource} alt="Generated" className="w-full h-auto" />
                    </div>
                 ) : (
-                   <div className="text-zinc-300 whitespace-pre-wrap leading-relaxed">
+                   <div className="text-gray-300 whitespace-pre-wrap leading-loose">
                      {result.split('\n').map((line, i) => (
-                       <div key={i} className="flex">
-                         <span className="text-zinc-700 mr-3 select-none">{i + 1}</span>
+                       <div key={i} className="flex hover:bg-white/5 transition-colors -mx-2 px-2 py-0.5">
+                         <span className="text-gray-700 mr-4 select-none w-6 text-right opacity-50">{i + 1}</span>
                          <span>{line}</span>
                        </div>
                      ))}
