@@ -90,127 +90,120 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   });
 
   return (
-    <div className="h-full flex flex-col p-4 md:p-6 bg-zinc-950">
-      <div className="flex justify-between items-center mb-6">
+    <div className="h-full flex flex-col p-6 md:p-10">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-100">{t.library.title}</h2>
-          <p className="text-zinc-400 text-sm mt-1">{t.library.subtitle}</p>
+          <h2 className="text-3xl font-bold text-zinc-100 tracking-tight">{t.library.title}</h2>
+          <p className="text-zinc-500 text-sm mt-1">{t.library.subtitle}</p>
         </div>
         <button 
           onClick={() => openModal()}
-          className="flex items-center gap-2 bg-banana-500 hover:bg-banana-400 text-zinc-950 px-4 py-2 rounded-lg font-semibold transition-colors text-sm md:text-base"
+          className="flex items-center gap-2 bg-zinc-100 hover:bg-white text-black px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl shadow-white/5 text-sm"
         >
           <Plus size={18} />
-          <span className="hidden md:inline">{t.library.createBtn}</span>
-          <span className="md:hidden">+</span>
+          <span>{t.library.createBtn}</span>
         </button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      {/* Filters Bar - Glass */}
+      <div className="glass-panel rounded-xl p-2 flex flex-col md:flex-row gap-2 mb-8">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
           <input 
             type="text" 
             placeholder={t.library.searchPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg pl-10 pr-4 py-2 text-zinc-200 focus:outline-none focus:border-banana-500/50"
+            className="w-full bg-transparent border-none outline-none pl-10 pr-4 py-2 text-zinc-200 text-sm placeholder-zinc-600"
           />
         </div>
+        <div className="w-px bg-white/10 hidden md:block my-1"></div>
         <select 
           value={filterType}
           onChange={(e) => setFilterType(e.target.value as any)}
-          className="bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-2 text-zinc-200 focus:outline-none focus:border-banana-500/50"
+          className="bg-transparent border-none outline-none px-4 py-2 text-zinc-400 text-sm hover:text-zinc-200 cursor-pointer"
         >
-          <option value="ALL">{t.library.allTypes}</option>
-          {Object.values(ModuleType).map(t => <option key={t} value={t}>{t}</option>)}
+          <option value="ALL" className="bg-zinc-900">{t.library.allTypes}</option>
+          {Object.values(ModuleType).map(t => <option key={t} value={t} className="bg-zinc-900">{t}</option>)}
         </select>
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto pb-20">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pb-20 pr-2">
         {filteredModules.map(module => (
-          <div key={module.id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 hover:border-zinc-700 transition-colors group relative flex flex-col h-full">
-             <div className="flex justify-between items-start mb-3">
-               <span className={`text-xs px-2 py-0.5 rounded border font-medium ${MODULE_COLORS[module.type]}`}>
+          <div key={module.id} className="glass-card rounded-2xl p-5 group relative flex flex-col h-full hover:-translate-y-1">
+             <div className="flex justify-between items-start mb-4">
+               <span className={`text-[10px] px-2 py-1 rounded-md border font-mono font-bold tracking-wide ${MODULE_COLORS[module.type]}`}>
                  {module.type}
                </span>
-               <div className="flex gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
+               <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
                  <button 
                     onClick={() => handleCopy(module.content, module.id)} 
-                    className={`transition-colors ${copiedId === module.id ? 'text-green-500' : 'text-zinc-400 hover:text-banana-400'}`}
-                    title={t.library.copySuccess}
+                    className={`p-1.5 rounded-lg transition-colors ${copiedId === module.id ? 'bg-green-500/20 text-green-400' : 'hover:bg-zinc-800 text-zinc-400'}`}
                  >
-                    {copiedId === module.id ? <Check size={16} /> : <Copy size={16} />}
+                    {copiedId === module.id ? <Check size={14} /> : <Copy size={14} />}
                  </button>
-                 <button onClick={() => openModal(module)} className="text-zinc-400 hover:text-banana-400" title="Edit"><Edit2 size={16} /></button>
-                 <button onClick={() => handleDelete(module.id)} className="text-zinc-400 hover:text-red-400" title="Delete"><Trash2 size={16} /></button>
+                 <button onClick={() => openModal(module)} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-banana-400"><Edit2 size={14} /></button>
+                 <button onClick={() => handleDelete(module.id)} className="p-1.5 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-red-400"><Trash2 size={14} /></button>
                </div>
              </div>
 
              {module.imageUrl && (
-               <div className="mb-3 rounded-lg overflow-hidden border border-zinc-800/50 aspect-video bg-zinc-950 group-hover:border-banana-500/30 transition-colors relative">
-                 <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover" />
-                 <a 
-                   href={module.imageUrl} 
-                   target="_blank" 
-                   rel="noopener noreferrer"
-                   className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-md text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                   title="View Image"
-                 >
-                   <ExternalLink size={12} />
-                 </a>
+               <div className="mb-4 rounded-xl overflow-hidden border border-white/5 aspect-video bg-black/50 relative group-hover:shadow-lg transition-all">
+                 <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                </div>
              )}
 
-             <h3 className="font-semibold text-zinc-100 mb-1 truncate" title={module.title}>{module.title}</h3>
+             <h3 className="font-bold text-zinc-100 mb-2 truncate text-base">{module.title}</h3>
              
-             {/* Description Display */}
              {module.description && (
-                <p className="text-xs text-zinc-500 mb-3 line-clamp-2 leading-relaxed" title={module.description}>
+                <p className="text-xs text-zinc-500 mb-4 line-clamp-2 leading-relaxed h-8">
                   {module.description}
                 </p>
              )}
 
-             <div className="text-zinc-400 text-sm line-clamp-3 font-mono bg-zinc-950/50 p-2 rounded mb-3 flex-1 select-all border border-zinc-800/50">
-               {module.content}
+             <div className="bg-black/30 border border-white/5 rounded-lg p-3 mb-4 flex-1 overflow-hidden relative group-hover:border-white/10 transition-colors">
+               <div className="text-zinc-400 text-xs font-mono line-clamp-4 leading-relaxed opacity-80 select-all">
+                 {module.content}
+               </div>
+               <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
              </div>
              
-             <div className="flex flex-wrap gap-2 mt-auto pt-2 border-t border-zinc-800/50">
+             <div className="flex flex-wrap gap-2 mt-auto">
                {module.tags.map((tag, i) => (
-                 <span key={i} className="text-xs text-zinc-500 flex items-center gap-1 bg-zinc-800/50 px-1.5 py-0.5 rounded">
-                   <Tag size={10} /> {tag}
+                 <span key={i} className="text-[10px] text-zinc-500 flex items-center gap-1 bg-white/5 px-2 py-1 rounded-md border border-white/5">
+                   <Tag size={8} /> {tag}
                  </span>
                ))}
-               {module.tags.length === 0 && <span className="text-xs text-zinc-700 italic">No Tags</span>}
              </div>
           </div>
         ))}
       </div>
 
-      {/* Edit/Create Modal */}
+      {/* Modal - Modernized */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-zinc-100 mb-4 flex items-center gap-2">
-              {editingModule ? <Edit2 size={20} className="text-banana-500"/> : <Plus size={20} className="text-banana-500"/>}
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="glass-panel w-full max-w-2xl p-8 rounded-3xl shadow-2xl max-h-[90vh] overflow-y-auto border border-white/10">
+            <h3 className="text-2xl font-bold text-zinc-100 mb-6 flex items-center gap-3">
+              <div className="p-2 bg-banana-500/10 rounded-lg text-banana-500 border border-banana-500/20">
+                 {editingModule ? <Edit2 size={20}/> : <Plus size={20}/>}
+              </div>
               {editingModule ? t.library.modalEdit : t.library.modalCreate}
             </h3>
             
-            <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase tracking-wider">{t.library.labelTitle}</label>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{t.library.labelTitle}</label>
                   <input 
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 focus:border-banana-500/50 outline-none transition-colors"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-zinc-200 focus:border-banana-500/50 outline-none transition-colors text-sm"
                     value={title} onChange={e => setTitle(e.target.value)} placeholder={t.library.placeholderTitle}
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase tracking-wider">{t.library.labelType}</label>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{t.library.labelType}</label>
                   <select 
-                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 focus:border-banana-500/50 outline-none transition-colors"
+                    className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-zinc-200 focus:border-banana-500/50 outline-none transition-colors text-sm"
                     value={type} onChange={e => setType(e.target.value as ModuleType)}
                   >
                     {Object.values(ModuleType).map(t => <option key={t} value={t}>{t}</option>)}
@@ -218,55 +211,39 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                 </div>
               </div>
 
-              {/* Description Field */}
-              <div>
-                <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase tracking-wider flex items-center gap-1">
-                  <FileText size={12} /> {t.library.labelDesc}
-                </label>
-                <textarea
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 focus:border-banana-500/50 outline-none resize-none h-20 text-sm transition-colors placeholder-zinc-700"
-                  value={description} onChange={e => setDescription(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase tracking-wider">{t.library.labelImage}</label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-                    <input 
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg pl-10 pr-2 py-2.5 text-zinc-200 focus:border-banana-500/50 outline-none font-mono text-sm transition-colors"
-                      value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://example.com/image.png"
-                    />
-                  </div>
-                </div>
-                {imageUrl && (
-                   <div className="mt-2 w-24 h-24 rounded-lg border border-zinc-800 overflow-hidden bg-zinc-950">
-                      <img src={imageUrl} alt="preview" className="w-full h-full object-cover" />
-                   </div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase tracking-wider">{t.library.labelContent}</label>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{t.library.labelContent}</label>
                 <textarea 
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-3 text-zinc-200 font-mono text-sm h-48 focus:border-banana-500/50 outline-none resize-none transition-colors"
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-4 text-zinc-300 font-mono text-sm h-40 focus:border-banana-500/50 outline-none resize-none transition-colors leading-relaxed"
                   value={content} onChange={e => setContent(e.target.value)} placeholder={t.library.placeholderContent}
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-zinc-400 mb-1.5 uppercase tracking-wider">{t.library.labelTags}</label>
-                <input 
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-zinc-200 focus:border-banana-500/50 outline-none transition-colors"
-                  value={tags} onChange={e => setTags(e.target.value)} placeholder="programming, react..."
-                />
+              {/* Advanced toggle or condensed section could go here, keeping it simple for now */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{t.library.labelTags}</label>
+                    <input 
+                      className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-zinc-200 focus:border-banana-500/50 outline-none transition-colors text-sm"
+                      value={tags} onChange={e => setTags(e.target.value)} placeholder="tag1, tag2..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{t.library.labelImage}</label>
+                    <div className="relative">
+                      <input 
+                        className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-zinc-200 focus:border-banana-500/50 outline-none transition-colors text-sm pl-10"
+                        value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..."
+                      />
+                      <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" size={16}/>
+                    </div>
+                  </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-zinc-800">
-              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-zinc-400 hover:text-zinc-200 transition-colors text-sm font-medium">{t.library.btnCancel}</button>
-              <button onClick={handleSave} className="px-6 py-2 bg-banana-500 hover:bg-banana-400 text-zinc-950 font-bold rounded-lg transition-colors text-sm shadow-lg shadow-banana-500/10">
+            <div className="flex justify-end gap-3 mt-10 pt-6 border-t border-white/5">
+              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 text-zinc-400 hover:text-white transition-colors text-sm font-medium">{t.library.btnCancel}</button>
+              <button onClick={handleSave} className="px-6 py-2.5 bg-zinc-100 hover:bg-white text-black font-bold rounded-xl transition-all text-sm shadow-[0_0_15px_rgba(255,255,255,0.1)]">
                 {t.library.btnSave}
               </button>
             </div>
