@@ -277,13 +277,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest">{t.library.labelImage}</label>
+                    <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest block">{t.library.labelImage}</label>
                     <div className="relative">
                       <input 
-                        className="w-full cyber-input pl-9"
+                        className="w-full cyber-input !pl-10"
                         value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..."
                       />
-                      <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14}/>
+                      <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16}/>
                     </div>
                   </div>
               </div>
