@@ -95,7 +95,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-6 shrink-0">
         <div className="relative">
           <h2 className="text-4xl font-bold text-white tracking-tighter flex items-center gap-3">
-             <span className="text-cyber-primary opacity-50 text-2xl">/</span> LIBRARY
+             <span className="text-cyber-primary opacity-50 text-2xl">/</span> {t.library.title.toUpperCase()}
           </h2>
           <div className="absolute -bottom-2 left-0 w-1/3 h-0.5 bg-cyber-primary shadow-[0_0_10px_#22d3ee]"></div>
         </div>
@@ -129,7 +129,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
           onClick={() => setFilterType('ALL')}
           className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all border border-transparent clip-tech ${filterType === 'ALL' ? 'text-slate-900 bg-cyber-primary' : 'text-slate-400 bg-white/5 hover:text-white hover:bg-white/10'}`}
         >
-          ALL
+          {t.moduleType['ALL']}
         </button>
         {Object.values(ModuleType).map(type => (
            <button 
@@ -137,7 +137,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
              onClick={() => setFilterType(type)}
              className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all border border-transparent whitespace-nowrap clip-tech ${filterType === type ? 'text-slate-900 bg-cyber-primary' : 'text-slate-400 bg-white/5 hover:text-white hover:bg-white/10'}`}
            >
-             {type}
+             {/* Use type assertion to map the enum value (string) to the translation key */}
+             {t.moduleType[type as keyof typeof t.moduleType] || type}
            </button>
         ))}
       </div>
@@ -160,14 +161,14 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                      {/* Generative Tech Pattern */}
                      <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(34,211,238,0.03)_25%,rgba(34,211,238,0.03)_50%,transparent_50%,transparent_75%,rgba(34,211,238,0.03)_75%,rgba(34,211,238,0.03)_100%)] bg-[length:20px_20px]"></div>
                      <Box size={40} className="text-slate-700 mb-2 group-hover:text-cyber-primary/50 transition-colors duration-500" strokeWidth={1} />
-                     <span className="text-[10px] text-slate-600 font-mono tracking-[0.2em] group-hover:text-cyber-primary/40">NO_VISUAL_DATA</span>
+                     <span className="text-[10px] text-slate-600 font-mono tracking-[0.2em] group-hover:text-cyber-primary/40">{t.library.noVisualData}</span>
                   </div>
                 )}
                 
                 {/* Overlay Type Tag */}
                 <div className="absolute top-0 left-0 p-0">
                    <span className={`text-[10px] font-bold px-3 py-1 bg-slate-900/90 backdrop-blur-md border-b border-r border-white/10 text-white clip-tech-alt block shadow-lg`}>
-                      {module.type}
+                      {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
                    </span>
                 </div>
 
@@ -218,7 +219,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
             <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
                <h3 className="text-xl font-bold text-white tracking-widest flex items-center gap-3">
                   <Box size={20} className="text-cyber-primary"/>
-                  {editingModule ? 'EDIT_PROTOCOL' : 'INIT_NEW_PROTOCOL'}
+                  {editingModule ? t.library.modalEdit : t.library.modalCreate}
                </h3>
                <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-cyber-primary transition-colors"><X size={24}/></button>
             </div>
@@ -238,7 +239,12 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     className="w-full cyber-input bg-slate-900"
                     value={type} onChange={e => setType(e.target.value as ModuleType)}
                   >
-                    {Object.values(ModuleType).map(t => <option key={t} value={t}>{t}</option>)}
+                    {Object.values(ModuleType).map(t => (
+                      <option key={t} value={t}>
+                        {/* Map enum values in dropdown as well */}
+                        {translations[lang].moduleType[t as keyof typeof translations['en']['moduleType']] || t}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -258,7 +264,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     className="w-full cyber-input h-40 resize-none bg-slate-950/50 border border-white/10 focus:border-cyber-primary transition-colors leading-relaxed p-4 font-mono text-xs"
                     value={content} onChange={e => setContent(e.target.value)} placeholder={t.library.placeholderContent}
                   />
-                  <div className="absolute top-0 right-0 p-1 bg-cyber-primary/10 text-cyber-primary text-[9px] font-bold opacity-50 group-hover:opacity-100">RAW_INPUT</div>
+                  <div className="absolute top-0 right-0 p-1 bg-cyber-primary/10 text-cyber-primary text-[9px] font-bold opacity-50 group-hover:opacity-100">{t.library.rawInput}</div>
                 </div>
               </div>
 
@@ -284,9 +290,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
             </div>
 
             <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-white/5">
-              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2 text-slate-500 hover:text-white transition-colors text-xs font-bold tracking-widest uppercase hover:underline decoration-cyber-primary decoration-2 underline-offset-4">CANCEL</button>
+              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2 text-slate-500 hover:text-white transition-colors text-xs font-bold tracking-widest uppercase hover:underline decoration-cyber-primary decoration-2 underline-offset-4">{t.library.btnCancel}</button>
               <button onClick={handleSave} className="btn-tech text-xs shadow-lg">
-                CONFIRM_WRITE
+                {t.library.btnSave}
               </button>
             </div>
           </div>

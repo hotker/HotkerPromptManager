@@ -2,7 +2,6 @@ import { GoogleGenAI } from "@google/genai";
 import { FixedConfig } from "../types";
 
 // Standard Vite environment variable access
-// Note: In Cloudflare Pages, set the environment variable as VITE_API_KEY in the dashboard to expose it to the client bundle if needed.
 const getEnvApiKey = () => {
   return (import.meta as any).env.VITE_API_KEY || '';
 };
@@ -13,11 +12,6 @@ interface ApiKeyOptions {
 }
 
 export const generateResponse = async (prompt: string, config: FixedConfig, options: ApiKeyOptions): Promise<string> => {
-  // Logic: 
-  // 1. If user provides a custom key, use it.
-  // 2. If no custom key, check if system key fallback is allowed.
-  // 3. If allowed, use env key.
-  
   let finalApiKey = options.apiKey;
 
   if (!finalApiKey && options.allowSystemKey) {
@@ -26,17 +20,16 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
 
   if (!finalApiKey) {
     if (!options.apiKey && !options.allowSystemKey) {
-       throw new Error("权限受限：当前账户无权使用系统默认 Key。请在侧边栏设置您自己的 Google AI Studio API Key。");
+       throw new Error("ERR_PERMISSION_DENIED");
     }
-    throw new Error("API Key 缺失。请在侧边栏配置您的 API Key。");
+    throw new Error("ERR_API_KEY_MISSING");
   }
 
   const ai = new GoogleGenAI({ apiKey: finalApiKey });
 
   try {
-    // Handling for Image Generation Model (Hotker Prompt Studio context)
+    // Handling for Image Generation Model
     if (config.model.includes('image')) {
-       // Hotker Image Logic
        const imageConfig: any = {};
        if (config.aspectRatio && config.aspectRatio !== 'auto') {
            imageConfig.aspectRatio = config.aspectRatio;
@@ -50,17 +43,14 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
          }
        });
        
-       // Handle image response (extract image parts)
        const parts = response.candidates?.[0]?.content?.parts;
        if (parts) {
-            // Priority: Check for image first
             const imagePart = parts.find(p => p.inlineData);
             
             if (imagePart && imagePart.inlineData) {
                  return `[IMAGE GENERATED] data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
             }
 
-            // Fallback: Check for text if no image is found
             const textContent = parts
                 .filter(p => p.text)
                 .map(p => p.text)
@@ -70,7 +60,7 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
                 return textContent;
             }
        }
-       return "模型未返回内容 (可能是因为安全过滤或提示词过于简单)。";
+       return "ERR_MODEL_IMAGE_FAILED";
 
     } else {
       // Standard Text Generation
@@ -86,19 +76,18 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
 
       if (!response.text) {
           if (response.candidates && response.candidates.length > 0 && response.candidates[0].finishReason) {
-              return `生成被中断: ${response.candidates[0].finishReason}`;
+              return `ERR_FINISH_REASON${response.candidates[0].finishReason}`;
           }
-          return "模型返回了空响应。";
+          return "ERR_MODEL_EMPTY";
       }
 
       return response.text;
     }
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    // Improve error message for end users
-    if (error.message?.includes('403')) return "API 密钥无效或无权访问该模型。";
-    if (error.message?.includes('429')) return "请求过多 (Rate Limit)，请稍后重试。";
-    if (error.message?.includes('503')) return "模型服务暂时不可用，请稍后重试。";
-    throw new Error(error.message || "生成过程中发生未知错误");
+    if (error.message?.includes('403')) throw new Error("ERR_403");
+    if (error.message?.includes('429')) throw new Error("ERR_429");
+    if (error.message?.includes('503')) throw new Error("ERR_503");
+    throw new Error(error.message || "ERR_UNKNOWN");
   }
 };

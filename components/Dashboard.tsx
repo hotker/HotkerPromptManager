@@ -118,23 +118,23 @@ export const Dashboard: React.FC<DashboardProps> = ({
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6 border-b border-white/5 pb-6">
         <div>
           <h2 className="text-4xl font-bold text-white mb-2 tracking-tighter text-glow uppercase flex items-center gap-3">
-             <span className="text-cyber-primary">CMD:</span> {t.dashboard.welcome}
+             <span className="text-cyber-primary">{t.dashboard.cmdPrefix}</span> {t.dashboard.welcome}
           </h2>
           <div className="flex flex-wrap items-center gap-4 text-xs mt-4">
              <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-900/10 px-3 py-1 border border-emerald-500/30 clip-tech">
                 <div className="w-1.5 h-1.5 rounded-none bg-emerald-400 animate-pulse"></div>
-                <span className="tracking-wider font-bold">SYS_ONLINE</span>
+                <span className="tracking-wider font-bold">{t.dashboard.systemOnline}</span>
              </div>
 
              {dbStatus === 'connected' ? (
                 <div className="flex items-center gap-1.5 text-cyber-primary bg-cyan-900/10 px-3 py-1 border border-cyan-500/30 clip-tech">
                     <Database size={10}/>
-                    <span className="tracking-wider font-bold">DB_LINK_ACTIVE</span>
+                    <span className="tracking-wider font-bold">{t.dashboard.dbConnected}</span>
                 </div>
              ) : (
                 <div className="flex items-center gap-1.5 text-red-400 bg-red-900/10 px-3 py-1 border border-red-500/30 animate-pulse clip-tech">
                     <AlertTriangle size={10}/>
-                    <span className="tracking-wider font-bold">DB_LINK_SEVERED</span>
+                    <span className="tracking-wider font-bold">{t.dashboard.dbDisconnected}</span>
                 </div>
              )}
           </div>
@@ -226,10 +226,10 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <div className="flex gap-2">
                  <button onClick={handleExport} className="flex-1 py-3 text-[10px] font-bold bg-slate-900 text-white border border-white/10 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/50 transition-all clip-tech hover:bg-cyber-primary hover:text-slate-900">
-                   <Download size={12}/> EXPORT
+                   <Download size={12}/> {t.dashboard.exportBtn}
                  </button>
                  <button onClick={handleImportClick} className="flex-1 py-3 text-[10px] font-bold bg-slate-900 text-white border border-white/10 flex items-center justify-center gap-1 tracking-wider uppercase hover:border-cyber-primary/50 transition-all clip-tech hover:bg-cyber-primary hover:text-slate-900">
-                   <Upload size={12}/> IMPORT
+                   <Upload size={12}/> {t.dashboard.importBtn}
                  </button>
               </div>
               <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".json"/>

@@ -3,7 +3,7 @@ import { User } from '../types';
 import { authService } from '../services/authService';
 import { ArrowRight, Loader2, AlertCircle, Globe, Hexagon, ShieldCheck, Cpu } from 'lucide-react';
 import { AUTHOR_INFO } from '../constants';
-import { Language } from '../translations';
+import { Language, translations } from '../translations';
 
 interface AuthPageProps {
   onLogin: (user: User) => void;
@@ -18,34 +18,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  const t = {
-    zh: {
-      subtitle: 'NEURAL LINK ESTABLISHED',
-      loginTab: 'ACCESS',
-      registerTab: 'INITIATE',
-      usernamePlaceholder: 'CODENAME',
-      passwordPlaceholder: 'PASSPHRASE',
-      enterBtn: 'JACK IN',
-      createBtn: 'CREATE IDENTITY',
-      googleBtn: 'LINK GOOGLE NETWORK',
-      defaultError: 'ACCESS DENIED',
-      googleError: 'NETWORK ERROR',
-    },
-    en: {
-      subtitle: 'NEURAL LINK ESTABLISHED',
-      loginTab: 'ACCESS',
-      registerTab: 'INITIATE',
-      usernamePlaceholder: 'CODENAME',
-      passwordPlaceholder: 'PASSPHRASE',
-      enterBtn: 'JACK IN',
-      createBtn: 'CREATE IDENTITY',
-      googleBtn: 'LINK GOOGLE NETWORK',
-      defaultError: 'ACCESS DENIED',
-      googleError: 'NETWORK ERROR',
-    }
-  };
-
-  const text = t[lang];
+  const t = translations[lang].auth;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +34,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
       }
       onLogin(user);
     } catch (err: any) {
-      setError(err.message || text.defaultError);
+      setError(err.message || t.defaultError);
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +47,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
       const user = await authService.loginWithGoogle();
       onLogin(user);
     } catch (err: any) {
-      setError(text.googleError);
+      setError(t.googleError);
       setIsLoading(false);
     }
   };
@@ -102,7 +75,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white mb-2 tracking-tighter text-glow">HOTKER<span className="text-cyber-primary">.SYS</span></h1>
-          <p className="text-cyber-primary/60 text-xs tracking-[0.3em] uppercase">{text.subtitle}</p>
+          <p className="text-cyber-primary/60 text-xs tracking-[0.3em] uppercase">{t.subtitle}</p>
         </div>
 
         {/* Tab Switcher */}
@@ -112,13 +85,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
              onClick={() => setMode('login')} 
              className={`flex-1 pb-3 text-xs font-bold tracking-widest transition-colors ${mode === 'login' ? 'text-cyber-primary text-glow' : 'text-slate-500 hover:text-slate-300'}`}
            >
-             {text.loginTab}
+             {t.loginTab}
            </button>
            <button 
              onClick={() => setMode('register')} 
              className={`flex-1 pb-3 text-xs font-bold tracking-widest transition-colors ${mode === 'register' ? 'text-cyber-primary text-glow' : 'text-slate-500 hover:text-slate-300'}`}
            >
-             {text.registerTab}
+             {t.registerTab}
            </button>
         </div>
 
@@ -140,7 +113,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
                placeholder=" "
              />
              <label className={`absolute left-4 top-3 text-xs text-slate-500 pointer-events-none transition-all duration-300 ${username ? '-top-5 text-cyber-primary text-[10px]' : ''}`}>
-               {text.usernamePlaceholder}
+               {t.usernamePlaceholder}
              </label>
              {/* Corner markers for input */}
              <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyber-primary/30"></div>
@@ -157,7 +130,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
                placeholder=" "
              />
              <label className={`absolute left-4 top-3 text-xs text-slate-500 pointer-events-none transition-all duration-300 ${password ? '-top-5 text-cyber-primary text-[10px]' : ''}`}>
-               {text.passwordPlaceholder}
+               {t.passwordPlaceholder}
              </label>
              <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyber-primary/30"></div>
              <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyber-primary/30"></div>
@@ -170,7 +143,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
            >
              {isLoading ? <Loader2 className="animate-spin" size={16} /> : (
                <>
-                 <span className="relative z-10 group-hover:tracking-[0.2em] transition-all">{mode === 'login' ? text.enterBtn : text.createBtn}</span>
+                 <span className="relative z-10 group-hover:tracking-[0.2em] transition-all">{mode === 'login' ? t.enterBtn : t.createBtn}</span>
                  <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
                </>
              )}
@@ -180,7 +153,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
 
         <div className="relative my-8">
            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-           <div className="relative flex justify-center text-[10px] tracking-widest text-slate-500"><span className="bg-slate-900 px-2">SYSTEM_OVERRIDE</span></div>
+           <div className="relative flex justify-center text-[10px] tracking-widest text-slate-500"><span className="bg-slate-900 px-2">{t.systemOverride}</span></div>
         </div>
 
         <button
@@ -190,7 +163,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
            className="w-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/30 text-slate-300 text-xs font-bold py-3 tracking-wide transition-all flex items-center justify-center gap-3 clip-tech"
          >
            <ShieldCheck size={14} className="text-cyber-secondary" />
-           {text.googleBtn}
+           {t.googleBtn}
          </button>
 
         {/* Footer */}
@@ -199,7 +172,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
                <Globe size={12} /> {lang === 'zh' ? 'EN' : '中文'}
             </button>
             <div className="flex gap-4">
-              <a href={AUTHOR_INFO.website} target="_blank" className="text-slate-500 hover:text-cyber-primary text-[10px] transition-colors tracking-widest">HELP</a>
+              <a href={AUTHOR_INFO.website} target="_blank" className="text-slate-500 hover:text-cyber-primary text-[10px] transition-colors tracking-widest">{t.help}</a>
             </div>
         </div>
       </div>

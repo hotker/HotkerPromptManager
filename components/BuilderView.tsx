@@ -56,6 +56,20 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
     setSelectedModuleIds(prev => prev.filter((_, i) => i !== index));
   };
 
+  const getTranslatedError = (errorMsg: string): string => {
+     // Check for standard error codes in translations
+     for (const key in translations[lang].errors) {
+        if (errorMsg === key) {
+            return translations[lang].errors[key as keyof typeof translations['en']['errors']];
+        }
+        // Handle dynamic error codes like ERR_FINISH_REASON
+        if (errorMsg.startsWith('ERR_FINISH_REASON')) {
+            return translations[lang].errors['ERR_FINISH_REASON'] + errorMsg.replace('ERR_FINISH_REASON', '');
+        }
+     }
+     return errorMsg; // Return raw if no translation found
+  };
+
   const handleRun = async () => {
     if (!compiledPrompt) return;
     if (window.innerWidth < 768) setMobileSection('preview');
@@ -71,6 +85,11 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         allowSystemKey: false 
       });
 
+      // Check if output is actually an error code returned as string (for special model cases)
+      if (output.startsWith('ERR_')) {
+          throw new Error(output);
+      }
+
       setResult(output);
       addLog({
         id: crypto.randomUUID(),
@@ -83,7 +102,8 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         durationMs: Date.now() - startTime
       });
     } catch (e: any) {
-      setExecutionError(e.message);
+      const errorMsg = getTranslatedError(e.message);
+      setExecutionError(errorMsg);
       addLog({
         id: crypto.randomUUID(),
         templateId: 'unsaved-session',
@@ -91,7 +111,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         finalPrompt: compiledPrompt,
         output: '',
         status: 'failure',
-        notes: e.message,
+        notes: errorMsg,
         timestamp: Date.now(),
         durationMs: Date.now() - startTime
       });
@@ -111,7 +131,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
       updatedAt: Date.now()
     };
     saveTemplate(tmpl);
-    alert('Template Saved!');
+    alert(t.builder.success);
   };
 
   const loadTemplate = (tmpl: PromptTemplate) => {
@@ -169,7 +189,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                   {modules.filter(m => m.title.toLowerCase().includes(searchModule.toLowerCase())).map(module => (
                     <div key={module.id} className="bg-slate-800/40 border-l-2 border-white/10 p-3 hover:border-l-cyber-primary hover:bg-slate-800 transition-all cursor-pointer select-none group" onClick={() => handleAddModule(module.id)}>
                       <div className="flex justify-between items-center mb-1">
-                        <span className={`text-[9px] font-bold uppercase tracking-wider ${MODULE_COLORS[module.type].split(' ')[1]}`}>{module.type}</span>
+                        <span className={`text-[9px] font-bold uppercase tracking-wider ${MODULE_COLORS[module.type].split(' ')[1]}`}>{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
                         <Plus size={12} className="text-slate-600 group-hover:text-cyber-primary" />
                       </div>
                       <p className="text-xs text-slate-300 font-bold truncate">{module.title}</p>
@@ -269,7 +289,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                   
                   <div className="flex justify-between items-start mb-3">
                      <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 border ${MODULE_COLORS[module.type]}`}>{module.type}</span>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 border ${MODULE_COLORS[module.type]}`}>{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
                      </div>
                      <button onClick={() => handleRemoveModule(index)} className="text-slate-500 hover:text-red-400 transition-colors">
                         <X size={14} />
@@ -313,7 +333,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
            <div className="flex justify-between items-center mb-4">
               <h3 className="text-xs font-bold text-cyber-primary uppercase tracking-[0.2em] flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-cyber-primary shadow-[0_0_5px_#22d3ee] animate-pulse"></span>
-                TERMINAL_OUTPUT
+                {t.builder.terminalOutput}
               </h3>
            </div>
            
@@ -324,7 +344,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                isRunning ? 'bg-white/5 text-slate-500 cursor-wait' : 'btn-tech shadow-lg'
              }`}
            >
-             {isRunning ? 'PROCESSING_DATA...' : <><Play size={14} fill="currentColor" /> {t.builder.runBtn}</>}
+             {isRunning ? t.builder.processing : <><Play size={14} fill="currentColor" /> {t.builder.runBtn}</>}
            </button>
          </div>
 
@@ -333,7 +353,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
               <div className="p-4 bg-red-900/20 border border-red-500/50 text-red-400 mb-4 animate-in slide-in-from-top-2 flex items-start gap-3">
                 <AlertCircle size={16} className="shrink-0 mt-0.5"/> 
                 <div>
-                   <div className="font-bold mb-1">SYSTEM_ERROR</div>
+                   <div className="font-bold mb-1">{t.builder.systemError}</div>
                    <p className="opacity-80 leading-relaxed">{executionError}</p>
                 </div>
               </div>
@@ -343,7 +363,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
               <div className="absolute inset-0 flex items-center justify-center text-slate-700 pointer-events-none select-none">
                  <div className="text-center">
                     <div className="text-6xl mb-4 opacity-10 font-black">_</div>
-                    <p className="tracking-[0.2em] text-[10px]">AWAITING_INPUT_STREAM</p>
+                    <p className="tracking-[0.2em] text-[10px]">{t.builder.awaitingInput}</p>
                  </div>
               </div>
             )}
@@ -352,7 +372,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
               <div className="animate-in fade-in duration-500 pb-10">
                 <div className="flex justify-between items-center mb-6 sticky top-0 bg-slate-950/90 backdrop-blur py-2 border-b border-white/5 z-10">
                    <span className="text-emerald-400 font-bold flex items-center gap-2 text-[10px] tracking-wider">
-                     <CheckCircle2 size={12}/> PROCESS_COMPLETE
+                     <CheckCircle2 size={12}/> {t.builder.processComplete}
                    </span>
                    <div className="flex gap-2">
                      {isImageResult && (
@@ -361,9 +381,9 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                           link.href = imageSource;
                           link.download = `hotker-${Date.now()}.png`;
                           link.click();
-                       }} className="text-slate-500 hover:text-white transition-colors"><Download size={14}/></button>
+                       }} className="text-slate-500 hover:text-white transition-colors" title={t.builder.downloadImage}><Download size={14}/></button>
                      )}
-                     <button onClick={() => navigator.clipboard.writeText(result)} className="text-slate-500 hover:text-white transition-colors"><Copy size={14}/></button>
+                     <button onClick={() => navigator.clipboard.writeText(result)} className="text-slate-500 hover:text-white transition-colors" title={t.builder.copy}><Copy size={14}/></button>
                    </div>
                 </div>
                 

@@ -59,12 +59,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderSyncStatus = () => {
     switch(syncStatus) {
       case 'saving':
-        return <span className="text-cyber-primary flex items-center gap-1.5 text-[10px] tracking-wider animate-pulse"><RefreshCcw size={10} className="animate-spin"/> SYNCING</span>;
+        return <span className="text-cyber-primary flex items-center gap-1.5 text-[10px] tracking-wider animate-pulse"><RefreshCcw size={10} className="animate-spin"/> {t.sidebar.syncSaving}</span>;
       case 'error':
-        return <span className="text-red-500 flex items-center gap-1.5 text-[10px] tracking-wider"><AlertTriangle size={10}/> ERR_SYNC</span>;
+        return <span className="text-red-500 flex items-center gap-1.5 text-[10px] tracking-wider"><AlertTriangle size={10}/> {t.sidebar.syncError}</span>;
       case 'saved':
       default:
-        return <span className="text-slate-400 flex items-center gap-1.5 text-[10px] tracking-wider"><Cloud size={10}/> ONLINE</span>;
+        return <span className="text-slate-300 flex items-center gap-1.5 text-[10px] tracking-wider"><Cloud size={10}/> {t.sidebar.syncSaved}</span>;
     }
   };
 
@@ -90,15 +90,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
            <div className="absolute top-0 bottom-0 right-0 w-72 bg-slate-800 border-l border-white/10 p-6 flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
                <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
                 <h3 className="font-bold text-cyber-primary tracking-widest">SYSTEM_OPTS</h3>
-                <button onClick={() => setIsMobileMenuOpen(false)}><X size={20} className="text-slate-400 hover:text-white"/></button>
+                <button onClick={() => setIsMobileMenuOpen(false)}><X size={20} className="text-slate-300 hover:text-white"/></button>
               </div>
               
               <div className="space-y-3 font-mono">
                  <button onClick={openKeyModal} className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-none text-white hover:bg-white/10 hover:border-cyber-primary/50 transition-all clip-tech">
-                    <KeyRound size={16} /> <span>API_CONFIG</span>
+                    <KeyRound size={16} /> <span>{t.sidebar.apiKeyConfig}</span>
                  </button>
                  <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-none text-red-400 hover:bg-red-500/20 clip-tech">
-                    <LogOut size={16} /> <span>DISCONNECT</span>
+                    <LogOut size={16} /> <span>{t.sidebar.logout}</span>
                  </button>
               </div>
            </div>
@@ -127,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className={`w-full flex items-center gap-3 px-4 py-4 transition-all duration-300 group relative clip-tech ${
                 currentView === item.id
                   ? 'bg-cyber-primary/15 text-cyber-primary shadow-[0_0_15px_rgba(34,211,238,0.1)]'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
               <div className={`absolute left-0 top-0 bottom-0 w-1 bg-cyber-primary transition-opacity ${currentView === item.id ? 'opacity-100' : 'opacity-0'}`}></div>
@@ -148,9 +148,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
            <div className="flex items-center justify-between px-2 mb-4">
               <div className="flex items-center gap-2">
                  <div className={`w-2 h-2 rounded-full ${hasValidKey ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'} animate-pulse`}></div>
-                 <span className="hidden lg:block text-[10px] text-slate-500 tracking-wider font-mono">SYS_STATUS</span>
+                 <span className="hidden lg:block text-[10px] text-slate-300 tracking-wider font-mono">{t.sidebar.sysStatus}</span>
               </div>
-              <button onClick={openKeyModal} className="text-slate-500 hover:text-cyber-primary transition-colors">
+              <button onClick={openKeyModal} className="text-slate-300 hover:text-cyber-primary transition-colors">
                  <Settings size={14} />
               </button>
            </div>
@@ -162,15 +162,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div className="hidden lg:block min-w-0 z-10">
                  <p className="text-xs font-bold text-slate-200 truncate font-mono">{currentUser?.username}</p>
-                 <button onClick={onLogout} className="text-[10px] text-slate-500 hover:text-red-400 transition-colors flex items-center gap-1 mt-1 tracking-wider uppercase">
-                    &gt;&gt; LOGOUT
+                 <button onClick={onLogout} className="text-[10px] text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1 mt-1 tracking-wider uppercase">
+                    &gt;&gt; {t.sidebar.logout}
                  </button>
               </div>
            </div>
            
-           <div className="hidden lg:flex justify-between text-[9px] text-slate-600 pt-3 font-mono tracking-tighter">
-              <span>V.2.1.0</span>
-              <a href={AUTHOR_INFO.github} target="_blank" className="hover:text-cyber-primary transition-colors">GITHUB</a>
+           <div className="hidden lg:flex justify-between text-[9px] text-slate-500 pt-3 font-mono tracking-tighter">
+              <span>{t.sidebar.version} 2.1.0</span>
+              <a href={AUTHOR_INFO.github} target="_blank" className="hover:text-cyber-primary transition-colors">{t.sidebar.github}</a>
            </div>
         </div>
       </div>
@@ -185,8 +185,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <KeyRound size={24} />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white tracking-widest">SECURE_LINK</h3>
-                <p className="text-slate-500 text-xs font-mono mt-1">AUTHORIZATION REQUIRED</p>
+                <h3 className="text-lg font-bold text-white tracking-widest">{t.sidebar.secureLink}</h3>
+                <p className="text-slate-500 text-xs font-mono mt-1">{t.sidebar.authRequired}</p>
               </div>
             </div>
             
@@ -195,10 +195,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="w-full cyber-input mb-6 font-mono text-sm bg-slate-950"
               value={tempKey}
               onChange={(e) => setTempKey(e.target.value)}
-              placeholder="ENTER_API_KEY_HERE"
+              placeholder={t.sidebar.enterKey}
             />
             <button onClick={handleSaveKey} className="w-full btn-tech shadow-lg">
-              ESTABLISH CONNECTION
+              {t.sidebar.establishConn}
             </button>
           </div>
         </div>
