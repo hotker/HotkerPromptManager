@@ -192,7 +192,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
             </h3>
             
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{t.library.labelTitle}</label>
                   <input 
@@ -209,6 +209,14 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     {Object.values(ModuleType).map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">{t.library.labelDesc}</label>
+                <input 
+                  className="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-zinc-200 focus:border-banana-500/50 outline-none transition-colors text-sm"
+                  value={description} onChange={e => setDescription(e.target.value)} placeholder={t.library.labelDesc}
+                />
               </div>
 
               <div className="space-y-2">
