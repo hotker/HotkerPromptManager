@@ -140,7 +140,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Sidebar */}
       <div className="hidden md:flex w-20 lg:w-64 bg-white h-full border-r border-slate-200 flex-col relative z-20">
         
-        {/* Brand */}
+        {/* Brand - Compressed Height & Visual Hierarchy */}
         <div className="h-12 flex items-center gap-3 px-5 border-b border-slate-100 shrink-0">
           <div className="bg-slate-900 text-white p-1 rounded-md shadow-sm shrink-0"><Command size={16} strokeWidth={3} /></div>
           <div className="hidden lg:flex items-center gap-2 overflow-hidden whitespace-nowrap">
