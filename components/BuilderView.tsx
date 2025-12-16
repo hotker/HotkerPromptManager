@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PromptModule, PromptTemplate, RunLog, FixedConfig, ModuleType, User } from '../types';
 import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
-import { Plus, Save, Play, X, Settings2, CheckCircle2, Copy, Download, Box, Layout, Eye, Search, ArrowRight, GripVertical } from 'lucide-react';
+import { 
+  Plus, Save, Play, X, Settings2, CheckCircle2, Copy, Download, 
+  Box, Layout, Eye, Search, ArrowRight, GripVertical, AlertCircle,
+  Cpu, Thermometer, Layers, ChevronDown, Info
+} from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
 import { Language, translations } from '../translations';
 
@@ -29,9 +33,15 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
   const [executionError, setExecutionError] = useState<string | null>(null);
 
   // UI State
-  const [activeTab, setActiveTab] = useState<'modules' | 'config'>('modules');
   const [searchModule, setSearchModule] = useState('');
   const [mobileSection, setMobileSection] = useState<'resources' | 'assembly' | 'preview'>('assembly');
+
+  // Collapse sections state
+  const [sectionsOpen, setSectionsOpen] = useState({
+    info: true,
+    structure: true,
+    params: true
+  });
 
   useEffect(() => {
      if (templateName === translations['zh'].builder.defaultTemplateName || templateName === translations['en'].builder.defaultTemplateName) {
@@ -127,6 +137,22 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
 
   const isImageResult = result?.startsWith('[IMAGE GENERATED]');
   const imageSource = isImageResult ? result?.replace('[IMAGE GENERATED] ', '') : '';
+  const isReady = selectedModuleIds.length > 0;
+
+  // Group modules by type for the library sidebar
+  const groupedModules = useMemo(() => {
+    const groups: Partial<Record<ModuleType, PromptModule[]>> = {};
+    const filtered = modules.filter(m => 
+      m.title.toLowerCase().includes(searchModule.toLowerCase()) || 
+      m.tags.some(tag => tag.toLowerCase().includes(searchModule.toLowerCase()))
+    );
+    
+    filtered.forEach(m => {
+      if (!groups[m.type]) groups[m.type] = [];
+      groups[m.type]?.push(m);
+    });
+    return groups;
+  }, [modules, searchModule]);
 
   return (
     <div className="h-full flex flex-col md:flex-row bg-slate-50 overflow-hidden relative font-sans md:rounded-tl-xl md:border-l md:border-t md:border-slate-200">
@@ -150,206 +176,319 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
       </div>
 
 
-      {/* LEFT: Resources Sidebar */}
-      <div className={`w-full md:w-80 border-r border-slate-200 flex flex-col bg-white ${mobileSection === 'resources' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
-        <div className="p-2 border-b border-slate-100 flex gap-1 bg-slate-50">
-           <button onClick={() => setActiveTab('modules')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'modules' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>{t.builder.tabModules}</button>
-           <button onClick={() => setActiveTab('config')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'config' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>{t.builder.tabConfig}</button>
+      {/* COLUMN 1: Module Library */}
+      <div className={`w-full md:w-72 border-r border-slate-200 flex flex-col bg-white shrink-0 ${mobileSection === 'resources' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
+        <div className="p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
+           <div className="relative">
+              <input 
+                type="text" 
+                placeholder={t.builder.searchModules}
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pl-9 text-xs focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
+                value={searchModule}
+                onChange={e => setSearchModule(e.target.value)}
+              />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
-          {activeTab === 'modules' ? (
-            <div className="space-y-3">
-               <div className="relative mb-2">
-                  <input 
-                    type="text" 
-                    placeholder={t.builder.searchModules}
-                    className="prod-input pl-8"
-                    value={searchModule}
-                    onChange={e => setSearchModule(e.target.value)}
-                  />
-                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-               </div>
-               <div className="space-y-2">
-                  {modules.filter(m => m.title.toLowerCase().includes(searchModule.toLowerCase())).map(module => (
-                    <div key={module.id} className="bg-white border border-slate-200 rounded-lg p-3 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer group select-none active:scale-[0.98]" onClick={() => handleAddModule(module.id)}>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${MODULE_COLORS[module.type]}`}>{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
-                        <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
-                            <Plus size={12} />
-                        </div>
-                      </div>
-                      <p className="text-xs text-slate-800 font-medium truncate mb-0.5">{module.title}</p>
-                      <p className="text-[10px] text-slate-400 line-clamp-2">{module.content}</p>
-                    </div>
-                  ))}
-               </div>
-            </div>
-          ) : (
-            <div className="space-y-6 px-1">
-               <div className="space-y-4">
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 mb-1 block">{t.builder.model}</label>
-                    <select 
-                      className="prod-input"
-                      value={config.model}
-                      onChange={(e) => setConfig({...config, model: e.target.value})}
-                    >
-                      {AVAILABLE_MODELS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                        <label className="text-xs font-semibold text-slate-700 mb-1 block">{t.builder.temperature}</label>
-                        <input type="number" step="0.1" min="0" max="2" className="prod-input" value={config.temperature} onChange={(e) => setConfig({...config, temperature: parseFloat(e.target.value)})} />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-slate-700 mb-1 block">{t.builder.topK}</label>
-                        <input type="number" className="prod-input" value={config.topK} onChange={(e) => setConfig({...config, topK: parseInt(e.target.value)})} />
-                    </div>
-                  </div>
-                  <div>
-                      <label className="text-xs font-semibold text-slate-700 mb-1 block">{t.builder.fixedEnding}</label>
-                      <textarea 
-                        className="prod-input min-h-[80px]"
-                        value={config.appendString}
-                        onChange={(e) => setConfig({...config, appendString: e.target.value})}
-                      />
-                  </div>
-               </div>
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
+           {Object.keys(groupedModules).length === 0 && (
+              <div className="text-center py-8 text-slate-400 text-xs">
+                {t.builder.noModulesFound}
+              </div>
+           )}
 
-               <div className="pt-4 border-t border-slate-200">
-                 <label className="text-xs font-semibold text-slate-500 mb-2 block uppercase tracking-wider">{t.builder.savedTemplates}</label>
-                 <div className="space-y-1">
-                   {templates.length === 0 && <div className="text-xs text-slate-400 italic p-2">No templates yet.</div>}
-                   {templates.map(tmpl => (
-                     <button key={tmpl.id} onClick={() => loadTemplate(tmpl)} className="w-full text-left text-xs text-slate-600 hover:text-blue-700 px-3 py-2 rounded hover:bg-slate-100 transition-colors flex items-center gap-2">
-                       <Layout size={12}/> {tmpl.name}
-                     </button>
-                   ))}
+           {(Object.keys(groupedModules) as ModuleType[]).map(type => (
+              <div key={type}>
+                 <div className="flex items-center gap-2 mb-2 px-1">
+                    <span className={`w-1.5 h-1.5 rounded-full ${MODULE_COLORS[type].split(' ')[0].replace('bg-', 'bg-')}`}></span>
+                    <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      {t.moduleType[type as keyof typeof t.moduleType] || type}
+                    </h3>
                  </div>
+                 <div className="space-y-2">
+                    {groupedModules[type]?.map(module => (
+                      <div 
+                        key={module.id} 
+                        className="group bg-white border border-slate-200 rounded-lg p-3 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer select-none active:scale-[0.98] relative overflow-hidden" 
+                        onClick={() => handleAddModule(module.id)}
+                      >
+                         <div className="flex justify-between items-start gap-2">
+                           <p className="text-xs text-slate-800 font-semibold truncate leading-tight">{module.title}</p>
+                           <Plus size={14} className="text-slate-300 group-hover:text-blue-600 transition-colors shrink-0" />
+                         </div>
+                         <p className="text-[10px] text-slate-400 line-clamp-2 mt-1 leading-relaxed">{module.content}</p>
+                      </div>
+                    ))}
+                 </div>
+              </div>
+           ))}
+           
+           {/* Saved Templates Quick Access */}
+           {templates.length > 0 && (
+             <div className="pt-4 border-t border-slate-100">
+               <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 px-1">{t.builder.savedTemplates}</h3>
+               <div className="space-y-1">
+                 {templates.map(tmpl => (
+                   <button key={tmpl.id} onClick={() => loadTemplate(tmpl)} className="w-full text-left text-xs text-slate-600 hover:text-blue-700 px-3 py-2 rounded hover:bg-slate-50 transition-colors flex items-center gap-2 border border-transparent hover:border-slate-200">
+                     <Layout size={12}/> {tmpl.name}
+                   </button>
+                 ))}
                </div>
-            </div>
-          )}
+             </div>
+           )}
         </div>
       </div>
 
-      {/* MIDDLE: Assembly Area */}
+      {/* COLUMN 2: Build Canvas (Center) */}
       <div className={`flex-1 flex flex-col min-w-0 bg-slate-50 relative ${mobileSection === 'assembly' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
-        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white shadow-sm z-10">
-           <input 
-              className="bg-transparent text-lg font-bold text-slate-900 outline-none placeholder-slate-400 w-full" 
-              value={templateName} 
-              onChange={e => setTemplateName(e.target.value)} 
-           />
-           <button onClick={handleSaveTemplate} className="btn-secondary text-xs whitespace-nowrap">
-             <Save size={14} /> <span className="hidden sm:inline">{t.builder.saveTemplateBtn}</span>
-           </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 relative custom-scrollbar">
-           {selectedModuleIds.length === 0 && (
-             <div className="h-full flex flex-col items-center justify-center opacity-40">
-               <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-4 text-slate-400">
-                 <Layout size={32} />
+         
+         <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+            <div className="max-w-2xl mx-auto space-y-6 pb-20">
+               
+               <div className="flex items-center gap-2 text-slate-400 mb-2">
+                  <Layers size={14} />
+                  <span className="text-xs font-bold uppercase tracking-widest">Builder Flow</span>
                </div>
-               <p className="text-slate-500 font-medium">{t.builder.dragTip}</p>
-             </div>
-           )}
 
-           {selectedModuleIds.map((id, index) => {
-             const module = modules.find(m => m.id === id);
-             if(!module) return null;
-             return (
-               <div key={`${id}-${index}`} className="group relative bg-white border border-slate-200 rounded-lg shadow-sm hover:shadow-md transition-all">
-                  <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50/50 rounded-t-lg">
-                      <GripVertical size={14} className="text-slate-300 cursor-move" />
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${MODULE_COLORS[module.type]}`}>{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
-                      <h4 className="text-xs font-semibold text-slate-700 truncate">{module.title}</h4>
-                      <button onClick={() => handleRemoveModule(index)} className="ml-auto text-slate-400 hover:text-red-500 transition-colors p-1">
-                        <X size={14} />
-                      </button>
-                  </div>
-                  <div className="p-4 text-sm text-slate-600 font-mono leading-relaxed whitespace-pre-wrap bg-white rounded-b-lg">
-                    {module.content}
+               {/* Step 1: Info */}
+               <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                  <div 
+                    className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center cursor-pointer"
+                    onClick={() => setSectionsOpen(prev => ({...prev, info: !prev.info}))}
+                  >
+                     <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
+                        <span className="text-xs font-bold text-slate-700 uppercase">Template Metadata</span>
+                     </div>
+                     <ChevronDown size={14} className={`text-slate-400 transition-transform ${sectionsOpen.info ? 'rotate-180' : ''}`} />
                   </div>
                   
-                  {/* Connector Line */}
-                  {index < selectedModuleIds.length - 1 && (
-                    <div className="absolute left-1/2 -bottom-6 w-px h-6 bg-slate-300 z-0"></div>
+                  {sectionsOpen.info && (
+                    <div className="p-5">
+                       <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t.library.labelTitle}</label>
+                       <div className="flex gap-2">
+                         <input 
+                            className="flex-1 bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-blue-500 transition-all" 
+                            value={templateName} 
+                            onChange={e => setTemplateName(e.target.value)}
+                            placeholder="Name your template..." 
+                         />
+                         <button onClick={handleSaveTemplate} className="btn-secondary whitespace-nowrap px-3" title={t.builder.saveTemplateBtn}>
+                           <Save size={14} />
+                         </button>
+                       </div>
+                    </div>
                   )}
                </div>
-             )
-           })}
 
-           {/* Fixed Ending Node */}
-           {config.appendString && (
-             <div className="mt-8 border-t-2 border-dashed border-slate-200 pt-6 relative">
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-50 px-2 text-[10px] text-slate-400 uppercase font-bold tracking-wider">System Append</span>
-                <div className="bg-slate-100 border border-slate-200 p-4 rounded-lg opacity-75">
-                  <div className="flex items-center gap-2 mb-2 text-slate-500">
-                     <Settings2 size={12} />
-                     <span className="text-[10px] font-bold uppercase">{t.builder.fixedEnding}</span>
+               {/* Connector */}
+               <div className="flex justify-center h-4"><div className="w-px bg-slate-200 h-full"></div></div>
+
+               {/* Step 2: Structure */}
+               <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[150px]">
+                  <div 
+                     className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center cursor-pointer"
+                     onClick={() => setSectionsOpen(prev => ({...prev, structure: !prev.structure}))}
+                  >
+                     <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">2</div>
+                        <span className="text-xs font-bold text-slate-700 uppercase">Prompt Structure</span>
+                        <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-[10px] font-mono">{selectedModuleIds.length}</span>
+                     </div>
+                     <ChevronDown size={14} className={`text-slate-400 transition-transform ${sectionsOpen.structure ? 'rotate-180' : ''}`} />
                   </div>
-                  <p className="text-xs font-mono text-slate-600 whitespace-pre-wrap">{config.appendString}</p>
-                </div>
-             </div>
-           )}
-           
-           <div className="h-24 md:hidden"></div>
-           <button 
-             onClick={handleRun}
-             disabled={isRunning || selectedModuleIds.length === 0}
-             className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-50 disabled:bg-slate-300 disabled:shadow-none transition-all active:scale-90"
-           >
-             {isRunning ? <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div> : <Play fill="currentColor" size={24} />}
-           </button>
-        </div>
+
+                  {sectionsOpen.structure && (
+                    <div className="p-5 bg-slate-50/30">
+                       {selectedModuleIds.length === 0 ? (
+                          <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 flex flex-col items-center justify-center text-center">
+                             <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-3">
+                                <Plus size={20} />
+                             </div>
+                             <p className="text-sm font-medium text-slate-600">Start Building</p>
+                             <p className="text-xs text-slate-400 mt-1 max-w-[200px]">{t.builder.dragTip}</p>
+                          </div>
+                       ) : (
+                          <div className="space-y-0 relative">
+                             {/* Connecting Line for items */}
+                             {selectedModuleIds.length > 1 && (
+                                <div className="absolute left-[19px] top-4 bottom-4 w-px bg-slate-200 -z-0"></div>
+                             )}
+
+                             {selectedModuleIds.map((id, index) => {
+                               const module = modules.find(m => m.id === id);
+                               if(!module) return null;
+                               return (
+                                 <div key={`${id}-${index}`} className="group relative pl-10 pb-4 last:pb-0 z-10">
+                                    {/* Node Dot */}
+                                    <div className="absolute left-[11px] top-3.5 w-[17px] h-[17px] bg-white border-2 border-slate-200 rounded-full flex items-center justify-center z-10">
+                                       <div className={`w-1.5 h-1.5 rounded-full ${MODULE_COLORS[module.type].split(' ')[0].replace('bg-', 'bg-')}`}></div>
+                                    </div>
+
+                                    <div className="bg-white border border-slate-200 rounded-lg shadow-sm group-hover:border-blue-300 transition-colors">
+                                        <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-50">
+                                            <GripVertical size={12} className="text-slate-300 cursor-move" />
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase">{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
+                                            <div className="flex-1"></div>
+                                            <button onClick={() => handleRemoveModule(index)} className="text-slate-400 hover:text-red-500 transition-colors p-1">
+                                              <X size={14} />
+                                            </button>
+                                        </div>
+                                        <div className="px-3 py-2">
+                                           <h4 className="text-xs font-bold text-slate-700 mb-1">{module.title}</h4>
+                                           <p className="text-xs text-slate-500 font-mono line-clamp-2">{module.content}</p>
+                                        </div>
+                                    </div>
+                                 </div>
+                               )
+                             })}
+                          </div>
+                       )}
+                    </div>
+                  )}
+               </div>
+
+               {/* Connector */}
+               <div className="flex justify-center h-4"><div className="w-px bg-slate-200 h-full"></div></div>
+
+               {/* Step 3: Parameters (Config) */}
+               <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                   <div 
+                     className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center cursor-pointer"
+                     onClick={() => setSectionsOpen(prev => ({...prev, params: !prev.params}))}
+                   >
+                     <div className="flex items-center gap-2">
+                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">3</div>
+                        <span className="text-xs font-bold text-slate-700 uppercase">Parameters</span>
+                     </div>
+                     <ChevronDown size={14} className={`text-slate-400 transition-transform ${sectionsOpen.params ? 'rotate-180' : ''}`} />
+                  </div>
+
+                  {sectionsOpen.params && (
+                     <div className="p-5 space-y-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div>
+                              <label className="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1.5">
+                                 <Cpu size={12} /> {t.builder.model}
+                              </label>
+                              <select 
+                                className="prod-input text-xs"
+                                value={config.model}
+                                onChange={(e) => setConfig({...config, model: e.target.value})}
+                              >
+                                {AVAILABLE_MODELS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                              </select>
+                           </div>
+                           <div>
+                              <label className="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1.5">
+                                 <Thermometer size={12} /> {t.builder.temperature}: {config.temperature}
+                              </label>
+                              <input 
+                                type="range" min="0" max="2" step="0.1" 
+                                className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                value={config.temperature} 
+                                onChange={(e) => setConfig({...config, temperature: parseFloat(e.target.value)})} 
+                              />
+                           </div>
+                        </div>
+
+                        <div>
+                           <label className="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1.5">
+                              <Settings2 size={12} /> {t.builder.fixedEnding}
+                           </label>
+                           <textarea 
+                              className="prod-input min-h-[80px] font-mono text-xs"
+                              value={config.appendString}
+                              onChange={(e) => setConfig({...config, appendString: e.target.value})}
+                              placeholder="System instructions appended to the end..."
+                           />
+                        </div>
+                     </div>
+                  )}
+               </div>
+
+            </div>
+         </div>
       </div>
 
-      {/* RIGHT: Output / Preview */}
-      <div className={`w-full md:w-[400px] border-l border-slate-200 flex flex-col bg-white ${mobileSection === 'preview' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
-         <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col gap-3">
-           <div className="flex justify-between items-center">
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-                <ArrowRight size={14} className="text-blue-500" />
-                {t.builder.terminalOutput}
-              </h3>
-           </div>
-           
-           <button 
-             onClick={handleRun}
-             disabled={isRunning || selectedModuleIds.length === 0}
-             className={`w-full py-2.5 font-medium flex items-center justify-center gap-2 transition-all text-sm rounded-md shadow-sm ${
-               isRunning ? 'bg-slate-100 text-slate-400 cursor-wait' : 'bg-blue-600 hover:bg-blue-700 text-white'
-             }`}
-           >
-             {isRunning ? t.builder.processing : <><Play size={14} fill="currentColor" /> {t.builder.runBtn}</>}
-           </button>
+      {/* COLUMN 3: Run & Output (Right) */}
+      <div className={`w-full md:w-96 border-l border-slate-200 flex flex-col bg-white shrink-0 ${mobileSection === 'preview' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
+         
+         {/* 3.1 Runner Header */}
+         <div className="p-5 border-b border-slate-200 bg-white sticky top-0 z-10 space-y-4">
+            <div className="flex items-center justify-between">
+               <h3 className="text-sm font-bold text-slate-800">Runner</h3>
+               <div className="flex items-center gap-1.5">
+                  {isReady ? (
+                     <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <CheckCircle2 size={10} /> Ready
+                     </span>
+                  ) : (
+                     <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <AlertCircle size={10} /> Missing Steps
+                     </span>
+                  )}
+               </div>
+            </div>
+
+            <button 
+               onClick={handleRun}
+               disabled={isRunning || !isReady}
+               className={`w-full py-3 font-bold flex items-center justify-center gap-2 transition-all text-sm rounded-lg shadow-md ${
+                  isRunning 
+                  ? 'bg-slate-100 text-slate-400 cursor-wait shadow-none' 
+                  : !isReady
+                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                     : 'bg-blue-600 hover:bg-blue-700 text-white hover:shadow-lg active:scale-[0.98]'
+               }`}
+            >
+               {isRunning ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full"></div>
+                    {t.builder.processing}
+                  </>
+               ) : (
+                  <><Play size={16} fill="currentColor" /> {t.builder.runBtn}</>
+               )}
+            </button>
+            
+            {!isReady && (
+               <p className="text-[10px] text-center text-slate-400">
+                  Add at least one module to start.
+               </p>
+            )}
          </div>
 
-         <div className="flex-1 overflow-y-auto p-6 font-mono text-sm custom-scrollbar bg-slate-50 relative">
+         {/* 3.2 Output Area */}
+         <div className="flex-1 overflow-y-auto p-5 font-mono text-sm custom-scrollbar bg-slate-50 relative">
             {executionError && (
-               <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 mb-4 text-xs">
-                 <p className="font-bold mb-1">Execution Error</p>
+               <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 mb-4 text-xs animate-in slide-in-from-top-2">
+                 <p className="font-bold mb-1 flex items-center gap-1"><AlertCircle size={12}/> Execution Error</p>
                  {executionError}
                </div>
             )}
             
             {!result && !isRunning && !executionError && (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-300 pointer-events-none select-none">
-                 <div className="text-center">
-                    <p className="text-sm font-medium">{t.builder.awaitingInput}</p>
-                 </div>
+              <div className="h-full flex flex-col items-center justify-center text-slate-300 pointer-events-none select-none">
+                 <ArrowRight size={32} className="mb-2 opacity-20" />
+                 <p className="text-xs font-medium uppercase tracking-wide opacity-50">{t.builder.awaitingInput}</p>
               </div>
             )}
 
+            {isRunning && !result && (
+               <div className="space-y-3 animate-pulse">
+                  <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                  <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                  <div className="h-4 bg-slate-200 rounded w-2/3"></div>
+               </div>
+            )}
+
             {result && (
-              <div className="animate-in fade-in duration-300 pb-10">
+              <div className="animate-in fade-in duration-500">
                 <div className="flex justify-between items-center mb-4 sticky top-0 bg-slate-50/95 backdrop-blur py-2 border-b border-slate-200 z-10">
-                   <span className="text-emerald-600 font-bold flex items-center gap-1.5 text-xs">
-                     <CheckCircle2 size={14}/> {t.builder.processComplete}
-                   </span>
+                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Output</span>
                    <div className="flex gap-1">
                      {isImageResult && (
                        <button onClick={() => { 
@@ -357,9 +496,9 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                           link.href = imageSource;
                           link.download = `hotker-${Date.now()}.png`;
                           link.click();
-                       }} className="btn-icon" title={t.builder.downloadImage}><Download size={14}/></button>
+                       }} className="btn-icon bg-white border border-slate-200" title={t.builder.downloadImage}><Download size={12}/></button>
                      )}
-                     <button onClick={() => navigator.clipboard.writeText(result)} className="btn-icon" title={t.builder.copy}><Copy size={14}/></button>
+                     <button onClick={() => navigator.clipboard.writeText(result)} className="btn-icon bg-white border border-slate-200" title={t.builder.copy}><Copy size={12}/></button>
                    </div>
                 </div>
                 
@@ -368,7 +507,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                       <img src={imageSource} alt="Generated" className="w-full h-auto" />
                    </div>
                 ) : (
-                   <div className="text-slate-800 whitespace-pre-wrap leading-relaxed">
+                   <div className="text-slate-800 whitespace-pre-wrap leading-relaxed text-xs">
                      {result.split('\n').map((line, i) => (
                        <div key={i} className="min-h-[1.5em]">
                          {line}
