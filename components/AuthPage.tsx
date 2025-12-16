@@ -149,7 +149,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
             <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className="text-slate-400 hover:text-slate-700 text-xs font-medium flex items-center gap-2 transition-colors">
                <Globe size={14} /> {lang === 'zh' ? 'Switch to English' : '切换中文'}
             </button>
-            <a href={AUTHOR_INFO.website} target="_blank" className="text-slate-400 hover:text-slate-700 text-xs font-medium transition-colors">{t.help}</a>
+            <a href={AUTHOR_INFO.github} target="_blank" className="text-slate-400 hover:text-slate-700 text-xs font-medium transition-colors">{t.help}</a>
         </div>
       </div>
     </div>
