@@ -133,6 +133,24 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedModules = filteredModules.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
+  // Pagination Window Generator
+  const getPageNumbers = () => {
+    const windowSize = 5;
+    const pages = [];
+    if (totalPages <= windowSize) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
+      let end = start + windowSize - 1;
+      if (end > totalPages) {
+        end = totalPages;
+        start = Math.max(1, end - windowSize + 1);
+      }
+      for (let i = start; i <= end; i++) pages.push(i);
+    }
+    return pages;
+  };
+
   return (
     <div className="h-full flex flex-col bg-slate-50/50 md:rounded-tl-xl md:border-l md:border-t md:border-slate-200 overflow-hidden">
       
@@ -374,9 +392,22 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                         <ChevronLeft size={16} />
                     </button>
                     
-                    <span className="text-xs font-medium text-slate-700 bg-white px-3 py-2 rounded-md border border-slate-200 min-w-[80px] text-center shadow-sm">
-                        Page {currentPage} of {totalPages}
-                    </span>
+                    {/* Numeric Pagination Buttons */}
+                    <div className="flex items-center gap-1">
+                      {getPageNumbers().map(pageNum => (
+                        <button
+                          key={pageNum}
+                          onClick={() => setCurrentPage(pageNum)}
+                          className={`min-w-[32px] h-8 flex items-center justify-center rounded-md text-xs font-medium transition-all ${
+                            currentPage === pageNum
+                              ? 'bg-slate-900 text-white shadow-sm'
+                              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      ))}
+                    </div>
                     
                     <button 
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
