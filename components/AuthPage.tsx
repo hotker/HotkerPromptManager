@@ -130,7 +130,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
 
         <div className="my-6 flex items-center gap-3">
            <div className="flex-1 h-px bg-slate-200"></div>
-           <span className="text-xs text-slate-400 font-medium">OR</span>
+           <span className="text-xs text-slate-400 font-medium">{t.or}</span>
            <div className="flex-1 h-px bg-slate-200"></div>
         </div>
 

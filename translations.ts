@@ -2,6 +2,11 @@ export type Language = 'zh' | 'en';
 
 export const translations = {
   zh: {
+    // App Global
+    app: {
+      initializing: '正在初始化工作区...',
+      syncing: '正在同步数据...'
+    },
     // 核心业务类型
     moduleType: {
       '角色': '角色',
@@ -20,7 +25,12 @@ export const translations = {
       builder: '构建台',
       history: '历史记录',
       settings: '用户设置',
+      menu: '菜单',
+      freePlan: '免费版',
+      online: '在线',
       apiKeyConfig: 'API Key 配置',
+      apiConfigTitle: 'API 配置',
+      apiConfigDesc: '连接您的 Gemini API Key',
       changePassword: '修改密码',
       logout: '退出登录',
       apiKeyConnected: 'API 连接正常',
@@ -36,7 +46,9 @@ export const translations = {
       enterKey: '在此输入 API Key',
       establishConn: '建立连接',
       version: '版本',
-      github: '开源仓库'
+      github: '开源仓库',
+      cancel: '取消',
+      connect: '连接 API'
     },
     // 仪表盘
     dashboard: {
@@ -53,18 +65,22 @@ export const translations = {
       importBtn: '导入数据',
       importWarningTitle: '注意',
       importWarningDesc: '导入操作将会覆盖当前界面显示的数据。',
+      invalidBackup: '无效的备份格式',
+      readError: '读取文件失败',
       statsModules: '模块总数',
       statsTemplates: '保存模板',
       statsSuccess: '成功率',
       chartLatency: '延迟 (最近运行)',
       chartQuality: '质量控制',
       success: '成功',
-      failure: '失败'
+      failure: '失败',
+      engineVersion: '引擎版本'
     },
     // 模块库
     library: {
       title: '模块库',
       subtitle: '管理可复用的提示词片段 (Hotker 积木)',
+      modulesAvailable: '个可用模块',
       createBtn: '创建模块',
       searchPlaceholder: '搜索模块...',
       allTypes: '全部类型',
@@ -78,12 +94,19 @@ export const translations = {
       labelImage: '图片链接 (可选)',
       labelContent: '提示词内容 (Core Prompt)',
       labelTags: '标签 (逗号分隔)',
+      invalidImage: '无效',
+      pasteImageTip: '粘贴直接图片 URL 以在库中显示缩略图。',
       btnCancel: '取消',
       btnSave: '确认写入',
       placeholderTitle: '例如：资深 React 工程师角色',
       placeholderContent: '在此输入实际的提示词文本块...',
       noVisualData: '无视觉数据',
-      rawInput: '原始内容'
+      rawInput: '原始内容',
+      noModulesFound: '未找到模块',
+      showing: '显示',
+      to: '至',
+      of: '共',
+      results: '条结果'
     },
     // 构建器
     builder: {
@@ -94,29 +117,47 @@ export const translations = {
       tabConfig: '参数配置',
       searchModules: '搜索积木...',
       noModulesFound: '未找到模块。请先在库中创建。',
-      fixedEnding: '固定结尾参数',
+      flowTitle: '构建流程',
+      saveTemplateBtn: '保存模板',
+      defaultTemplateName: '新建 Hotker 模板',
+      structureTitle: '提示词结构',
+      startBuilding: '开始构建',
+      dragTip: '点击侧边栏的 + 添加模块',
+      mobileAddTip: '去添加素材',
+      paramTitle: '参数设置',
       model: '模型选择',
       temperature: '温度 (Temperature)',
       topK: '采样 (Top K)',
       aspectRatio: '图片比例',
       resolution: '分辨率 (Resolution)',
-      savedTemplates: '已保存模板',
-      noSavedTemplates: '暂无保存的模板。',
-      defaultTemplateName: '新建 Hotker 模板',
-      saveTemplateBtn: '保存模板',
-      dragTip: '点击侧边栏的 + 添加模块',
-      mobileAddTip: '去添加素材',
+      fixedEnding: '固定结尾参数',
+      runnerTitle: '运行器',
+      statusReady: '就绪',
+      statusMissing: '缺少步骤',
+      processing: '数据处理中...',
       runBtn: '执行生成',
-      thinking: '思考中...',
+      missingModuleTip: '请添加至少一个模块以开始。',
+      executionError: '执行错误',
+      awaitingInput: '等待输入流...',
+      outputTitle: '输出',
+      downloadImage: '下载图片',
+      copy: '复制文本',
       success: '成功',
       failed: '生成失败',
-      copy: '复制文本',
-      downloadImage: '下载图片',
       terminalOutput: '终端输出',
-      awaitingInput: '等待输入流...',
       processComplete: '处理完成',
       systemError: '系统错误',
-      processing: '数据处理中...'
+      thinking: '思考中...',
+      savedTemplates: '已保存模板',
+      noSavedTemplates: '暂无保存的模板。',
+      options: {
+        auto: '自动',
+        square: '1:1 (正方形)',
+        landscape: '16:9 (横向)',
+        portrait: '9:16 (纵向)',
+        standard: '4:3 (标准)',
+        portrait34: '3:4 (纵向)'
+      }
     },
     // 历史记录
     history: {
@@ -135,6 +176,7 @@ export const translations = {
       passwordPlaceholder: '口令 (Password)',
       enterBtn: '接入系统',
       createBtn: '创建身份',
+      or: '或',
       googleBtn: '连接 Google 网络',
       defaultError: '访问被拒绝',
       googleError: '网络错误',
@@ -155,6 +197,10 @@ export const translations = {
     }
   },
   en: {
+    app: {
+      initializing: 'Initializing workspace...',
+      syncing: 'Syncing data...'
+    },
     moduleType: {
       '角色': 'Role',
       '背景': 'Context',
@@ -171,7 +217,12 @@ export const translations = {
       builder: 'Builder',
       history: 'History',
       settings: 'Settings',
+      menu: 'Menu',
+      freePlan: 'Free Plan',
+      online: 'Online',
       apiKeyConfig: 'API Key Config',
+      apiConfigTitle: 'API Configuration',
+      apiConfigDesc: 'Connect your Gemini API Key',
       changePassword: 'Change Password',
       logout: 'Logout',
       apiKeyConnected: 'API Connected',
@@ -187,7 +238,9 @@ export const translations = {
       enterKey: 'ENTER_API_KEY_HERE',
       establishConn: 'ESTABLISH CONNECTION',
       version: 'VERSION',
-      github: 'GITHUB'
+      github: 'GITHUB',
+      cancel: 'Cancel',
+      connect: 'Connect API'
     },
     dashboard: {
       welcome: 'Welcome back',
@@ -203,17 +256,21 @@ export const translations = {
       importBtn: 'IMPORT',
       importWarningTitle: 'Note',
       importWarningDesc: 'Importing will overwrite current data.',
+      invalidBackup: 'Invalid backup format',
+      readError: 'Failed to read file',
       statsModules: 'TOTAL MODULES',
       statsTemplates: 'SAVED TEMPLATES',
       statsSuccess: 'SUCCESS RATE',
       chartLatency: 'LATENCY (RECENT)',
       chartQuality: 'QUALITY CONTROL',
       success: 'Success',
-      failure: 'Failure'
+      failure: 'Failure',
+      engineVersion: 'Engine Version'
     },
     library: {
       title: 'Library',
       subtitle: 'Manage reusable prompt blocks (Hotker Bricks)',
+      modulesAvailable: 'modules available',
       createBtn: 'Create Module',
       searchPlaceholder: 'Search modules...',
       allTypes: 'All Types',
@@ -227,12 +284,19 @@ export const translations = {
       labelImage: 'IMAGE URL',
       labelContent: 'CORE PROMPT CONTENT',
       labelTags: 'TAGS',
+      invalidImage: 'Invalid',
+      pasteImageTip: 'Paste a direct image URL to display a thumbnail in the library.',
       btnCancel: 'CANCEL',
       btnSave: 'CONFIRM WRITE',
       placeholderTitle: 'e.g. Senior React Engineer',
       placeholderContent: 'Enter the actual prompt text block here...',
       noVisualData: 'NO_VISUAL_DATA',
-      rawInput: 'RAW_INPUT'
+      rawInput: 'RAW_INPUT',
+      noModulesFound: 'No modules found',
+      showing: 'Showing',
+      to: 'to',
+      of: 'of',
+      results: 'results'
     },
     builder: {
       tabResources: 'Resources',
@@ -242,29 +306,47 @@ export const translations = {
       tabConfig: 'CONFIG',
       searchModules: 'Search bricks...',
       noModulesFound: 'No modules found.',
-      fixedEnding: 'FIXED ENDING PARAMS',
+      flowTitle: 'Builder Flow',
+      saveTemplateBtn: 'SAVE TEMPLATE',
+      defaultTemplateName: 'New Hotker Template',
+      structureTitle: 'Prompt Structure',
+      startBuilding: 'Start Building',
+      dragTip: 'Click + in sidebar to add modules',
+      mobileAddTip: 'Go to Resources',
+      paramTitle: 'Parameters',
       model: 'MODEL',
       temperature: 'TEMPERATURE',
       topK: 'TOP K',
       aspectRatio: 'ASPECT RATIO',
       resolution: 'RESOLUTION',
-      savedTemplates: 'SAVED TEMPLATES',
-      noSavedTemplates: 'No saved templates.',
-      defaultTemplateName: 'New Hotker Template',
-      saveTemplateBtn: 'SAVE TEMPLATE',
-      dragTip: 'Click + in sidebar to add modules',
-      mobileAddTip: 'Go to Resources',
+      fixedEnding: 'FIXED ENDING PARAMS',
+      runnerTitle: 'Runner',
+      statusReady: 'Ready',
+      statusMissing: 'Missing Steps',
+      processing: 'PROCESSING_DATA...',
       runBtn: 'EXECUTE RUN',
-      thinking: 'Thinking...',
+      missingModuleTip: 'Add at least one module to start.',
+      executionError: 'Execution Error',
+      awaitingInput: 'AWAITING_INPUT_STREAM',
+      outputTitle: 'Output',
+      downloadImage: 'Download',
+      copy: 'Copy',
       success: 'Success',
       failed: 'Failed',
-      copy: 'Copy',
-      downloadImage: 'Download',
       terminalOutput: 'TERMINAL_OUTPUT',
-      awaitingInput: 'AWAITING_INPUT_STREAM',
       processComplete: 'PROCESS_COMPLETE',
       systemError: 'SYSTEM_ERROR',
-      processing: 'PROCESSING_DATA...'
+      thinking: 'Thinking...',
+      savedTemplates: 'SAVED TEMPLATES',
+      noSavedTemplates: 'No saved templates.',
+      options: {
+        auto: 'Auto',
+        square: '1:1 (Square)',
+        landscape: '16:9 (Landscape)',
+        portrait: '9:16 (Portrait)',
+        standard: '4:3 (Standard)',
+        portrait34: '3:4 (Portrait)'
+      }
     },
     history: {
       title: 'Run History & Review',
@@ -281,6 +363,7 @@ export const translations = {
       passwordPlaceholder: 'PASSPHRASE',
       enterBtn: 'JACK IN',
       createBtn: 'CREATE IDENTITY',
+      or: 'OR',
       googleBtn: 'LINK GOOGLE NETWORK',
       defaultError: 'ACCESS DENIED',
       googleError: 'NETWORK ERROR',

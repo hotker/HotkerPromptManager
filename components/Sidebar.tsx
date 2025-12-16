@@ -90,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="md:hidden fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm transition-opacity" onClick={() => setIsMobileMenuOpen(false)}>
            <div className="absolute top-0 bottom-0 right-0 w-80 bg-white shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
                <div className="flex justify-between items-center p-6 border-b border-slate-100">
-                <span className="font-bold text-slate-900 text-lg">Menu</span>
+                <span className="font-bold text-slate-900 text-lg">{t.sidebar.menu}</span>
                 <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-500 hover:bg-slate-100 rounded-full"><X size={20}/></button>
               </div>
 
@@ -122,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                      </div>
                      <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium text-slate-900 truncate">{currentUser?.username}</div>
-                        <div className="text-xs text-slate-500">Free Plan</div>
+                        <div className="text-xs text-slate-500">{t.sidebar.freePlan}</div>
                      </div>
                  </div>
 
@@ -194,7 +194,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                  <p className="text-xs font-medium text-slate-900 truncate">{currentUser?.username}</p>
                  <div className="flex items-center gap-1 mt-0.5">
                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                   <span className="text-[10px] text-slate-500">Online</span>
+                   <span className="text-[10px] text-slate-500">{t.sidebar.online}</span>
                  </div>
               </div>
            </div>
@@ -218,8 +218,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <KeyRound size={20} />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">API Configuration</h3>
-                    <p className="text-slate-500 text-xs mt-0.5">Connect your Gemini API Key</p>
+                    <h3 className="text-base font-bold text-slate-900">{t.sidebar.apiConfigTitle}</h3>
+                    <p className="text-slate-500 text-xs mt-0.5">{t.sidebar.apiConfigDesc}</p>
                   </div>
                </div>
                <button onClick={() => setIsKeyModalOpen(false)} className="text-slate-400 hover:text-slate-900"><X size={20} /></button>
@@ -234,9 +234,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               autoFocus
             />
             <div className="flex justify-end gap-3">
-               <button onClick={() => setIsKeyModalOpen(false)} className="btn-secondary">Cancel</button>
+               <button onClick={() => setIsKeyModalOpen(false)} className="btn-secondary">{t.sidebar.cancel}</button>
                <button onClick={handleSaveKey} className="btn-primary">
-                 Connect API
+                 {t.sidebar.connect}
                </button>
             </div>
           </div>

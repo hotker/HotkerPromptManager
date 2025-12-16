@@ -9,7 +9,7 @@ import { ViewState, PromptModule, PromptTemplate, RunLog, User } from './types';
 import { authService } from './services/authService';
 import { apiService, UserData } from './services/apiService';
 import { INITIAL_MODULES } from './constants';
-import { Language } from './translations';
+import { Language, translations } from './translations';
 
 // Debounce Hook to prevent API spamming
 function useDebounce<T>(value: T, delay: number): T {
@@ -37,6 +37,8 @@ const App = () => {
     setLangState(l);
     localStorage.setItem('hotker_lang', l);
   };
+  
+  const t = translations[lang];
 
   useEffect(() => {
     const user = authService.getCurrentUser();
@@ -58,7 +60,7 @@ const App = () => {
   if (isLoadingAuth) {
     return <div className="h-screen bg-slate-50 flex flex-col items-center justify-center text-slate-500">
        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-       <span className="font-medium text-sm tracking-wide">Initializing workspace...</span>
+       <span className="font-medium text-sm tracking-wide">{t.app.initializing}</span>
     </div>;
   }
 
@@ -83,6 +85,7 @@ const AuthenticatedApp: React.FC<{
   setLang: (l: Language) => void
 }> = ({ currentUser, onLogout, lang, setLang }) => {
   const [view, setView] = useState<ViewState>('dashboard');
+  const t = translations[lang];
   
   // Data State
   const [modules, setModules] = useState<PromptModule[]>([]);
@@ -154,7 +157,7 @@ const AuthenticatedApp: React.FC<{
     return (
       <div className="h-screen bg-slate-50 flex flex-col items-center justify-center gap-4 text-slate-500">
         <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm font-medium">Syncing data...</p>
+        <p className="text-sm font-medium">{t.app.syncing}</p>
       </div>
     );
   }

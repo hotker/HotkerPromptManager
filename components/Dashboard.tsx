@@ -92,7 +92,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         const jsonStr = event.target?.result as string;
         const parsed = JSON.parse(jsonStr);
         if (!parsed.data || !Array.isArray(parsed.data.modules)) {
-          alert("Invalid backup format");
+          alert(t.dashboard.invalidBackup);
           return;
         }
         if (confirm(`${t.dashboard.importWarningDesc}`)) {
@@ -102,7 +102,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           alert(t.dashboard.success);
         }
       } catch (err) {
-        alert("Failed to read file.");
+        alert(t.dashboard.readError);
       } finally {
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
@@ -233,7 +233,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       <div className="py-8 border-t border-slate-200 text-center">
           <p className="text-xs text-slate-400 font-medium">
-             Engine Version 2.1.0 • {AUTHOR_INFO.name}
+             {t.dashboard.engineVersion} 2.1.0 • {AUTHOR_INFO.name}
           </p>
       </div>
     </div>

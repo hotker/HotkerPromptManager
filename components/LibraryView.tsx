@@ -171,7 +171,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
         <div>
           <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t.library.title}</h2>
-          <p className="text-xs text-slate-500 mt-1">{modules.length} modules available</p>
+          <p className="text-xs text-slate-500 mt-1">{modules.length} {t.library.modulesAvailable}</p>
         </div>
         
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -223,7 +223,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
         {paginatedModules.length === 0 ? (
            <div className="h-64 flex flex-col items-center justify-center text-slate-400">
               <Search size={48} className="mb-4 opacity-20" />
-              <p>No modules found</p>
+              <p>{t.library.noModulesFound}</p>
            </div>
         ) : viewMode === 'list' ? (
           // LIST VIEW
@@ -388,7 +388,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                        <span className="text-[10px] text-slate-400 font-medium">{module.content.length} chars</span>
                        {copiedId === module.id && (
                           <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium animate-in fade-in slide-in-from-bottom-1">
-                             <Check size={10} /> Copied
+                             <Check size={10} /> {t.library.copySuccess}
                           </span>
                        )}
                     </div>
@@ -402,7 +402,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
         {totalPages > 1 && (
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 pt-6 pb-2 gap-4">
                 <div className="text-xs text-slate-500 order-2 sm:order-1">
-                    Showing <span className="font-medium">{startIndex + 1}</span> to <span className="font-medium">{Math.min(startIndex + ITEMS_PER_PAGE, filteredModules.length)}</span> of <span className="font-medium">{filteredModules.length}</span> results
+                    {t.library.showing} <span className="font-medium">{startIndex + 1}</span> {t.library.to} <span className="font-medium">{Math.min(startIndex + ITEMS_PER_PAGE, filteredModules.length)}</span> {t.library.of} <span className="font-medium">{filteredModules.length}</span> {t.library.results}
                 </div>
                 
                 <div className="flex items-center gap-2 order-1 sm:order-2">
@@ -462,7 +462,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelTitle}</label>
-                  <input className="prod-input font-bold" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Senior React Dev" autoFocus/>
+                  <input className="prod-input font-bold" value={title} onChange={e => setTitle(e.target.value)} placeholder={t.library.placeholderTitle} autoFocus/>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -498,11 +498,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                       {imageUrl && (
                           <div className="w-10 h-10 rounded border border-slate-200 bg-slate-50 shrink-0 overflow-hidden relative group">
                              <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                             <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400 text-[8px] -z-10">Invalid</div>
+                             <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400 text-[8px] -z-10">{t.library.invalidImage}</div>
                           </div>
                       )}
                    </div>
-                   <p className="text-[10px] text-slate-400 mt-1 ml-1">Paste a direct image URL to display a thumbnail in the library.</p>
+                   <p className="text-[10px] text-slate-400 mt-1 ml-1">{t.library.pasteImageTip}</p>
                 </div>
 
                 <div>
@@ -511,7 +511,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                      className="prod-input min-h-[200px] font-mono text-sm leading-relaxed" 
                      value={content} 
                      onChange={e => setContent(e.target.value)} 
-                     placeholder="Enter your prompt content here..."
+                     placeholder={t.library.placeholderContent}
                    />
                 </div>
 

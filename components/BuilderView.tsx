@@ -277,7 +277,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2 text-slate-400">
                         <Layers size={14} />
-                        <span className="text-xs font-bold uppercase tracking-widest">Builder Flow</span>
+                        <span className="text-xs font-bold uppercase tracking-widest">{t.builder.flowTitle}</span>
                     </div>
                     <button 
                       onClick={handleSaveTemplate} 
@@ -303,7 +303,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                   >
                      <div className="flex items-center gap-2">
                         <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
-                        <span className="text-xs font-bold text-slate-700 uppercase">Prompt Structure</span>
+                        <span className="text-xs font-bold text-slate-700 uppercase">{t.builder.structureTitle}</span>
                         <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-[10px] font-mono">{selectedModuleIds.length}</span>
                      </div>
                      <ChevronDown size={14} className={`text-slate-400 transition-transform ${sectionsOpen.structure ? 'rotate-180' : ''}`} />
@@ -316,7 +316,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                              <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 mb-3">
                                 <Plus size={20} />
                              </div>
-                             <p className="text-sm font-medium text-slate-600">Start Building</p>
+                             <p className="text-sm font-medium text-slate-600">{t.builder.startBuilding}</p>
                              <p className="text-xs text-slate-400 mt-1 max-w-[200px]">{t.builder.dragTip}</p>
                           </div>
                        ) : (
@@ -400,7 +400,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                    >
                      <div className="flex items-center gap-2">
                         <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">2</div>
-                        <span className="text-xs font-bold text-slate-700 uppercase">Parameters</span>
+                        <span className="text-xs font-bold text-slate-700 uppercase">{t.builder.paramTitle}</span>
                      </div>
                      <ChevronDown size={14} className={`text-slate-400 transition-transform ${sectionsOpen.params ? 'rotate-180' : ''}`} />
                   </div>
@@ -440,12 +440,12 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                                 value={config.aspectRatio || 'auto'}
                                 onChange={(e) => setConfig({...config, aspectRatio: e.target.value})}
                               >
-                                <option value="auto">Auto</option>
-                                <option value="1:1">1:1 (Square)</option>
-                                <option value="16:9">16:9 (Landscape)</option>
-                                <option value="9:16">9:16 (Portrait)</option>
-                                <option value="4:3">4:3 (Standard)</option>
-                                <option value="3:4">3:4 (Portrait)</option>
+                                <option value="auto">{t.builder.options.auto}</option>
+                                <option value="1:1">{t.builder.options.square}</option>
+                                <option value="16:9">{t.builder.options.landscape}</option>
+                                <option value="9:16">{t.builder.options.portrait}</option>
+                                <option value="4:3">{t.builder.options.standard}</option>
+                                <option value="3:4">{t.builder.options.portrait34}</option>
                               </select>
                            </div>
                            <div>
@@ -489,15 +489,15 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
          {/* 3.1 Runner Header */}
          <div className="p-5 border-b border-slate-200 bg-white sticky top-0 z-10 space-y-4">
             <div className="flex items-center justify-between">
-               <h3 className="text-sm font-bold text-slate-800">Runner</h3>
+               <h3 className="text-sm font-bold text-slate-800">{t.builder.runnerTitle}</h3>
                <div className="flex items-center gap-1.5">
                   {isReady ? (
                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <CheckCircle2 size={10} /> Ready
+                        <CheckCircle2 size={10} /> {t.builder.statusReady}
                      </span>
                   ) : (
                      <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <AlertCircle size={10} /> Missing Steps
+                        <AlertCircle size={10} /> {t.builder.statusMissing}
                      </span>
                   )}
                </div>
@@ -526,7 +526,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
             
             {!isReady && (
                <p className="text-[10px] text-center text-slate-400">
-                  Add at least one module to start.
+                  {t.builder.missingModuleTip}
                </p>
             )}
          </div>
@@ -535,7 +535,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
          <div className="flex-1 overflow-y-auto p-5 font-mono text-sm custom-scrollbar bg-slate-50 relative">
             {executionError && (
                <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 mb-4 text-xs animate-in slide-in-from-top-2">
-                 <p className="font-bold mb-1 flex items-center gap-1"><AlertCircle size={12}/> Execution Error</p>
+                 <p className="font-bold mb-1 flex items-center gap-1"><AlertCircle size={12}/> {t.builder.executionError}</p>
                  {executionError}
                </div>
             )}
@@ -559,7 +559,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
             {result && (
               <div className="animate-in fade-in duration-500">
                 <div className="flex justify-between items-center mb-4 sticky top-0 bg-slate-50/95 backdrop-blur py-2 border-b border-slate-200 z-10">
-                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Output</span>
+                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">{t.builder.outputTitle}</span>
                    <div className="flex gap-1">
                      {isImageResult && (
                        <button onClick={() => { 
