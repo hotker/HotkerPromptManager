@@ -27,6 +27,7 @@ export interface FixedConfig {
   topK: number;
   outputFormat: 'text' | 'json';
   aspectRatio: string; // Image generation aspect ratio
+  imageSize: string; // Image generation resolution/size
   appendString: string; // The "Fixed Ending Parameters"
 }
 

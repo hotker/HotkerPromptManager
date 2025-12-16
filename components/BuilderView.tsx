@@ -4,7 +4,8 @@ import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
 import { 
   Plus, Save, Play, X, Settings2, CheckCircle2, Copy, Download, 
   Box, Layout, Eye, Search, ArrowRight, GripVertical, AlertCircle,
-  Cpu, Thermometer, Layers, ChevronDown, Info, Image as ImageIcon
+  Cpu, Thermometer, Layers, ChevronDown, Info, Image as ImageIcon,
+  Maximize, Edit2, Check
 } from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
 import { Language, translations } from '../translations';
@@ -14,12 +15,13 @@ interface BuilderViewProps {
   templates: PromptTemplate[];
   saveTemplate: (t: PromptTemplate) => void;
   addLog: (l: RunLog) => void;
+  onUpdateModule: (m: PromptModule) => void;
   userApiKey: string;
   currentUser: User;
   lang: Language;
 }
 
-export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, saveTemplate, addLog, userApiKey, currentUser, lang }) => {
+export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, saveTemplate, addLog, onUpdateModule, userApiKey, currentUser, lang }) => {
   const t = translations[lang];
 
   // Builder State
@@ -27,6 +29,10 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
   const [templateName, setTemplateName] = useState(t.builder.defaultTemplateName);
   const [config, setConfig] = useState<FixedConfig>(DEFAULT_CONFIG);
   
+  // Edit State
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+
   // Execution State
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -38,7 +44,6 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
 
   // Collapse sections state
   const [sectionsOpen, setSectionsOpen] = useState({
-    info: true,
     structure: true,
     params: true
   });
@@ -64,6 +69,27 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
 
   const handleRemoveModule = (index: number) => {
     setSelectedModuleIds(prev => prev.filter((_, i) => i !== index));
+  };
+
+  // Editing logic
+  const startEditing = (module: PromptModule) => {
+    setEditingModuleId(module.id);
+    setEditingContent(module.content);
+  };
+
+  const saveEditing = (module: PromptModule) => {
+    if (editingContent.trim() !== module.content) {
+      onUpdateModule({
+        ...module,
+        content: editingContent
+      });
+    }
+    setEditingModuleId(null);
+  };
+
+  const cancelEditing = () => {
+    setEditingModuleId(null);
+    setEditingContent('');
   };
 
   const handleRun = async () => {
@@ -246,53 +272,37 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
          <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
             <div className="max-w-2xl mx-auto space-y-6 pb-20">
                
-               <div className="flex items-center gap-2 text-slate-400 mb-2">
-                  <Layers size={14} />
-                  <span className="text-xs font-bold uppercase tracking-widest">Builder Flow</span>
-               </div>
-
-               {/* Step 1: Info */}
-               <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                  <div 
-                    className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center cursor-pointer"
-                    onClick={() => setSectionsOpen(prev => ({...prev, info: !prev.info}))}
-                  >
-                     <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
-                        <span className="text-xs font-bold text-slate-700 uppercase">Template Metadata</span>
-                     </div>
-                     <ChevronDown size={14} className={`text-slate-400 transition-transform ${sectionsOpen.info ? 'rotate-180' : ''}`} />
-                  </div>
-                  
-                  {sectionsOpen.info && (
-                    <div className="p-5">
-                       <label className="block text-xs font-semibold text-slate-500 mb-1.5">{t.library.labelTitle}</label>
-                       <div className="flex gap-2">
-                         <input 
-                            className="flex-1 bg-slate-50 border border-slate-200 rounded-md px-3 py-2 text-sm font-semibold text-slate-900 outline-none focus:border-blue-500 transition-all" 
-                            value={templateName} 
-                            onChange={e => setTemplateName(e.target.value)}
-                            placeholder="Name your template..." 
-                         />
-                         <button onClick={handleSaveTemplate} className="btn-secondary whitespace-nowrap px-3" title={t.builder.saveTemplateBtn}>
-                           <Save size={14} />
-                         </button>
-                       </div>
+               {/* Builder Header (New - replaced Step 1) */}
+               <div className="mb-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2 text-slate-400">
+                        <Layers size={14} />
+                        <span className="text-xs font-bold uppercase tracking-widest">Builder Flow</span>
                     </div>
-                  )}
+                    <button 
+                      onClick={handleSaveTemplate} 
+                      className="text-xs flex items-center gap-1.5 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                      title={t.builder.saveTemplateBtn}
+                    >
+                      <Save size={14} /> <span>Save</span>
+                    </button>
+                  </div>
+                  <input 
+                    className="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 text-slate-900 placeholder-slate-300 w-full outline-none"
+                    value={templateName} 
+                    onChange={e => setTemplateName(e.target.value)}
+                    placeholder="Untitled Template" 
+                  />
                </div>
 
-               {/* Connector */}
-               <div className="flex justify-center h-4"><div className="w-px bg-slate-200 h-full"></div></div>
-
-               {/* Step 2: Structure */}
+               {/* Step 1: Structure (Renumbered) */}
                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[150px]">
                   <div 
                      className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center cursor-pointer"
                      onClick={() => setSectionsOpen(prev => ({...prev, structure: !prev.structure}))}
                   >
                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">2</div>
+                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div>
                         <span className="text-xs font-bold text-slate-700 uppercase">Prompt Structure</span>
                         <span className="bg-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full text-[10px] font-mono">{selectedModuleIds.length}</span>
                      </div>
@@ -319,6 +329,9 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                              {selectedModuleIds.map((id, index) => {
                                const module = modules.find(m => m.id === id);
                                if(!module) return null;
+                               
+                               const isEditing = editingModuleId === module.id;
+
                                return (
                                  <div key={`${id}-${index}`} className="group relative pl-10 pb-4 last:pb-0 z-10">
                                     {/* Node Dot */}
@@ -326,18 +339,45 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                                        <div className={`w-1.5 h-1.5 rounded-full ${MODULE_COLORS[module.type].split(' ')[0].replace('bg-', 'bg-')}`}></div>
                                     </div>
 
-                                    <div className="bg-white border border-slate-200 rounded-lg shadow-sm group-hover:border-blue-300 transition-colors">
+                                    <div className={`bg-white border rounded-lg shadow-sm transition-colors ${isEditing ? 'border-blue-400 ring-1 ring-blue-100' : 'border-slate-200 group-hover:border-blue-300'}`}>
                                         <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-50">
                                             <GripVertical size={12} className="text-slate-300 cursor-move" />
                                             <span className="text-[10px] font-bold text-slate-500 uppercase">{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
                                             <div className="flex-1"></div>
-                                            <button onClick={() => handleRemoveModule(index)} className="text-slate-400 hover:text-red-500 transition-colors p-1">
-                                              <X size={14} />
-                                            </button>
+                                            
+                                            {isEditing ? (
+                                              <>
+                                                <button onClick={() => saveEditing(module)} className="text-emerald-500 hover:bg-emerald-50 p-1 rounded transition-colors" title="Save changes">
+                                                  <Check size={14} />
+                                                </button>
+                                                <button onClick={cancelEditing} className="text-slate-400 hover:bg-slate-100 p-1 rounded transition-colors" title="Cancel">
+                                                  <X size={14} />
+                                                </button>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <button onClick={() => startEditing(module)} className="text-slate-400 hover:text-blue-600 transition-colors p-1" title="Edit Content">
+                                                  <Edit2 size={12} />
+                                                </button>
+                                                <button onClick={() => handleRemoveModule(index)} className="text-slate-400 hover:text-red-500 transition-colors p-1" title="Remove">
+                                                  <X size={14} />
+                                                </button>
+                                              </>
+                                            )}
                                         </div>
                                         <div className="px-3 py-2">
                                            <h4 className="text-xs font-bold text-slate-700 mb-1">{module.title}</h4>
-                                           <p className="text-xs text-slate-500 font-mono line-clamp-2">{module.content}</p>
+                                           
+                                           {isEditing ? (
+                                              <textarea 
+                                                className="w-full text-xs font-mono border border-slate-200 rounded p-2 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none min-h-[100px]"
+                                                value={editingContent}
+                                                onChange={(e) => setEditingContent(e.target.value)}
+                                                autoFocus
+                                              />
+                                           ) : (
+                                              <p className="text-xs text-slate-500 font-mono line-clamp-3 whitespace-pre-wrap">{module.content}</p>
+                                           )}
                                         </div>
                                     </div>
                                  </div>
@@ -352,14 +392,14 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                {/* Connector */}
                <div className="flex justify-center h-4"><div className="w-px bg-slate-200 h-full"></div></div>
 
-               {/* Step 3: Parameters (Config) */}
+               {/* Step 2: Parameters (Config) (Renumbered) */}
                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                    <div 
                      className="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex justify-between items-center cursor-pointer"
                      onClick={() => setSectionsOpen(prev => ({...prev, params: !prev.params}))}
                    >
                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">3</div>
+                        <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">2</div>
                         <span className="text-xs font-bold text-slate-700 uppercase">Parameters</span>
                      </div>
                      <ChevronDown size={14} className={`text-slate-400 transition-transform ${sectionsOpen.params ? 'rotate-180' : ''}`} />
@@ -406,6 +446,20 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                                 <option value="9:16">9:16 (Portrait)</option>
                                 <option value="4:3">4:3 (Standard)</option>
                                 <option value="3:4">3:4 (Portrait)</option>
+                              </select>
+                           </div>
+                           <div>
+                              <label className="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1.5">
+                                 <Maximize size={12} /> {t.builder.resolution}
+                              </label>
+                              <select 
+                                className="prod-input text-xs"
+                                value={config.imageSize || '1K'}
+                                onChange={(e) => setConfig({...config, imageSize: e.target.value})}
+                              >
+                                <option value="1K">1K</option>
+                                <option value="2K">2K</option>
+                                <option value="4K">4K</option>
                               </select>
                            </div>
                         </div>

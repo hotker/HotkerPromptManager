@@ -34,6 +34,9 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
        if (config.aspectRatio && config.aspectRatio !== 'auto') {
            imageConfig.aspectRatio = config.aspectRatio;
        }
+       if (config.imageSize) {
+           imageConfig.imageSize = config.imageSize;
+       }
 
        const response = await ai.models.generateContent({
          model: config.model,

@@ -171,6 +171,10 @@ const AuthenticatedApp: React.FC<{
     setLogs(prev => prev.map(log => log.id === id ? { ...log, ...updates } : log));
   };
 
+  const handleUpdateModule = (updatedModule: PromptModule) => {
+    setModules(prev => prev.map(m => m.id === updatedModule.id ? updatedModule : m));
+  };
+
   return (
     <div className="flex h-[100dvh] bg-slate-50 text-slate-900 font-sans overflow-hidden">
       <Sidebar 
@@ -207,6 +211,7 @@ const AuthenticatedApp: React.FC<{
               templates={templates} 
               saveTemplate={handleSaveTemplate}
               addLog={handleAddLog}
+              onUpdateModule={handleUpdateModule}
               userApiKey={userApiKey}
               currentUser={currentUser}
               lang={lang}
