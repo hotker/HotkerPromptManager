@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User } from '../types';
 import { authService } from '../services/authService';
-import { ArrowRight, Loader2, AlertCircle, Globe, Hexagon, ShieldCheck, Cpu } from 'lucide-react';
+import { ArrowRight, Loader2, AlertCircle, Globe, ShieldCheck, Command } from 'lucide-react';
 import { AUTHOR_INFO } from '../constants';
 import { Language, translations } from '../translations';
 
@@ -53,127 +53,103 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onLogin, lang, setLang }) =>
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden font-mono">
-      {/* Sci-fi Background Elements */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-30"></div>
-      <div className="absolute top-0 left-0 w-full h-1 bg-cyber-primary/50 shadow-[0_0_20px_#22d3ee]"></div>
-      <div className="absolute bottom-0 right-0 w-full h-1 bg-cyber-primary/50 shadow-[0_0_20px_#22d3ee]"></div>
+    <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center p-4">
       
-      {/* Animated Orb */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyber-primary/10 rounded-full blur-[100px] animate-pulse-glow"></div>
-      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-cyber-secondary/10 rounded-full blur-[80px] animate-pulse-glow" style={{animationDelay: '1s'}}></div>
-
-      {/* Main Container - HUD Style */}
-      <div className="w-full max-w-[450px] relative z-10 bg-slate-900/80 backdrop-blur-xl border border-white/10 p-10 rounded-xl shadow-2xl clip-tech">
+      <div className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-xl p-8 md:p-10">
         
         {/* Header */}
-        <div className="text-center mb-10 relative">
+        <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="relative">
-               <Hexagon size={64} className="text-cyber-primary animate-spin-slow" strokeWidth={1} />
-               <Cpu size={32} className="text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="bg-slate-900 text-white p-3 rounded-xl shadow-lg">
+               <Command size={32} strokeWidth={2.5} />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-white mb-2 tracking-tighter text-glow">HOTKER<span className="text-cyber-primary">.SYS</span></h1>
-          <p className="text-cyber-primary/60 text-xs tracking-[0.3em] uppercase">{t.subtitle}</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Hotker Prompt Studio</h1>
+          <p className="text-slate-500 text-sm mt-2">{t.subtitle}</p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex mb-8 border-b border-white/10 relative">
-           <div className={`absolute bottom-0 h-0.5 bg-cyber-primary transition-all duration-300 ${mode === 'login' ? 'left-0 w-1/2' : 'left-1/2 w-1/2'}`}></div>
+        <div className="flex p-1 bg-slate-100 rounded-lg mb-8">
            <button 
              onClick={() => setMode('login')} 
-             className={`flex-1 pb-3 text-xs font-bold tracking-widest transition-colors ${mode === 'login' ? 'text-cyber-primary text-glow' : 'text-slate-500 hover:text-slate-300'}`}
+             className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${mode === 'login' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
            >
              {t.loginTab}
            </button>
            <button 
              onClick={() => setMode('register')} 
-             className={`flex-1 pb-3 text-xs font-bold tracking-widest transition-colors ${mode === 'register' ? 'text-cyber-primary text-glow' : 'text-slate-500 hover:text-slate-300'}`}
+             className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${mode === 'register' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
            >
              {t.registerTab}
            </button>
         </div>
 
         {error && (
-         <div className="mb-6 bg-red-500/10 border border-red-500/50 p-3 flex items-center gap-3 text-red-400 animate-pulse">
+         <div className="mb-6 bg-red-50 border border-red-100 p-3 rounded-lg flex items-center gap-2 text-red-600 text-sm">
             <AlertCircle size={16} />
-            <span className="text-xs font-bold tracking-wide">{error}</span>
+            <span>{error}</span>
          </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-           <div className="relative group">
+        <form onSubmit={handleSubmit} className="space-y-4">
+           <div>
+             <label className="block text-xs font-semibold text-slate-700 mb-1 ml-1">{t.usernamePlaceholder}</label>
              <input
                type="text"
                required
-               className="w-full bg-slate-950/50 border-b border-white/20 text-white placeholder-transparent focus:border-cyber-primary outline-none transition-all duration-300 px-4 py-3 rounded-none text-base md:text-sm"
+               className="prod-input py-2.5"
                value={username}
                onChange={(e) => setUsername(e.target.value)}
-               placeholder=" "
              />
-             <label className={`absolute left-4 top-3 text-xs text-slate-500 pointer-events-none transition-all duration-300 ${username ? '-top-5 text-cyber-primary text-[10px]' : ''}`}>
-               {t.usernamePlaceholder}
-             </label>
-             {/* Corner markers for input */}
-             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyber-primary/30"></div>
-             <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyber-primary/30"></div>
            </div>
 
-           <div className="relative group">
+           <div>
+             <label className="block text-xs font-semibold text-slate-700 mb-1 ml-1">{t.passwordPlaceholder}</label>
              <input
                type="password"
                required
-               className="w-full bg-slate-950/50 border-b border-white/20 text-white placeholder-transparent focus:border-cyber-primary outline-none transition-all duration-300 px-4 py-3 rounded-none text-base md:text-sm"
+               className="prod-input py-2.5"
                value={password}
                onChange={(e) => setPassword(e.target.value)}
-               placeholder=" "
              />
-             <label className={`absolute left-4 top-3 text-xs text-slate-500 pointer-events-none transition-all duration-300 ${password ? '-top-5 text-cyber-primary text-[10px]' : ''}`}>
-               {t.passwordPlaceholder}
-             </label>
-             <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-cyber-primary/30"></div>
-             <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-cyber-primary/30"></div>
            </div>
 
            <button
              type="submit"
              disabled={isLoading}
-             className="w-full btn-tech py-3 flex items-center justify-center gap-2 group relative overflow-hidden"
+             className="w-full btn-primary py-2.5 mt-2"
            >
-             {isLoading ? <Loader2 className="animate-spin" size={16} /> : (
+             {isLoading ? <Loader2 className="animate-spin" size={18} /> : (
                <>
-                 <span className="relative z-10 group-hover:tracking-[0.2em] transition-all">{mode === 'login' ? t.enterBtn : t.createBtn}</span>
-                 <ArrowRight size={16} className="relative z-10 group-hover:translate-x-1 transition-transform" />
+                 <span>{mode === 'login' ? t.enterBtn : t.createBtn}</span>
+                 <ArrowRight size={16} />
                </>
              )}
-             <div className="absolute inset-0 bg-cyber-primary/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
            </button>
         </form>
 
-        <div className="relative my-8">
-           <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10"></div></div>
-           <div className="relative flex justify-center text-[10px] tracking-widest text-slate-500"><span className="bg-slate-900 px-2">{t.systemOverride}</span></div>
+        <div className="my-6 flex items-center gap-3">
+           <div className="flex-1 h-px bg-slate-200"></div>
+           <span className="text-xs text-slate-400 font-medium">OR</span>
+           <div className="flex-1 h-px bg-slate-200"></div>
         </div>
 
         <button
            type="button"
            onClick={handleGoogleLogin}
            disabled={isLoading}
-           className="w-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/30 text-slate-300 text-xs font-bold py-3 tracking-wide transition-all flex items-center justify-center gap-3 clip-tech"
+           className="w-full btn-secondary py-2.5"
          >
-           <ShieldCheck size={14} className="text-cyber-secondary" />
+           <ShieldCheck size={16} className="text-blue-600" />
            {t.googleBtn}
          </button>
 
         {/* Footer */}
-        <div className="mt-8 flex justify-between items-center pt-4 border-t border-white/5">
-            <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className="text-slate-500 hover:text-cyber-primary text-xs transition-colors flex items-center gap-2 font-bold tracking-widest">
-               <Globe size={12} /> {lang === 'zh' ? 'EN' : '中文'}
+        <div className="mt-8 flex justify-between items-center pt-6 border-t border-slate-100">
+            <button onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')} className="text-slate-400 hover:text-slate-700 text-xs font-medium flex items-center gap-2 transition-colors">
+               <Globe size={14} /> {lang === 'zh' ? 'Switch to English' : '切换中文'}
             </button>
-            <div className="flex gap-4">
-              <a href={AUTHOR_INFO.website} target="_blank" className="text-slate-500 hover:text-cyber-primary text-[10px] transition-colors tracking-widest">{t.help}</a>
-            </div>
+            <a href={AUTHOR_INFO.website} target="_blank" className="text-slate-400 hover:text-slate-700 text-xs font-medium transition-colors">{t.help}</a>
         </div>
       </div>
     </div>

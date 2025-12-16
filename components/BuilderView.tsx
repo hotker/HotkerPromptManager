@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PromptModule, PromptTemplate, RunLog, FixedConfig, ModuleType, User } from '../types';
 import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
-import { Plus, Save, Play, ChevronRight, X, Settings2, GripVertical, AlertCircle, CheckCircle2, Copy, Download, Image as ImageIcon, Box, Layout, Eye, Trash2, Cpu } from 'lucide-react';
+import { Plus, Save, Play, X, Settings2, CheckCircle2, Copy, Download, Box, Layout, Eye, Search, ArrowRight, GripVertical } from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
 import { Language, translations } from '../translations';
 
@@ -56,20 +56,6 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
     setSelectedModuleIds(prev => prev.filter((_, i) => i !== index));
   };
 
-  const getTranslatedError = (errorMsg: string): string => {
-     // Check for standard error codes in translations
-     for (const key in translations[lang].errors) {
-        if (errorMsg === key) {
-            return translations[lang].errors[key as keyof typeof translations['en']['errors']];
-        }
-        // Handle dynamic error codes like ERR_FINISH_REASON
-        if (errorMsg.startsWith('ERR_FINISH_REASON')) {
-            return translations[lang].errors['ERR_FINISH_REASON'] + errorMsg.replace('ERR_FINISH_REASON', '');
-        }
-     }
-     return errorMsg; // Return raw if no translation found
-  };
-
   const handleRun = async () => {
     if (!compiledPrompt) return;
     if (window.innerWidth < 768) setMobileSection('preview');
@@ -85,7 +71,6 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         allowSystemKey: false 
       });
 
-      // Check if output is actually an error code returned as string (for special model cases)
       if (output.startsWith('ERR_')) {
           throw new Error(output);
       }
@@ -102,8 +87,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         durationMs: Date.now() - startTime
       });
     } catch (e: any) {
-      const errorMsg = getTranslatedError(e.message);
-      setExecutionError(errorMsg);
+      setExecutionError(e.message);
       addLog({
         id: crypto.randomUUID(),
         templateId: 'unsaved-session',
@@ -111,7 +95,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         finalPrompt: compiledPrompt,
         output: '',
         status: 'failure',
-        notes: errorMsg,
+        notes: e.message,
         timestamp: Date.now(),
         durationMs: Date.now() - startTime
       });
@@ -145,10 +129,10 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
   const imageSource = isImageResult ? result?.replace('[IMAGE GENERATED] ', '') : '';
 
   return (
-    <div className="h-full flex flex-col md:flex-row bg-slate-950 overflow-hidden relative font-mono">
+    <div className="h-full flex flex-col md:flex-row bg-slate-50 overflow-hidden relative font-sans md:rounded-tl-xl md:border-l md:border-t md:border-slate-200">
       
       {/* Mobile Tab Switcher */}
-      <div className="md:hidden flex border-b border-white/10 bg-slate-900 shrink-0 z-20">
+      <div className="md:hidden flex border-b border-slate-200 bg-white shrink-0 z-20">
         {[
           { id: 'resources', icon: Box, label: t.builder.tabResources },
           { id: 'assembly', icon: Layout, label: t.builder.tabAssembly },
@@ -157,86 +141,90 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
            <button 
             key={tab.id}
             onClick={() => setMobileSection(tab.id as any)}
-            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 ${mobileSection === tab.id ? 'text-cyber-primary bg-white/5 border-b-2 border-cyber-primary' : 'text-slate-500'}`}
+            className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${mobileSection === tab.id ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600' : 'text-slate-500'}`}
           >
             <tab.icon size={14}/> {tab.label}
-            {tab.id === 'assembly' && <span className="bg-cyber-primary text-black font-bold px-1.5 rounded text-[9px]">{selectedModuleIds.length}</span>}
+            {tab.id === 'assembly' && <span className="bg-slate-200 text-slate-600 px-1.5 rounded-full text-[9px] min-w-[1.2em]">{selectedModuleIds.length}</span>}
           </button>
         ))}
       </div>
 
 
-      {/* LEFT: Resources (Glass Sidebar) */}
-      <div className={`w-full md:w-80 border-r border-white/5 flex flex-col bg-slate-900/50 backdrop-blur-sm ${mobileSection === 'resources' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
-        <div className="p-4 border-b border-white/5 flex gap-2">
-           <button onClick={() => setActiveTab('modules')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest clip-tech transition-colors ${activeTab === 'modules' ? 'bg-cyber-primary/20 text-cyber-primary' : 'bg-slate-800/50 text-slate-500 hover:text-white'}`}>{t.builder.tabModules}</button>
-           <button onClick={() => setActiveTab('config')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest clip-tech transition-colors ${activeTab === 'config' ? 'bg-cyber-primary/20 text-cyber-primary' : 'bg-slate-800/50 text-slate-500 hover:text-white'}`}>{t.builder.tabConfig}</button>
+      {/* LEFT: Resources Sidebar */}
+      <div className={`w-full md:w-80 border-r border-slate-200 flex flex-col bg-white ${mobileSection === 'resources' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
+        <div className="p-2 border-b border-slate-100 flex gap-1 bg-slate-50">
+           <button onClick={() => setActiveTab('modules')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'modules' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>{t.builder.tabModules}</button>
+           <button onClick={() => setActiveTab('config')} className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-all ${activeTab === 'config' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>{t.builder.tabConfig}</button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50/50">
           {activeTab === 'modules' ? (
             <div className="space-y-3">
-               <div className="relative mb-4">
+               <div className="relative mb-2">
                   <input 
                     type="text" 
                     placeholder={t.builder.searchModules}
-                    className="w-full bg-slate-900/50 border border-white/10 px-3 py-2 text-xs focus:border-cyber-primary outline-none text-slate-300 clip-tech"
+                    className="prod-input pl-8"
                     value={searchModule}
                     onChange={e => setSearchModule(e.target.value)}
                   />
+                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
                </div>
                <div className="space-y-2">
                   {modules.filter(m => m.title.toLowerCase().includes(searchModule.toLowerCase())).map(module => (
-                    <div key={module.id} className="bg-slate-800/40 border-l-2 border-white/10 p-3 hover:border-l-cyber-primary hover:bg-slate-800 transition-all cursor-pointer select-none group" onClick={() => handleAddModule(module.id)}>
+                    <div key={module.id} className="bg-white border border-slate-200 rounded-lg p-3 hover:border-blue-400 hover:shadow-sm transition-all cursor-pointer group select-none active:scale-[0.98]" onClick={() => handleAddModule(module.id)}>
                       <div className="flex justify-between items-center mb-1">
-                        <span className={`text-[9px] font-bold uppercase tracking-wider ${MODULE_COLORS[module.type].split(' ')[1]}`}>{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
-                        <Plus size={12} className="text-slate-600 group-hover:text-cyber-primary" />
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${MODULE_COLORS[module.type]}`}>{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
+                        <div className="w-5 h-5 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                            <Plus size={12} />
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-300 font-bold truncate">{module.title}</p>
-                      <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5 font-mono">{module.content.substring(0, 40)}</p>
+                      <p className="text-xs text-slate-800 font-medium truncate mb-0.5">{module.title}</p>
+                      <p className="text-[10px] text-slate-400 line-clamp-2">{module.content}</p>
                     </div>
                   ))}
                </div>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 px-1">
                <div className="space-y-4">
                   <div>
-                    <label className="text-[10px] text-cyber-primary font-bold uppercase tracking-wider mb-2 block">{t.builder.model}</label>
+                    <label className="text-xs font-semibold text-slate-700 mb-1 block">{t.builder.model}</label>
                     <select 
-                      className="w-full bg-slate-900/50 border-b border-white/10 py-2 text-xs text-slate-300 outline-none focus:border-cyber-primary"
+                      className="prod-input"
                       value={config.model}
                       onChange={(e) => setConfig({...config, model: e.target.value})}
                     >
-                      {AVAILABLE_MODELS.map(m => <option key={m.id} value={m.id} className="bg-slate-900">{m.name}</option>)}
+                      {AVAILABLE_MODELS.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
                     </select>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.temperature}</label>
-                        <input type="number" step="0.1" min="0" max="2" className="w-full bg-slate-900/50 border-b border-white/10 py-2 text-xs text-slate-300 outline-none focus:border-cyber-primary" value={config.temperature} onChange={(e) => setConfig({...config, temperature: parseFloat(e.target.value)})} />
+                        <label className="text-xs font-semibold text-slate-700 mb-1 block">{t.builder.temperature}</label>
+                        <input type="number" step="0.1" min="0" max="2" className="prod-input" value={config.temperature} onChange={(e) => setConfig({...config, temperature: parseFloat(e.target.value)})} />
                     </div>
                     <div>
-                        <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.topK}</label>
-                        <input type="number" className="w-full bg-slate-900/50 border-b border-white/10 py-2 text-xs text-slate-300 outline-none focus:border-cyber-primary" value={config.topK} onChange={(e) => setConfig({...config, topK: parseInt(e.target.value)})} />
+                        <label className="text-xs font-semibold text-slate-700 mb-1 block">{t.builder.topK}</label>
+                        <input type="number" className="prod-input" value={config.topK} onChange={(e) => setConfig({...config, topK: parseInt(e.target.value)})} />
                     </div>
                   </div>
                   <div>
-                      <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.fixedEnding}</label>
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">{t.builder.fixedEnding}</label>
                       <textarea 
-                        className="w-full bg-slate-900/50 border border-white/10 p-2 text-xs font-mono text-slate-400 h-24 focus:border-cyber-primary outline-none resize-none"
+                        className="prod-input min-h-[80px]"
                         value={config.appendString}
                         onChange={(e) => setConfig({...config, appendString: e.target.value})}
                       />
                   </div>
                </div>
 
-               <div className="pt-4 border-t border-white/5">
-                 <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2 block">{t.builder.savedTemplates}</label>
+               <div className="pt-4 border-t border-slate-200">
+                 <label className="text-xs font-semibold text-slate-500 mb-2 block uppercase tracking-wider">{t.builder.savedTemplates}</label>
                  <div className="space-y-1">
+                   {templates.length === 0 && <div className="text-xs text-slate-400 italic p-2">No templates yet.</div>}
                    {templates.map(tmpl => (
-                     <button key={tmpl.id} onClick={() => loadTemplate(tmpl)} className="w-full text-left text-xs text-slate-400 hover:text-cyber-primary px-2 py-2 border-b border-white/5 hover:bg-white/5 transition-colors flex items-center gap-2">
-                       <Box size={10}/> {tmpl.name}
+                     <button key={tmpl.id} onClick={() => loadTemplate(tmpl)} className="w-full text-left text-xs text-slate-600 hover:text-blue-700 px-3 py-2 rounded hover:bg-slate-100 transition-colors flex items-center gap-2">
+                       <Layout size={12}/> {tmpl.name}
                      </button>
                    ))}
                  </div>
@@ -246,32 +234,26 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         </div>
       </div>
 
-      {/* MIDDLE: Assembly Area (Blueprint Grid) */}
-      <div className={`flex-1 flex flex-col min-w-0 bg-[#0f172a] relative ${mobileSection === 'assembly' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
-        {/* Tech Grid Background */}
-        <div className="absolute inset-0 bg-grid-pattern opacity-50 pointer-events-none"></div>
-
-        <div className="p-4 border-b border-white/5 flex justify-between items-center relative z-10 bg-slate-900/80 backdrop-blur-sm">
-           <div className="flex items-center gap-3 w-full">
-              <Cpu size={18} className="text-cyber-primary animate-pulse"/>
-              <input 
-                className="bg-transparent text-lg font-bold text-white outline-none placeholder-slate-600 w-full tracking-wider" 
-                value={templateName} 
-                onChange={e => setTemplateName(e.target.value)} 
-              />
-           </div>
-           <button onClick={handleSaveTemplate} className="flex-shrink-0 flex items-center gap-2 text-xs font-bold bg-white/5 hover:bg-white/10 text-white px-4 py-2 clip-tech transition-colors border border-white/10 hover:border-cyber-primary">
+      {/* MIDDLE: Assembly Area */}
+      <div className={`flex-1 flex flex-col min-w-0 bg-slate-50 relative ${mobileSection === 'assembly' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
+        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white shadow-sm z-10">
+           <input 
+              className="bg-transparent text-lg font-bold text-slate-900 outline-none placeholder-slate-400 w-full" 
+              value={templateName} 
+              onChange={e => setTemplateName(e.target.value)} 
+           />
+           <button onClick={handleSaveTemplate} className="btn-secondary text-xs whitespace-nowrap">
              <Save size={14} /> <span className="hidden sm:inline">{t.builder.saveTemplateBtn}</span>
            </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8 space-y-8 relative z-10 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 relative custom-scrollbar">
            {selectedModuleIds.length === 0 && (
-             <div className="h-full flex flex-col items-center justify-center opacity-30">
-               <div className="w-24 h-24 border border-dashed border-cyber-primary flex items-center justify-center mb-4 rotate-45">
-                 <div className="-rotate-45"><Plus size={32} className="text-cyber-primary" /></div>
+             <div className="h-full flex flex-col items-center justify-center opacity-40">
+               <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-4 text-slate-400">
+                 <Layout size={32} />
                </div>
-               <p className="text-cyber-primary font-mono text-xs uppercase tracking-[0.2em]">{t.builder.dragTip}</p>
+               <p className="text-slate-500 font-medium">{t.builder.dragTip}</p>
              </div>
            )}
 
@@ -279,39 +261,37 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
              const module = modules.find(m => m.id === id);
              if(!module) return null;
              return (
-               <div key={`${id}-${index}`} className="group relative bg-slate-800 border-l-2 border-cyber-primary p-5 shadow-lg transition-all animate-in slide-in-from-bottom-4 clip-tech-border hover:shadow-cyber-primary/20 hover:bg-slate-700">
-                  {/* Energy Line Visual */}
-                  {index < selectedModuleIds.length - 1 && (
-                    <div className="absolute left-6 -bottom-8 w-0.5 h-8 bg-cyber-primary/30 z-0">
-                       <div className="w-full h-2 bg-cyber-primary animate-float blur-[2px]"></div>
-                    </div>
-                  )}
-                  
-                  <div className="flex justify-between items-start mb-3">
-                     <div className="flex items-center gap-2">
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 border ${MODULE_COLORS[module.type]}`}>{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
-                     </div>
-                     <button onClick={() => handleRemoveModule(index)} className="text-slate-500 hover:text-red-400 transition-colors">
+               <div key={`${id}-${index}`} className="group relative bg-white border border-slate-200 rounded-lg shadow-sm hover:shadow-md transition-all">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50/50 rounded-t-lg">
+                      <GripVertical size={14} className="text-slate-300 cursor-move" />
+                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${MODULE_COLORS[module.type]}`}>{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
+                      <h4 className="text-xs font-semibold text-slate-700 truncate">{module.title}</h4>
+                      <button onClick={() => handleRemoveModule(index)} className="ml-auto text-slate-400 hover:text-red-500 transition-colors p-1">
                         <X size={14} />
-                     </button>
+                      </button>
                   </div>
-                  <h4 className="text-sm font-bold text-white mb-2 tracking-wide">{module.title}</h4>
-                  <div className="bg-slate-900/50 p-3 border border-white/5 text-[11px] text-slate-300 font-mono leading-relaxed whitespace-pre-wrap">
+                  <div className="p-4 text-sm text-slate-600 font-mono leading-relaxed whitespace-pre-wrap bg-white rounded-b-lg">
                     {module.content}
                   </div>
+                  
+                  {/* Connector Line */}
+                  {index < selectedModuleIds.length - 1 && (
+                    <div className="absolute left-1/2 -bottom-6 w-px h-6 bg-slate-300 z-0"></div>
+                  )}
                </div>
              )
            })}
 
            {/* Fixed Ending Node */}
            {config.appendString && (
-             <div className="opacity-60 mt-8 relative pl-8 border-l border-dashed border-slate-600 ml-4">
-                <div className="bg-slate-800/50 border border-white/5 p-4 rounded-sm">
-                  <div className="flex items-center gap-2 mb-2">
-                     <Settings2 size={12} className="text-slate-400" />
-                     <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">{t.builder.fixedEnding}</span>
+             <div className="mt-8 border-t-2 border-dashed border-slate-200 pt-6 relative">
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-50 px-2 text-[10px] text-slate-400 uppercase font-bold tracking-wider">System Append</span>
+                <div className="bg-slate-100 border border-slate-200 p-4 rounded-lg opacity-75">
+                  <div className="flex items-center gap-2 mb-2 text-slate-500">
+                     <Settings2 size={12} />
+                     <span className="text-[10px] font-bold uppercase">{t.builder.fixedEnding}</span>
                   </div>
-                  <p className="text-[10px] font-mono text-slate-400 whitespace-pre-wrap">{config.appendString}</p>
+                  <p className="text-xs font-mono text-slate-600 whitespace-pre-wrap">{config.appendString}</p>
                 </div>
              </div>
            )}
@@ -320,19 +300,19 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
            <button 
              onClick={handleRun}
              disabled={isRunning || selectedModuleIds.length === 0}
-             className="md:hidden fixed bottom-24 right-6 bg-cyber-primary text-black rounded-none p-4 shadow-[0_0_30px_rgba(34,211,238,0.4)] z-50 disabled:opacity-50 disabled:shadow-none clip-tech"
+             className="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-50 disabled:bg-slate-300 disabled:shadow-none transition-all active:scale-90"
            >
-             {isRunning ? <div className="animate-spin w-6 h-6 border-2 border-black border-t-transparent rounded-full"></div> : <Play fill="currentColor" size={24} />}
+             {isRunning ? <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div> : <Play fill="currentColor" size={24} />}
            </button>
         </div>
       </div>
 
-      {/* RIGHT: Output / Preview (Terminal Style) */}
-      <div className={`w-full md:w-[450px] border-l border-white/5 flex flex-col bg-slate-900 ${mobileSection === 'preview' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
-         <div className="p-4 border-b border-white/5 bg-slate-800">
-           <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xs font-bold text-cyber-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-cyber-primary shadow-[0_0_5px_#22d3ee] animate-pulse"></span>
+      {/* RIGHT: Output / Preview */}
+      <div className={`w-full md:w-[400px] border-l border-slate-200 flex flex-col bg-white ${mobileSection === 'preview' ? 'flex-1 overflow-hidden' : 'hidden md:flex'}`}>
+         <div className="p-4 border-b border-slate-200 bg-slate-50 flex flex-col gap-3">
+           <div className="flex justify-between items-center">
+              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                <ArrowRight size={14} className="text-blue-500" />
                 {t.builder.terminalOutput}
               </h3>
            </div>
@@ -340,63 +320,58 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
            <button 
              onClick={handleRun}
              disabled={isRunning || selectedModuleIds.length === 0}
-             className={`w-full py-3 font-bold flex items-center justify-center gap-2 transition-all text-xs tracking-widest uppercase clip-tech ${
-               isRunning ? 'bg-white/5 text-slate-500 cursor-wait' : 'btn-tech shadow-lg'
+             className={`w-full py-2.5 font-medium flex items-center justify-center gap-2 transition-all text-sm rounded-md shadow-sm ${
+               isRunning ? 'bg-slate-100 text-slate-400 cursor-wait' : 'bg-blue-600 hover:bg-blue-700 text-white'
              }`}
            >
              {isRunning ? t.builder.processing : <><Play size={14} fill="currentColor" /> {t.builder.runBtn}</>}
            </button>
          </div>
 
-         <div className="flex-1 overflow-y-auto p-6 font-mono text-xs custom-scrollbar relative bg-slate-950">
+         <div className="flex-1 overflow-y-auto p-6 font-mono text-sm custom-scrollbar bg-slate-50 relative">
             {executionError && (
-              <div className="p-4 bg-red-900/20 border border-red-500/50 text-red-400 mb-4 animate-in slide-in-from-top-2 flex items-start gap-3">
-                <AlertCircle size={16} className="shrink-0 mt-0.5"/> 
-                <div>
-                   <div className="font-bold mb-1">{t.builder.systemError}</div>
-                   <p className="opacity-80 leading-relaxed">{executionError}</p>
-                </div>
-              </div>
+               <div className="p-4 bg-red-50 border border-red-100 rounded-lg text-red-600 mb-4 text-xs">
+                 <p className="font-bold mb-1">Execution Error</p>
+                 {executionError}
+               </div>
             )}
             
             {!result && !isRunning && !executionError && (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-700 pointer-events-none select-none">
+              <div className="absolute inset-0 flex items-center justify-center text-slate-300 pointer-events-none select-none">
                  <div className="text-center">
-                    <div className="text-6xl mb-4 opacity-10 font-black">_</div>
-                    <p className="tracking-[0.2em] text-[10px]">{t.builder.awaitingInput}</p>
+                    <p className="text-sm font-medium">{t.builder.awaitingInput}</p>
                  </div>
               </div>
             )}
 
             {result && (
-              <div className="animate-in fade-in duration-500 pb-10">
-                <div className="flex justify-between items-center mb-6 sticky top-0 bg-slate-950/90 backdrop-blur py-2 border-b border-white/5 z-10">
-                   <span className="text-emerald-400 font-bold flex items-center gap-2 text-[10px] tracking-wider">
-                     <CheckCircle2 size={12}/> {t.builder.processComplete}
+              <div className="animate-in fade-in duration-300 pb-10">
+                <div className="flex justify-between items-center mb-4 sticky top-0 bg-slate-50/95 backdrop-blur py-2 border-b border-slate-200 z-10">
+                   <span className="text-emerald-600 font-bold flex items-center gap-1.5 text-xs">
+                     <CheckCircle2 size={14}/> {t.builder.processComplete}
                    </span>
-                   <div className="flex gap-2">
+                   <div className="flex gap-1">
                      {isImageResult && (
                        <button onClick={() => { 
                           const link = document.createElement('a');
                           link.href = imageSource;
                           link.download = `hotker-${Date.now()}.png`;
                           link.click();
-                       }} className="text-slate-500 hover:text-white transition-colors" title={t.builder.downloadImage}><Download size={14}/></button>
+                       }} className="btn-icon" title={t.builder.downloadImage}><Download size={14}/></button>
                      )}
-                     <button onClick={() => navigator.clipboard.writeText(result)} className="text-slate-500 hover:text-white transition-colors" title={t.builder.copy}><Copy size={14}/></button>
+                     <button onClick={() => navigator.clipboard.writeText(result)} className="btn-icon" title={t.builder.copy}><Copy size={14}/></button>
                    </div>
                 </div>
                 
                 {isImageResult ? (
-                   <div className="overflow-hidden border border-white/10 shadow-2xl">
+                   <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm bg-white">
                       <img src={imageSource} alt="Generated" className="w-full h-auto" />
                    </div>
                 ) : (
-                   <div className="text-slate-300 whitespace-pre-wrap leading-loose">
+                   <div className="text-slate-800 whitespace-pre-wrap leading-relaxed">
                      {result.split('\n').map((line, i) => (
-                       <div key={i} className="flex hover:bg-white/5 transition-colors -mx-2 px-2 py-0.5">
-                         <span className="text-slate-600 mr-4 select-none w-6 text-right opacity-50">{i + 1}</span>
-                         <span>{line}</span>
+                       <div key={i} className="min-h-[1.5em]">
+                         {line}
                        </div>
                      ))}
                    </div>

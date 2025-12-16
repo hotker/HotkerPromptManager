@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { LayoutGrid, Library, TestTube2, History, LogOut, Settings, KeyRound, X, Cloud, RefreshCcw, AlertTriangle, Menu, Hexagon, Zap } from 'lucide-react';
+import { LayoutGrid, Library, TestTube2, History, LogOut, Settings, KeyRound, X, Cloud, RefreshCcw, AlertCircle, Menu, Command, ChevronRight } from 'lucide-react';
 import { ViewState, User } from '../types';
 import { Language, translations } from '../translations';
-import { authService } from '../services/authService';
 import { AUTHOR_INFO } from '../constants';
 
 interface SidebarProps {
@@ -59,46 +58,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderSyncStatus = () => {
     switch(syncStatus) {
       case 'saving':
-        return <span className="text-cyber-primary flex items-center gap-1.5 text-[10px] tracking-wider animate-pulse"><RefreshCcw size={10} className="animate-spin"/> {t.sidebar.syncSaving}</span>;
+        return <span className="text-blue-500 flex items-center gap-1.5 text-xs"><RefreshCcw size={12} className="animate-spin"/> {t.sidebar.syncSaving}</span>;
       case 'error':
-        return <span className="text-red-500 flex items-center gap-1.5 text-[10px] tracking-wider"><AlertTriangle size={10}/> {t.sidebar.syncError}</span>;
+        return <span className="text-red-500 flex items-center gap-1.5 text-xs"><AlertCircle size={12}/> {t.sidebar.syncError}</span>;
       case 'saved':
       default:
-        return <span className="text-slate-300 flex items-center gap-1.5 text-[10px] tracking-wider"><Cloud size={10}/> {t.sidebar.syncSaved}</span>;
+        return <span className="text-slate-400 flex items-center gap-1.5 text-xs"><Cloud size={12}/> {t.sidebar.syncSaved}</span>;
     }
   };
 
   return (
     <>
-      {/* Mobile Top Header - High z-index to sit above content */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-slate-900/90 backdrop-blur-xl border-b border-white/10 flex items-center justify-between px-4 z-50 shadow-lg">
-        <div className="flex items-center gap-3">
-           <Hexagon className="text-cyber-primary animate-pulse" size={24} strokeWidth={1.5} />
-           <span className="font-bold text-white tracking-widest text-lg font-mono">HOTKER</span>
+      {/* Mobile Top Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-50 shadow-sm">
+        <div className="flex items-center gap-2">
+           <div className="bg-slate-900 text-white p-1 rounded-md"><Command size={18} /></div>
+           <span className="font-bold text-slate-900 text-lg tracking-tight">Hotker</span>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-[10px] opacity-70">{renderSyncStatus()}</div>
-          <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-cyber-primary hover:text-white">
+          <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-md">
              <Menu size={24} />
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu Overlay - Very high z-index */}
+      {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-[60] bg-slate-900/95 backdrop-blur-xl animate-in fade-in duration-200" onClick={() => setIsMobileMenuOpen(false)}>
-           <div className="absolute top-0 bottom-0 right-0 w-80 bg-slate-900 border-l border-white/10 p-6 flex flex-col shadow-2xl h-full overflow-y-auto" onClick={e => e.stopPropagation()}>
-               <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4 shrink-0">
-                <div className="flex items-center gap-2">
-                   <Settings size={18} className="text-cyber-primary" />
-                   <h3 className="font-bold text-white tracking-widest text-sm">SYSTEM_MENU</h3>
-                </div>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="p-1"><X size={24} className="text-slate-400 hover:text-white"/></button>
+        <div className="md:hidden fixed inset-0 z-[60] bg-slate-900/50 backdrop-blur-sm transition-opacity" onClick={() => setIsMobileMenuOpen(false)}>
+           <div className="absolute top-0 bottom-0 right-0 w-80 bg-white shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+               <div className="flex justify-between items-center p-6 border-b border-slate-100">
+                <span className="font-bold text-slate-900 text-lg">Menu</span>
+                <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 text-slate-500 hover:bg-slate-100 rounded-full"><X size={20}/></button>
               </div>
 
-              {/* Navigation Items (Added for Mobile) */}
-              <div className="space-y-3 mb-8 shrink-0">
-                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-2 px-2">NAVIGATION</div>
+              <div className="flex-1 py-4 px-2 space-y-1">
                 {navItems.map((item) => (
                     <button
                         key={item.id}
@@ -106,136 +99,143 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             setView(item.id);
                             setIsMobileMenuOpen(false);
                         }}
-                        className={`w-full flex items-center gap-4 px-4 py-3.5 border-l-2 transition-all clip-tech text-sm font-bold tracking-wider ${
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                             currentView === item.id 
-                            ? 'bg-cyber-primary/10 border-cyber-primary text-cyber-primary' 
-                            : 'bg-white/5 border-transparent text-slate-300 hover:text-white'
+                            ? 'bg-blue-50 text-blue-700' 
+                            : 'text-slate-600 hover:bg-slate-50'
                         }`}
                     >
                         {item.icon}
                         <span>{item.label}</span>
+                        {currentView === item.id && <ChevronRight size={16} className="ml-auto opacity-50"/>}
                     </button>
                 ))}
               </div>
               
-              <div className="mt-auto space-y-4 font-mono border-t border-white/10 pt-6 shrink-0">
-                 {/* User Info */}
-                 <div className="flex items-center gap-3 px-2 mb-2 bg-slate-800/50 p-3 rounded border border-white/5">
-                     <div className="w-10 h-10 bg-slate-950 border border-cyber-primary/50 flex items-center justify-center text-sm font-bold text-cyber-primary shrink-0">
+              <div className="p-4 border-t border-slate-100 space-y-3 bg-slate-50/50">
+                 <div className="flex items-center gap-3 px-2 mb-2">
+                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700">
                         {currentUser?.username.substring(0,1).toUpperCase()}
                      </div>
-                     <div className="min-w-0">
-                        <div className="text-xs text-slate-400 uppercase tracking-wider mb-0.5">Operator</div>
-                        <div className="text-sm font-bold text-white truncate">{currentUser?.username}</div>
+                     <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-slate-900 truncate">{currentUser?.username}</div>
+                        <div className="text-xs text-slate-500">Free Plan</div>
                      </div>
                  </div>
 
-                 <button onClick={openKeyModal} className="w-full flex items-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-none text-white hover:bg-white/10 hover:border-cyber-primary/50 transition-all clip-tech">
-                    <KeyRound size={18} className="text-cyber-primary" /> <span>{t.sidebar.apiKeyConfig}</span>
+                 <button onClick={openKeyModal} className="w-full btn-secondary text-xs">
+                    <KeyRound size={14} /> {t.sidebar.apiKeyConfig}
                  </button>
-                 <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-none text-red-400 hover:bg-red-500/20 clip-tech">
-                    <LogOut size={18} /> <span>{t.sidebar.logout}</span>
+                 <button onClick={onLogout} className="w-full btn-ghost text-xs text-red-600 hover:text-red-700 hover:bg-red-50">
+                    <LogOut size={14} /> {t.sidebar.logout}
                  </button>
               </div>
            </div>
         </div>
       )}
 
-      {/* Desktop Sidebar - Deep Slate / Semi-Transparent */}
-      <div className="hidden md:flex w-20 lg:w-64 bg-slate-900/95 h-full border-r border-white/5 flex-col relative z-20 shadow-xl backdrop-blur-sm">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex w-20 lg:w-64 bg-white h-full border-r border-slate-200 flex-col relative z-20">
         
-        {/* Logo Area */}
-        <div className="h-24 flex items-center gap-3 px-6 border-b border-white/5 relative overflow-hidden group bg-slate-900">
-          <div className="absolute top-0 left-0 w-1 h-full bg-cyber-primary/20 group-hover:bg-cyber-primary transition-colors"></div>
-          <Hexagon className="text-cyber-primary drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]" size={32} strokeWidth={1} />
+        {/* Brand */}
+        <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
+          <div className="bg-slate-900 text-white p-1.5 rounded-lg shadow-sm"><Command size={18} strokeWidth={3} /></div>
           <div className="hidden lg:block">
-            <h1 className="font-bold text-white tracking-[0.2em] text-xl font-mono">HOTKER</h1>
-            <div className="text-[9px] text-cyber-primary/70 tracking-widest mt-[-2px]">PROMPT_STUDIO</div>
+            <h1 className="font-bold text-slate-900 text-lg tracking-tight leading-none">Hotker</h1>
+            <span className="text-[10px] text-slate-400 font-medium">PROMPT STUDIO</span>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-8 space-y-3">
+        <nav className="flex-1 px-3 py-6 space-y-1">
           {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setView(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-4 transition-all duration-300 group relative clip-tech ${
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all group ${
                 currentView === item.id
-                  ? 'bg-cyber-primary/15 text-cyber-primary shadow-[0_0_15px_rgba(34,211,238,0.1)]'
-                  : 'text-slate-300 hover:text-white hover:bg-white/5'
+                  ? 'bg-slate-100 text-slate-900 shadow-sm font-medium ring-1 ring-slate-200'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <div className={`absolute left-0 top-0 bottom-0 w-1 bg-cyber-primary transition-opacity ${currentView === item.id ? 'opacity-100' : 'opacity-0'}`}></div>
-              
-              <span className={`relative z-10 transition-transform duration-300 ${currentView === item.id ? 'scale-110 drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]' : 'group-hover:text-cyber-primary'}`}>
+              <span className={`${currentView === item.id ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
                 {item.icon}
               </span>
-              <span className={`hidden lg:block text-xs font-bold tracking-widest uppercase relative z-10`}>
+              <span className="hidden lg:block text-sm">
                 {item.label}
               </span>
+              {currentView === item.id && <div className="hidden lg:block ml-auto w-1.5 h-1.5 rounded-full bg-blue-600"></div>}
             </button>
           ))}
         </nav>
 
-        {/* Bottom Section: User & Config */}
-        <div className="p-4 border-t border-white/5 bg-slate-900/50">
-           {/* API Status Indicator */}
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-100">
+           {/* API Status */}
            <div className="flex items-center justify-between px-2 mb-4">
               <div className="flex items-center gap-2">
-                 <div className={`w-2 h-2 rounded-full ${hasValidKey ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-red-500 shadow-[0_0_8px_#ef4444]'} animate-pulse`}></div>
-                 <span className="hidden lg:block text-[10px] text-slate-300 tracking-wider font-mono">{t.sidebar.sysStatus}</span>
+                 <div className={`w-2 h-2 rounded-full ${hasValidKey ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                 <span className="hidden lg:block text-xs text-slate-500 font-medium">{hasValidKey ? t.sidebar.apiKeyConnected : t.sidebar.apiKeyMissing}</span>
               </div>
-              <button onClick={openKeyModal} className="text-slate-300 hover:text-cyber-primary transition-colors">
+              <button onClick={openKeyModal} className="text-slate-400 hover:text-slate-900 transition-colors p-1 hover:bg-slate-100 rounded">
                  <Settings size={14} />
               </button>
            </div>
 
-           {/* User Profile Card */}
-           <div className="p-3 border border-white/5 bg-white/5 flex items-center gap-3 hover:border-cyber-primary/30 transition-all cursor-default group relative overflow-hidden clip-tech hover:bg-white/10">
-              <div className="w-8 h-8 bg-slate-950 border border-cyber-primary/50 flex items-center justify-center text-xs font-bold text-cyber-primary">
+           {/* User Profile */}
+           <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-white border border-slate-200 rounded-md flex items-center justify-center text-xs font-bold text-slate-700 shadow-sm">
                   {currentUser?.username.substring(0,1).toUpperCase()}
               </div>
-              <div className="hidden lg:block min-w-0 z-10">
-                 <p className="text-xs font-bold text-slate-200 truncate font-mono">{currentUser?.username}</p>
-                 <button onClick={onLogout} className="text-[10px] text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1 mt-1 tracking-wider uppercase">
-                    &gt;&gt; {t.sidebar.logout}
-                 </button>
+              <div className="hidden lg:block min-w-0">
+                 <p className="text-xs font-medium text-slate-900 truncate">{currentUser?.username}</p>
+                 <div className="flex items-center gap-1 mt-0.5">
+                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                   <span className="text-[10px] text-slate-500">Online</span>
+                 </div>
               </div>
            </div>
            
-           <div className="hidden lg:flex justify-between text-[9px] text-slate-500 pt-3 font-mono tracking-tighter">
-              <span>{t.sidebar.version} 2.1.0</span>
-              <a href={AUTHOR_INFO.github} target="_blank" className="hover:text-cyber-primary transition-colors">{t.sidebar.github}</a>
+           <div className="hidden lg:flex justify-between items-center text-[10px] text-slate-400 px-1">
+              <span>{renderSyncStatus()}</span>
+              <button onClick={onLogout} className="hover:text-red-500 transition-colors flex items-center gap-1">
+                <LogOut size={10} /> {t.sidebar.logout}
+              </button>
            </div>
         </div>
       </div>
 
       {/* API Key Modal */}
       {isKeyModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4">
-          <div className="bg-slate-900 border border-white/10 w-full max-w-md p-8 clip-tech relative shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <button onClick={() => setIsKeyModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-cyber-primary"><X size={20} /></button>
-            <div className="mb-6 flex items-center gap-4">
-              <div className="w-12 h-12 bg-cyber-primary/10 border border-cyber-primary flex items-center justify-center text-cyber-primary shadow-[0_0_15px_rgba(34,211,238,0.2)]">
-                <KeyRound size={24} />
-              </div>
-              <div>
-                <h3 className="text-lg font-bold text-white tracking-widest">{t.sidebar.secureLink}</h3>
-                <p className="text-slate-500 text-xs font-mono mt-1">{t.sidebar.authRequired}</p>
-              </div>
+        <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-[70] p-4 transition-opacity">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 border border-slate-200 transform transition-all scale-100">
+            <div className="flex justify-between items-start mb-6">
+               <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                    <KeyRound size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">API Configuration</h3>
+                    <p className="text-slate-500 text-xs mt-0.5">Connect your Gemini API Key</p>
+                  </div>
+               </div>
+               <button onClick={() => setIsKeyModalOpen(false)} className="text-slate-400 hover:text-slate-900"><X size={20} /></button>
             </div>
             
             <input 
               type="password"
-              className="w-full cyber-input mb-6"
+              className="prod-input mb-6 font-mono text-xs"
               value={tempKey}
               onChange={(e) => setTempKey(e.target.value)}
-              placeholder={t.sidebar.enterKey}
+              placeholder="sk-..."
+              autoFocus
             />
-            <button onClick={handleSaveKey} className="w-full btn-tech shadow-lg">
-              {t.sidebar.establishConn}
-            </button>
+            <div className="flex justify-end gap-3">
+               <button onClick={() => setIsKeyModalOpen(false)} className="btn-secondary">Cancel</button>
+               <button onClick={handleSaveKey} className="btn-primary">
+                 Connect API
+               </button>
+            </div>
           </div>
         </div>
       )}

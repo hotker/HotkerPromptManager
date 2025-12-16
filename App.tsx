@@ -29,7 +29,6 @@ const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   
-  // Lifted Language State with Persistence
   const [lang, setLangState] = useState<Language>(() => {
     return (localStorage.getItem('hotker_lang') as Language) || 'zh';
   });
@@ -39,7 +38,6 @@ const App = () => {
     localStorage.setItem('hotker_lang', l);
   };
 
-  // Check for existing session on mount
   useEffect(() => {
     const user = authService.getCurrentUser();
     if (user) {
@@ -58,9 +56,9 @@ const App = () => {
   };
 
   if (isLoadingAuth) {
-    return <div className="h-[100dvh] bg-slate-900 flex flex-col items-center justify-center text-cyber-primary">
-       <div className="w-16 h-16 border-4 border-cyber-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-       <span className="font-mono tracking-widest animate-pulse">SYSTEM INITIALIZING...</span>
+    return <div className="h-screen bg-slate-50 flex flex-col items-center justify-center text-slate-500">
+       <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+       <span className="font-medium text-sm tracking-wide">Initializing workspace...</span>
     </div>;
   }
 
@@ -97,10 +95,9 @@ const AuthenticatedApp: React.FC<{
   const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [syncErrorMsg, setSyncErrorMsg] = useState<string | undefined>(undefined);
 
-  // 1. Load Data from Cloud on Mount
+  // 1. Load Data
   useEffect(() => {
     const loadCloudData = async () => {
-      // Optimistic load: try to get data, if empty/null, use defaults
       const cloudData = await apiService.loadData(currentUser.id);
       
       if (cloudData && cloudData.modules && cloudData.modules.length > 0) {
@@ -109,7 +106,6 @@ const AuthenticatedApp: React.FC<{
         setLogs(cloudData.logs || []);
         setUserApiKey(cloudData.apiKey || '');
       } else {
-        // New user or empty data -> Load Commercial Defaults
         setModules(INITIAL_MODULES);
       }
       setIsDataLoaded(true);
@@ -118,7 +114,7 @@ const AuthenticatedApp: React.FC<{
     loadCloudData();
   }, [currentUser.id]);
 
-  // 2. Prepare Data Object for Sync
+  // 2. Prepare Data
   const currentData: UserData = {
     modules,
     templates,
@@ -126,16 +122,13 @@ const AuthenticatedApp: React.FC<{
     apiKey: userApiKey
   };
 
-  // 3. Debounce the data changes (Auto-save every 2s of inactivity)
+  // 3. Debounce
   const debouncedData = useDebounce(currentData, 2000);
 
-  // 4. Save to Cloud when debounced data changes
-  // We use a ref to skip the initial save when data is first loaded
+  // 4. Save
   const isFirstRender = useRef(true);
-
   useEffect(() => {
     if (!isDataLoaded) return;
-    
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
@@ -157,15 +150,11 @@ const AuthenticatedApp: React.FC<{
     saveData();
   }, [debouncedData, currentUser.id, isDataLoaded]);
 
-
   if (!isDataLoaded) {
     return (
-      <div className="h-[100dvh] bg-slate-900 flex flex-col items-center justify-center gap-4 text-cyber-primary">
-        <div className="relative">
-          <div className="w-12 h-12 border-2 border-cyber-primary rounded-full animate-ping absolute inset-0"></div>
-          <div className="w-12 h-12 border-2 border-cyber-primary border-t-transparent rounded-full animate-spin"></div>
-        </div>
-        <p className="text-sm font-mono tracking-widest">SYNCING DATA STREAM...</p>
+      <div className="h-screen bg-slate-50 flex flex-col items-center justify-center gap-4 text-slate-500">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-sm font-medium">Syncing data...</p>
       </div>
     );
   }
@@ -183,10 +172,7 @@ const AuthenticatedApp: React.FC<{
   };
 
   return (
-    <div className="flex h-[100dvh] bg-slate-900 text-slate-200 font-sans animate-in fade-in duration-500 flex-col md:flex-row bg-grid-pattern overflow-hidden">
-      {/* Background Overlay for Scanline */}
-      <div className="fixed inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-[1] bg-[length:100%_2px,3px_100%] opacity-20"></div>
-
+    <div className="flex h-[100dvh] bg-slate-50 text-slate-900 font-sans overflow-hidden">
       <Sidebar 
         currentView={view} 
         setView={setView} 
@@ -200,32 +186,34 @@ const AuthenticatedApp: React.FC<{
         setLang={setLang}
       />
       
-      <main className="flex-1 h-full overflow-hidden relative pt-16 md:pt-0 z-10">
-        {view === 'dashboard' && (
-          <Dashboard 
-            modules={modules} 
-            templates={templates} 
-            logs={logs}
-            setModules={setModules}
-            setTemplates={setTemplates}
-            setLogs={setLogs}
-            currentUser={currentUser}
-            lang={lang}
-          />
-        )}
-        {view === 'library' && <LibraryView modules={modules} setModules={setModules} lang={lang} />}
-        {view === 'builder' && (
-          <BuilderView 
-            modules={modules} 
-            templates={templates} 
-            saveTemplate={handleSaveTemplate}
-            addLog={handleAddLog}
-            userApiKey={userApiKey}
-            currentUser={currentUser}
-            lang={lang}
-          />
-        )}
-        {view === 'history' && <HistoryView logs={logs} updateLog={handleUpdateLog} lang={lang} />}
+      <main className="flex-1 h-full overflow-hidden relative flex flex-col pt-16 md:pt-0">
+        <div className="flex-1 overflow-hidden relative bg-white md:bg-slate-50 md:p-2">
+          {view === 'dashboard' && (
+            <Dashboard 
+              modules={modules} 
+              templates={templates} 
+              logs={logs}
+              setModules={setModules}
+              setTemplates={setTemplates}
+              setLogs={setLogs}
+              currentUser={currentUser}
+              lang={lang}
+            />
+          )}
+          {view === 'library' && <LibraryView modules={modules} setModules={setModules} lang={lang} />}
+          {view === 'builder' && (
+            <BuilderView 
+              modules={modules} 
+              templates={templates} 
+              saveTemplate={handleSaveTemplate}
+              addLog={handleAddLog}
+              userApiKey={userApiKey}
+              currentUser={currentUser}
+              lang={lang}
+            />
+          )}
+          {view === 'history' && <HistoryView logs={logs} updateLog={handleUpdateLog} lang={lang} />}
+        </div>
       </main>
     </div>
   );

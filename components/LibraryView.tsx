@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PromptModule, ModuleType } from '../types';
 import { MODULE_COLORS } from '../constants';
-import { Plus, Trash2, Edit2, Search, Image as ImageIcon, Copy, Check, Filter, Box, X } from 'lucide-react';
+import { Plus, Trash2, Edit2, Search, Copy, Check, Filter, X, MoreHorizontal, LayoutList, LayoutGrid } from 'lucide-react';
 import { Language, translations } from '../translations';
 
 interface LibraryViewProps {
@@ -27,6 +27,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<ModuleType | 'ALL'>('ALL');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
   const openModal = (module?: PromptModule) => {
     if (module) {
@@ -50,6 +51,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   };
 
   const handleSave = () => {
+    if (!title.trim() || !content.trim()) return;
+
     const newModule: PromptModule = {
       id: editingModule ? editingModule.id : crypto.randomUUID(),
       title,
@@ -78,7 +81,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const handleCopy = (content: string, id: string) => {
     navigator.clipboard.writeText(content);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setTimeout(() => setCopiedId(null), 1500);
   };
 
   const filteredModules = modules.filter(m => {
@@ -90,44 +93,44 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   });
 
   return (
-    <div className="h-full flex flex-col p-4 md:p-6 font-mono overflow-hidden">
-      {/* Header Area */}
-      <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-6 shrink-0">
-        <div className="relative">
-          <h2 className="text-4xl font-bold text-white tracking-tighter flex items-center gap-3">
-             <span className="text-cyber-primary opacity-50 text-2xl">/</span> {t.library.title.toUpperCase()}
-          </h2>
-          <div className="absolute -bottom-2 left-0 w-1/3 h-0.5 bg-cyber-primary shadow-[0_0_10px_#22d3ee]"></div>
+    <div className="h-full flex flex-col bg-slate-50/50 md:rounded-tl-xl md:border-l md:border-t md:border-slate-200 overflow-hidden">
+      
+      {/* Top Toolbar */}
+      <div className="px-6 py-4 border-b border-slate-200 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t.library.title}</h2>
+          <p className="text-xs text-slate-500 mt-1">{modules.length} modules available</p>
         </div>
         
-        <div className="flex items-center gap-4 w-full md:w-auto">
-           {/* Search Bar */}
+        <div className="flex items-center gap-3 w-full md:w-auto">
            <div className="relative group flex-1 md:w-64">
               <input 
                 type="text" 
                 placeholder={t.library.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-800/50 border-b border-white/20 px-0 py-2 pl-8 text-base md:text-sm focus:border-cyber-primary outline-none transition-colors text-white placeholder-slate-500"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pl-9 text-sm focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
               />
-              <Search className="absolute left-0 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-cyber-primary transition-colors" size={16} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
            </div>
 
-           <button 
-             onClick={() => openModal()}
-             className="btn-tech text-xs flex items-center gap-2 shadow-lg"
-           >
+           <div className="flex items-center border border-slate-200 rounded-lg p-1 bg-slate-50 gap-1">
+             <button onClick={() => setViewMode('list')} className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}><LayoutList size={16}/></button>
+             <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid size={16}/></button>
+           </div>
+
+           <button onClick={() => openModal()} className="btn-primary whitespace-nowrap">
              <Plus size={16} /> <span className="hidden sm:inline">{t.library.createBtn}</span>
            </button>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex gap-1 mb-6 overflow-x-auto pb-2 shrink-0 custom-scrollbar items-center">
-        <Filter size={14} className="text-slate-500 mr-2 shrink-0" />
+      {/* Filter Bar */}
+      <div className="px-6 py-3 border-b border-slate-200 bg-white flex items-center gap-2 overflow-x-auto custom-scrollbar">
+        <Filter size={14} className="text-slate-400 shrink-0 mr-2" />
         <button 
           onClick={() => setFilterType('ALL')}
-          className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all border border-transparent clip-tech ${filterType === 'ALL' ? 'text-slate-900 bg-cyber-primary' : 'text-slate-400 bg-white/5 hover:text-white hover:bg-white/10'}`}
+          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${filterType === 'ALL' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
         >
           {t.moduleType['ALL']}
         </button>
@@ -135,163 +138,168 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
            <button 
              key={type}
              onClick={() => setFilterType(type)}
-             className={`px-4 py-1.5 text-xs font-bold uppercase tracking-wider transition-all border border-transparent whitespace-nowrap clip-tech ${filterType === type ? 'text-slate-900 bg-cyber-primary' : 'text-slate-400 bg-white/5 hover:text-white hover:bg-white/10'}`}
+             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${filterType === type ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
            >
-             {/* Use type assertion to map the enum value (string) to the translation key */}
              {t.moduleType[type as keyof typeof t.moduleType] || type}
            </button>
         ))}
       </div>
 
-      {/* Grid - High Tech Image Focus */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pb-20 pr-2 custom-scrollbar">
-        {filteredModules.map(module => (
-          <div key={module.id} className="group relative bg-slate-800/80 hover:bg-slate-700/80 transition-colors clip-tech shadow-lg hover:shadow-cyber-primary/10 flex flex-col h-[340px] border border-white/5 hover:border-cyber-primary/30">
-             
-             {/* Top: Image / Visual Area (65%) */}
-             <div className="h-[65%] relative overflow-hidden bg-slate-900/50 w-full group">
-                {module.imageUrl ? (
-                  <img 
-                    src={module.imageUrl} 
-                    alt={module.title} 
-                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out" 
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center relative overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800">
-                     {/* Generative Tech Pattern */}
-                     <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(34,211,238,0.03)_25%,rgba(34,211,238,0.03)_50%,transparent_50%,transparent_75%,rgba(34,211,238,0.03)_75%,rgba(34,211,238,0.03)_100%)] bg-[length:20px_20px]"></div>
-                     <Box size={40} className="text-slate-700 mb-2 group-hover:text-cyber-primary/50 transition-colors duration-500" strokeWidth={1} />
-                     <span className="text-[10px] text-slate-600 font-mono tracking-[0.2em] group-hover:text-cyber-primary/40">{t.library.noVisualData}</span>
-                  </div>
-                )}
-                
-                {/* Overlay Type Tag */}
-                <div className="absolute top-0 left-0 p-0">
-                   <span className={`text-[10px] font-bold px-3 py-1 bg-slate-900/90 backdrop-blur-md border-b border-r border-white/10 text-white clip-tech-alt block shadow-lg`}>
-                      {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
-                   </span>
-                </div>
+      {/* Content Area */}
+      <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50">
+        
+        {filteredModules.length === 0 ? (
+           <div className="h-64 flex flex-col items-center justify-center text-slate-400">
+              <Search size={48} className="mb-4 opacity-20" />
+              <p>No modules found</p>
+           </div>
+        ) : viewMode === 'list' ? (
+          // LIST VIEW: Productivity focused
+          <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+             {filteredModules.map((module, index) => (
+               <div key={module.id} className={`group flex items-start p-4 hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 gap-4 cursor-pointer`} onClick={() => openModal(module)}>
+                 <div className="pt-1">
+                    <span className={`block w-2 h-2 rounded-full ${MODULE_COLORS[module.type].split(' ')[0].replace('bg-', 'bg-')}`}></span>
+                 </div>
+                 
+                 <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h3 className="text-sm font-semibold text-slate-900 truncate">{module.title}</h3>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${MODULE_COLORS[module.type]}`}>
+                        {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 font-mono line-clamp-2 leading-relaxed bg-slate-50 p-2 rounded border border-slate-100 group-hover:bg-white group-hover:border-blue-100 transition-colors">
+                      {module.content}
+                    </p>
+                    {module.tags.length > 0 && (
+                      <div className="flex gap-2 mt-2">
+                        {module.tags.map(tag => (
+                          <span key={tag} className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">#{tag}</span>
+                        ))}
+                      </div>
+                    )}
+                 </div>
 
-                {/* Hover Actions Overlay */}
-                <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
-                   <button onClick={() => handleCopy(module.content, module.id)} className="p-3 rounded-none bg-white/10 hover:bg-cyber-primary hover:text-black text-white transition-all border border-white/20 clip-tech backdrop-blur">
-                      {copiedId === module.id ? <Check size={20} /> : <Copy size={20} />}
-                   </button>
-                   <button onClick={() => openModal(module)} className="p-3 rounded-none bg-white/10 hover:bg-white hover:text-black text-white transition-all border border-white/20 clip-tech backdrop-blur">
-                      <Edit2 size={20} />
-                   </button>
-                   <button onClick={() => handleDelete(module.id)} className="p-3 rounded-none bg-white/10 hover:bg-red-500 hover:text-white text-white transition-all border border-white/20 clip-tech backdrop-blur">
-                      <Trash2 size={20} />
-                   </button>
-                </div>
-             </div>
-
-             {/* Bottom: Info Area (35%) */}
-             <div className="h-[35%] p-4 flex flex-col justify-between border-t border-white/5 relative bg-slate-800/50">
-                <div>
-                   <h3 className="text-base font-bold text-white leading-tight mb-2 truncate group-hover:text-cyber-primary transition-colors">{module.title}</h3>
-                   <div className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed h-8 font-sans">
-                     {module.description || module.content.substring(0, 60)}
-                   </div>
-                </div>
-                
-                <div className="flex items-center justify-between mt-3">
-                   <div className="flex gap-1 overflow-hidden">
-                      {module.tags.slice(0, 3).map(tag => (
-                        <span key={tag} className="text-[9px] text-slate-400 bg-white/5 px-1.5 py-0.5 border border-white/5">#{tag}</span>
-                      ))}
-                   </div>
-                   {/* Status Dot */}
-                   <div className="w-1.5 h-1.5 bg-slate-600 group-hover:bg-cyber-primary transition-colors shadow-[0_0_5px_rgba(34,211,238,0.5)]"></div>
-                </div>
-
-                {/* Tech Corner Decoration */}
-                <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-white/20 group-hover:border-cyber-primary/80 transition-colors"></div>
-             </div>
+                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity self-center">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
+                      className={`p-2 rounded-md border transition-all ${copiedId === module.id ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-white text-slate-500 border-slate-200 hover:text-blue-600 hover:border-blue-200'}`}
+                      title="Copy"
+                    >
+                      {copiedId === module.id ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); openModal(module); }}
+                      className="p-2 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all"
+                      title="Edit"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleDelete(module.id); }}
+                      className="p-2 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 transition-all"
+                      title="Delete"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                 </div>
+               </div>
+             ))}
           </div>
-        ))}
+        ) : (
+          // GRID VIEW
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredModules.map(module => (
+              <div key={module.id} className="prod-card flex flex-col h-64 hover:-translate-y-1 transition-transform cursor-pointer group" onClick={() => openModal(module)}>
+                 <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50 rounded-t-lg">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${MODULE_COLORS[module.type]}`}>
+                        {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
+                    </span>
+                    <button className="text-slate-400 hover:text-slate-600"><MoreHorizontal size={16}/></button>
+                 </div>
+                 
+                 <div className="p-4 flex-1 flex flex-col min-h-0">
+                    <h3 className="font-bold text-slate-800 text-sm mb-2 truncate" title={module.title}>{module.title}</h3>
+                    <div className="flex-1 bg-slate-50 rounded p-2 text-xs font-mono text-slate-500 overflow-hidden relative">
+                       <div className="absolute inset-0 p-2 overflow-hidden">{module.content}</div>
+                       <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-slate-50 to-transparent"></div>
+                    </div>
+                 </div>
+                 
+                 <div className="p-3 border-t border-slate-100 flex justify-between items-center bg-white rounded-b-lg">
+                    <div className="flex gap-1 overflow-hidden">
+                       {module.tags.slice(0, 2).map(t => <span key={t} className="text-[10px] text-slate-400 bg-slate-100 px-1 rounded">#{t}</span>)}
+                    </div>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
+                      className={`text-xs font-medium px-2 py-1 rounded transition-colors flex items-center gap-1 ${copiedId === module.id ? 'text-emerald-600 bg-emerald-50' : 'text-slate-500 hover:bg-slate-100'}`}
+                    >
+                      {copiedId === module.id ? <Check size={12}/> : <Copy size={12}/>}
+                      {copiedId === module.id ? t.library.copySuccess : 'Copy'}
+                    </button>
+                 </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Modal - Tech Interface */}
+      {/* Edit/Create Modal (Sheet Style) */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
-          <div className="bg-slate-900 border border-white/10 w-full max-w-2xl p-8 max-h-[90vh] overflow-y-auto clip-tech relative shadow-2xl border-t border-cyber-primary/30">
-            <div className="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
-               <h3 className="text-xl font-bold text-white tracking-widest flex items-center gap-3">
-                  <Box size={20} className="text-cyber-primary"/>
+        <div className="fixed inset-0 z-[100] flex justify-end">
+          <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)}></div>
+          
+          <div className="relative w-full max-w-xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+            <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+               <h3 className="font-bold text-slate-900 text-lg">
                   {editingModule ? t.library.modalEdit : t.library.modalCreate}
                </h3>
-               <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-cyber-primary transition-colors"><X size={24}/></button>
+               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded-md"><X size={20}/></button>
             </div>
             
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest">{t.library.labelTitle}</label>
-                  <input 
-                    className="w-full cyber-input"
-                    value={title} onChange={e => setTitle(e.target.value)} placeholder={t.library.placeholderTitle}
-                  />
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelTitle}</label>
+                  <input className="prod-input font-bold" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g., Senior React Dev" autoFocus/>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest">{t.library.labelType}</label>
-                  <select 
-                    className="w-full cyber-input bg-slate-900"
-                    value={type} onChange={e => setType(e.target.value as ModuleType)}
-                  >
-                    {Object.values(ModuleType).map(t => (
-                      <option key={t} value={t}>
-                        {/* Map enum values in dropdown as well */}
-                        {translations[lang].moduleType[t as keyof typeof translations['en']['moduleType']] || t}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest">{t.library.labelDesc}</label>
-                <input 
-                  className="w-full cyber-input"
-                  value={description} onChange={e => setDescription(e.target.value)} placeholder="Brief description..."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest">{t.library.labelContent}</label>
-                <div className="relative group">
-                  <textarea 
-                    className="w-full cyber-input h-40 resize-none bg-slate-950/50 border border-white/10 focus:border-cyber-primary transition-colors leading-relaxed p-4 font-mono text-base md:text-sm"
-                    value={content} onChange={e => setContent(e.target.value)} placeholder={t.library.placeholderContent}
-                  />
-                  <div className="absolute top-0 right-0 p-1 bg-cyber-primary/10 text-cyber-primary text-[9px] font-bold opacity-50 group-hover:opacity-100">{t.library.rawInput}</div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest">{t.library.labelTags}</label>
-                    <input 
-                      className="w-full cyber-input"
-                      value={tags} onChange={e => setTags(e.target.value)} placeholder="tag1, tag2..."
-                    />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelType}</label>
+                    <select className="prod-input" value={type} onChange={e => setType(e.target.value as ModuleType)}>
+                      {Object.values(ModuleType).map(t => (
+                        <option key={t} value={t}>{translations[lang].moduleType[t as keyof typeof translations['en']['moduleType']] || t}</option>
+                      ))}
+                    </select>
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-cyber-primary/70 uppercase tracking-widest block">{t.library.labelImage}</label>
-                    <div className="relative">
-                      <input 
-                        className="w-full cyber-input !pl-10"
-                        value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..."
-                      />
-                      <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" size={16}/>
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelTags}</label>
+                    <input className="prod-input" value={tags} onChange={e => setTags(e.target.value)} placeholder="tech, react, v1..." />
                   </div>
+                </div>
+
+                <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelContent}</label>
+                   <textarea 
+                     className="prod-input min-h-[200px] font-mono text-sm leading-relaxed" 
+                     value={content} 
+                     onChange={e => setContent(e.target.value)} 
+                     placeholder="Enter your prompt content here..."
+                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelDesc}</label>
+                  <input className="prod-input" value={description} onChange={e => setDescription(e.target.value)} placeholder="Optional context notes" />
+                </div>
               </div>
             </div>
 
-            <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-white/5">
-              <button onClick={() => setIsModalOpen(false)} className="px-6 py-2 text-slate-500 hover:text-white transition-colors text-xs font-bold tracking-widest uppercase hover:underline decoration-cyber-primary decoration-2 underline-offset-4">{t.library.btnCancel}</button>
-              <button onClick={handleSave} className="btn-tech text-xs shadow-lg">
+            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+              <button onClick={() => setIsModalOpen(false)} className="btn-secondary">{t.library.btnCancel}</button>
+              <button onClick={handleSave} className="btn-primary px-8">
                 {t.library.btnSave}
               </button>
             </div>

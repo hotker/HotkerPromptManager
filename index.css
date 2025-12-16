@@ -2,117 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 body {
-  background-color: #0f172a; /* Slate 900 */
-  color: #f1f5f9; /* Slate 100 */
-  font-family: 'Rajdhani', sans-serif;
+  background-color: #f8fafc; /* Slate 50 */
+  color: #0f172a; /* Slate 900 */
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Sci-fi Grid - Adjusted for lighter background */
-.bg-grid-pattern {
-  background-size: 40px 40px;
-  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  mask-image: radial-gradient(circle at center, black 60%, transparent 100%);
+/* Custom Scrollbar - Minimalist */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1; /* Slate 300 */
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* Slate 400 */
+}
+
+@layer components {
+  /* Productivity Card */
+  .prod-card {
+    @apply bg-white border border-slate-200 rounded-lg shadow-sm transition-all duration-200;
+  }
+  .prod-card:hover {
+    @apply border-slate-300 shadow-md;
+  }
+
+  /* Form Elements */
+  .prod-input {
+    @apply w-full bg-white border border-slate-200 rounded-md px-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all;
+  }
+  
+  /* Buttons */
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md px-4 py-2 text-sm transition-colors shadow-sm active:transform active:scale-95 flex items-center justify-center gap-2;
+  }
+  .btn-secondary {
+    @apply bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium rounded-md px-4 py-2 text-sm transition-colors shadow-sm flex items-center justify-center gap-2;
+  }
+  .btn-ghost {
+    @apply text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md px-3 py-2 text-sm transition-colors flex items-center gap-2;
+  }
+  .btn-icon {
+    @apply p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors;
+  }
+
+  /* Badge styling for tags */
+  .badge {
+    @apply px-2 py-0.5 text-xs font-medium rounded-md border;
+  }
 }
 
 @layer utilities {
-  /* Angled Corners */
-  .clip-tech {
-    clip-path: polygon(
-      0 0, 
-      100% 0, 
-      100% calc(100% - 12px), 
-      calc(100% - 12px) 100%, 
-      0 100%
-    );
+  .text-balance {
+    text-wrap: balance;
   }
-  
-  .clip-tech-alt {
-    clip-path: polygon(
-      12px 0, 
-      100% 0, 
-      100% 100%, 
-      0 100%, 
-      0 12px
-    );
-  }
-  
-  .clip-tech-border {
-    position: relative;
-  }
-  .clip-tech-border::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    right: -1px;
-    width: 18px;
-    height: 1px;
-    background: #22d3ee;
-    transform: rotate(45deg);
-    transform-origin: bottom right;
-    opacity: 0.6;
-    z-index: 20;
-  }
-
-  /* HUD Panel - Much lighter, glassier */
-  .hud-panel {
-    @apply bg-slate-800/60 backdrop-blur-xl border border-white/10;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  }
-
-  /* Interactive Card */
-  .cyber-card {
-    @apply relative overflow-hidden bg-slate-800/50 border border-white/10 transition-all duration-300;
-  }
-  .cyber-card:hover {
-    @apply border-cyber-primary/50 bg-slate-700/60;
-    box-shadow: 0 10px 30px -10px rgba(34, 211, 238, 0.2);
-  }
-
-  /* Inputs - Lighter slate, text-base on mobile to prevent iOS zoom */
-  .cyber-input {
-    @apply bg-slate-900/50 border-b border-white/20 text-white placeholder-slate-400 focus:border-cyber-primary outline-none transition-all duration-300 px-3 py-2 font-mono text-base md:text-sm;
-  }
-
-  /* Buttons */
-  .btn-tech {
-    @apply relative overflow-hidden bg-cyber-primary/20 text-cyber-primary font-bold uppercase tracking-widest transition-all duration-300 px-6 py-2 hover:bg-cyber-primary hover:text-slate-900 clip-tech backdrop-blur-sm;
-  }
-  
-  .text-glow {
-    text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
-  }
-
-  /* Scrollbar - Refined */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.5);
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #334155;
-    border-radius: 3px;
-  }
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #22d3ee;
-  }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
-}
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-::selection {
-  background-color: rgba(34, 211, 238, 0.3);
-  color: white;
 }
