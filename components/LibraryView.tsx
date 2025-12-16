@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { PromptModule, ModuleType } from '../types';
 import { MODULE_COLORS } from '../constants';
-import { Plus, Trash2, Edit2, Search, Copy, Check, Filter, X, MoreHorizontal, LayoutList, LayoutGrid, Image as ImageIcon, Link } from 'lucide-react';
+import { 
+  Plus, Trash2, Edit2, Search, Copy, Check, Filter, X, 
+  LayoutList, LayoutGrid, Image as ImageIcon, Link, 
+  User, FileText, CheckSquare, Shield, Layout, MessageSquare, Box, MoreHorizontal
+} from 'lucide-react';
 import { Language, translations } from '../translations';
 
 interface LibraryViewProps {
@@ -27,7 +31,19 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<ModuleType | 'ALL'>('ALL');
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid'); // Default to Grid for Card Layout focus
+
+  const getModuleIcon = (type: ModuleType) => {
+    switch (type) {
+      case ModuleType.ROLE: return <User size={32} />;
+      case ModuleType.CONTEXT: return <FileText size={32} />;
+      case ModuleType.TASK: return <CheckSquare size={32} />;
+      case ModuleType.CONSTRAINT: return <Shield size={32} />;
+      case ModuleType.FORMAT: return <Layout size={32} />;
+      case ModuleType.TONE: return <MessageSquare size={32} />;
+      default: return <Box size={32} />;
+    }
+  };
 
   const openModal = (module?: PromptModule) => {
     if (module) {
@@ -164,7 +180,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                        <img src={module.imageUrl} alt={module.title} className="w-12 h-12 rounded-md object-cover border border-slate-200 bg-slate-100 shadow-sm" />
                     ) : (
                        <div className={`w-12 h-12 rounded-md flex items-center justify-center border border-slate-100 ${MODULE_COLORS[module.type].replace('text-', 'text-opacity-50 text-').replace('border-', 'bg-opacity-20 bg-')}`}>
-                          <ImageIcon size={20} className="opacity-40" />
+                          {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 18, className: 'opacity-50' })}
                        </div>
                     )}
                  </div>
@@ -215,50 +231,80 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
              ))}
           </div>
         ) : (
-          // GRID VIEW: Enhanced with Top Image Banner
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          // GRID VIEW: Advanced Card Layout
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredModules.map(module => (
-              <div key={module.id} className="prod-card flex flex-col h-72 hover:-translate-y-1 transition-transform cursor-pointer group overflow-hidden" onClick={() => openModal(module)}>
-                 {/* Card Header / Image Area */}
-                 {module.imageUrl ? (
-                    <div className="h-32 w-full relative bg-slate-100 border-b border-slate-100">
-                       <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover" />
-                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60"></div>
-                       <div className="absolute top-2 left-2">
-                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm bg-white/90 backdrop-blur text-slate-800 border-none`}>
-                               {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
-                           </span>
+              <div key={module.id} className="group relative bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-[340px]" onClick={() => openModal(module)}>
+                 
+                 {/* 1. Header Area (Image or Visual Placeholder) - 45% Height */}
+                 <div className="relative h-[45%] shrink-0 overflow-hidden bg-slate-50">
+                    {module.imageUrl ? (
+                       <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                       <div className={`w-full h-full flex flex-col items-center justify-center gap-2 ${MODULE_COLORS[module.type].replace('text-', 'text-opacity-20 text-').replace('border-', 'bg-opacity-10 bg-')}`}>
+                          {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 48, className: 'opacity-20' })}
                        </div>
-                       <button className="absolute top-2 right-2 text-white/80 hover:text-white"><MoreHorizontal size={16}/></button>
-                    </div>
-                 ) : (
-                    <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50 rounded-t-lg">
-                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${MODULE_COLORS[module.type]}`}>
+                    )}
+                    
+                    {/* Badge Overlay */}
+                    <div className="absolute top-3 left-3">
+                       <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm border bg-white/95 backdrop-blur-sm text-slate-700 border-slate-200`}>
                            {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
                        </span>
-                       <button className="text-slate-400 hover:text-slate-600"><MoreHorizontal size={16}/></button>
                     </div>
-                 )}
-                 
-                 <div className="p-4 flex-1 flex flex-col min-h-0 bg-white">
-                    <h3 className="font-bold text-slate-800 text-sm mb-2 truncate" title={module.title}>{module.title}</h3>
-                    <div className={`flex-1 rounded p-2 text-xs font-mono text-slate-500 overflow-hidden relative ${module.imageUrl ? 'bg-slate-50 border border-slate-100' : 'bg-slate-50'}`}>
-                       <div className="absolute inset-0 p-2 overflow-hidden leading-relaxed">{module.content}</div>
-                       <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-slate-50 to-transparent"></div>
+
+                    {/* Quick Actions Overlay (Appears on Hover) */}
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
+                          className="p-2 rounded-full bg-white text-slate-700 hover:text-blue-600 hover:scale-110 transition-all shadow-lg"
+                          title="Copy"
+                        >
+                          {copiedId === module.id ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); openModal(module); }}
+                          className="p-2 rounded-full bg-white text-slate-700 hover:text-blue-600 hover:scale-110 transition-all shadow-lg"
+                          title="Edit"
+                        >
+                          <Edit2 size={18} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(module.id); }}
+                          className="p-2 rounded-full bg-white text-slate-700 hover:text-red-600 hover:scale-110 transition-all shadow-lg"
+                          title="Delete"
+                        >
+                          <Trash2 size={18} />
+                        </button>
                     </div>
                  </div>
                  
-                 <div className="px-3 pb-3 flex justify-between items-center bg-white rounded-b-lg">
-                    <div className="flex gap-1 overflow-hidden">
-                       {module.tags.slice(0, 2).map(t => <span key={t} className="text-[10px] text-slate-400 bg-slate-100 px-1 rounded">#{t}</span>)}
+                 {/* 2. Content Body - 55% Height */}
+                 <div className="flex-1 p-4 flex flex-col min-h-0 bg-white relative">
+                    <div className="flex justify-between items-start mb-2">
+                       <h3 className="font-bold text-slate-800 text-sm truncate pr-4" title={module.title}>{module.title}</h3>
+                       {module.tags.length > 0 && <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">#{module.tags[0]}</span>}
                     </div>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
-                      className={`text-xs font-medium px-2 py-1 rounded transition-colors flex items-center gap-1 ${copiedId === module.id ? 'text-emerald-600 bg-emerald-50' : 'text-slate-500 hover:bg-slate-100'}`}
-                    >
-                      {copiedId === module.id ? <Check size={12}/> : <Copy size={12}/>}
-                      {copiedId === module.id ? t.library.copySuccess : 'Copy'}
-                    </button>
+
+                    <div className="flex-1 relative overflow-hidden">
+                       <p className="text-xs text-slate-500 font-mono leading-relaxed line-clamp-6 opacity-80 group-hover:opacity-100 transition-opacity">
+                         {module.content}
+                       </p>
+                       {/* Fade out effect at bottom of text */}
+                       <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                    </div>
+
+                    {/* Quick Copy Footer */}
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center">
+                       <span className="text-[10px] text-slate-400">{module.content.length} chars</span>
+                       <button 
+                          onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
+                          className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded transition-colors ${copiedId === module.id ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'}`}
+                       >
+                         {copiedId === module.id ? <Check size={12}/> : <Copy size={12}/>}
+                         {copiedId === module.id ? t.library.copySuccess : 'Copy'}
+                       </button>
+                    </div>
                  </div>
               </div>
             ))}
