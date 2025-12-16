@@ -70,14 +70,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {/* Mobile Top Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-50 shadow-sm">
-        <div className="flex items-center gap-2">
-           <div className="bg-slate-900 text-white p-1 rounded-md"><Command size={18} /></div>
-           <span className="font-bold text-slate-900 text-lg tracking-tight">Hotker</span>
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-50 shadow-sm">
+        <div className="flex items-center gap-2.5">
+           <div className="bg-slate-900 text-white p-1 rounded"><Command size={16} strokeWidth={2.5} /></div>
+           <div className="flex items-baseline gap-2">
+              <span className="font-bold text-slate-900 text-sm tracking-tight">Hotker</span>
+              <span className="text-slate-900 text-sm font-light tracking-wide">Prompt Studio</span>
+           </div>
         </div>
         <div className="flex items-center gap-4">
           <button onClick={() => setIsMobileMenuOpen(true)} className="p-2 text-slate-600 hover:bg-slate-100 rounded-md">
-             <Menu size={24} />
+             <Menu size={20} />
           </button>
         </div>
       </div>
@@ -138,11 +141,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="hidden md:flex w-20 lg:w-64 bg-white h-full border-r border-slate-200 flex-col relative z-20">
         
         {/* Brand */}
-        <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
-          <div className="bg-slate-900 text-white p-1.5 rounded-lg shadow-sm"><Command size={18} strokeWidth={3} /></div>
-          <div className="hidden lg:block">
-            <h1 className="font-bold text-slate-900 text-lg tracking-tight leading-none">Hotker</h1>
-            <span className="text-[10px] text-slate-400 font-medium">PROMPT STUDIO</span>
+        <div className="h-12 flex items-center gap-3 px-5 border-b border-slate-100 shrink-0">
+          <div className="bg-slate-900 text-white p-1 rounded-md shadow-sm shrink-0"><Command size={16} strokeWidth={3} /></div>
+          <div className="hidden lg:flex items-center gap-2 overflow-hidden whitespace-nowrap">
+            <h1 className="font-bold text-slate-900 text-sm tracking-tight">Hotker</h1>
+            <span className="text-slate-900 text-sm font-normal tracking-wide">Prompt Studio</span>
           </div>
         </div>
 

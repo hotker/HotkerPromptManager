@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PromptModule, ModuleType } from '../types';
 import { MODULE_COLORS } from '../constants';
 import { 
   Plus, Trash2, Edit2, Search, Copy, Check, Filter, X, 
   LayoutList, LayoutGrid, Image as ImageIcon, Link, 
-  User, FileText, CheckSquare, Shield, Layout, MessageSquare, Box, MoreHorizontal
+  User, FileText, CheckSquare, Shield, Layout, MessageSquare, Box, MoreHorizontal, ExternalLink,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { Language, translations } from '../translations';
 
@@ -14,10 +15,13 @@ interface LibraryViewProps {
   lang: Language;
 }
 
+const ITEMS_PER_PAGE = 12;
+
 export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, lang }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<PromptModule | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const t = translations[lang];
 
@@ -29,9 +33,25 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const [tags, setTags] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
+  // Filter & View State
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<ModuleType | 'ALL'>('ALL');
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid'); // Default to Grid for Card Layout focus
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterType]);
+
+  // Scroll to top when page changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentPage]);
 
   const getModuleIcon = (type: ModuleType) => {
     switch (type) {
@@ -108,6 +128,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
     return matchesSearch && matchesType;
   });
 
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredModules.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedModules = filteredModules.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
   return (
     <div className="h-full flex flex-col bg-slate-50/50 md:rounded-tl-xl md:border-l md:border-t md:border-slate-200 overflow-hidden">
       
@@ -162,17 +187,17 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50">
+      <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50" ref={scrollContainerRef}>
         
-        {filteredModules.length === 0 ? (
+        {paginatedModules.length === 0 ? (
            <div className="h-64 flex flex-col items-center justify-center text-slate-400">
               <Search size={48} className="mb-4 opacity-20" />
               <p>No modules found</p>
            </div>
         ) : viewMode === 'list' ? (
-          // LIST VIEW: Enhanced with Thumbnails
+          // LIST VIEW
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-             {filteredModules.map((module, index) => (
+             {paginatedModules.map((module, index) => (
                <div key={module.id} className={`group flex items-start p-4 hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 gap-4 cursor-pointer`} onClick={() => openModal(module)}>
                  {/* List Thumbnail */}
                  <div className="shrink-0 pt-1">
@@ -231,12 +256,12 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
              ))}
           </div>
         ) : (
-          // GRID VIEW: Advanced Card Layout
+          // GRID VIEW
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredModules.map(module => (
+            {paginatedModules.map(module => (
               <div key={module.id} className="group relative bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-[340px]" onClick={() => openModal(module)}>
                  
-                 {/* 1. Header Area (Image or Visual Placeholder) - 45% Height */}
+                 {/* 1. Header Area */}
                  <div className="relative h-[45%] shrink-0 overflow-hidden bg-slate-50">
                     {module.imageUrl ? (
                        <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -253,8 +278,20 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                        </span>
                     </div>
 
-                    {/* Quick Actions Overlay (Appears on Hover) */}
+                    {/* Quick Actions Overlay */}
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+                        {module.imageUrl && (
+                            <a 
+                                href={module.imageUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="p-2 rounded-full bg-white text-slate-700 hover:text-blue-600 hover:scale-110 transition-all shadow-lg"
+                                title="Open Original Image"
+                            >
+                                <ExternalLink size={18} />
+                            </a>
+                        )}
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
                           className="p-2 rounded-full bg-white text-slate-700 hover:text-blue-600 hover:scale-110 transition-all shadow-lg"
@@ -279,23 +316,32 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     </div>
                  </div>
                  
-                 {/* 2. Content Body - 55% Height */}
+                 {/* 2. Content Body */}
                  <div className="flex-1 p-4 flex flex-col min-h-0 bg-white relative">
-                    <div className="flex justify-between items-start mb-2">
-                       <h3 className="font-bold text-slate-800 text-sm truncate pr-4" title={module.title}>{module.title}</h3>
-                       {module.tags.length > 0 && <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">#{module.tags[0]}</span>}
+                    <div className="mb-2">
+                       <h3 className="font-bold text-slate-800 text-sm truncate" title={module.title}>{module.title}</h3>
                     </div>
 
-                    <div className="flex-1 relative overflow-hidden">
-                       <p className="text-xs text-slate-500 font-mono leading-relaxed line-clamp-6 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <div className="flex-1 relative overflow-hidden min-h-0">
+                       <p className="text-xs text-slate-500 font-mono leading-relaxed line-clamp-4 opacity-80 group-hover:opacity-100 transition-opacity">
                          {module.content}
                        </p>
-                       {/* Fade out effect at bottom of text */}
                        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
                     </div>
 
+                    {/* Tags Area */}
+                    {module.tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5 max-h-12 overflow-hidden">
+                             {module.tags.map(tag => (
+                                 <span key={tag} className="text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md whitespace-nowrap" title={tag}>
+                                    #{tag}
+                                 </span>
+                             ))}
+                        </div>
+                    )}
+
                     {/* Quick Copy Footer */}
-                    <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center">
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center shrink-0">
                        <span className="text-[10px] text-slate-400">{module.content.length} chars</span>
                        <button 
                           onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
@@ -309,6 +355,39 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
               </div>
             ))}
           </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 pt-6 pb-2 gap-4">
+                <div className="text-xs text-slate-500 order-2 sm:order-1">
+                    Showing <span className="font-medium">{startIndex + 1}</span> to <span className="font-medium">{Math.min(startIndex + ITEMS_PER_PAGE, filteredModules.length)}</span> of <span className="font-medium">{filteredModules.length}</span> results
+                </div>
+                
+                <div className="flex items-center gap-2 order-1 sm:order-2">
+                    <button 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-md border border-slate-200 text-slate-600 hover:bg-white hover:border-blue-300 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-slate-200 disabled:cursor-not-allowed transition-all bg-slate-50"
+                        title="Previous Page"
+                    >
+                        <ChevronLeft size={16} />
+                    </button>
+                    
+                    <span className="text-xs font-medium text-slate-700 bg-white px-3 py-2 rounded-md border border-slate-200 min-w-[80px] text-center shadow-sm">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    
+                    <button 
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="p-2 rounded-md border border-slate-200 text-slate-600 hover:bg-white hover:border-blue-300 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-slate-200 disabled:cursor-not-allowed transition-all bg-slate-50"
+                        title="Next Page"
+                    >
+                        <ChevronRight size={16} />
+                    </button>
+                </div>
+            </div>
         )}
       </div>
 
