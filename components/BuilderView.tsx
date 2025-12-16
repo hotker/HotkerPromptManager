@@ -4,7 +4,7 @@ import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
 import { 
   Plus, Save, Play, X, Settings2, CheckCircle2, Copy, Download, 
   Box, Layout, Eye, Search, ArrowRight, GripVertical, AlertCircle,
-  Cpu, Thermometer, Layers, ChevronDown, Info
+  Cpu, Thermometer, Layers, ChevronDown, Info, Image as ImageIcon
 } from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
 import { Language, translations } from '../translations';
@@ -390,6 +390,23 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
                                 value={config.temperature} 
                                 onChange={(e) => setConfig({...config, temperature: parseFloat(e.target.value)})} 
                               />
+                           </div>
+                           <div>
+                              <label className="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1.5">
+                                 <ImageIcon size={12} /> {t.builder.aspectRatio}
+                              </label>
+                              <select 
+                                className="prod-input text-xs"
+                                value={config.aspectRatio || 'auto'}
+                                onChange={(e) => setConfig({...config, aspectRatio: e.target.value})}
+                              >
+                                <option value="auto">Auto</option>
+                                <option value="1:1">1:1 (Square)</option>
+                                <option value="16:9">16:9 (Landscape)</option>
+                                <option value="9:16">9:16 (Portrait)</option>
+                                <option value="4:3">4:3 (Standard)</option>
+                                <option value="3:4">3:4 (Portrait)</option>
+                              </select>
                            </div>
                         </div>
 
