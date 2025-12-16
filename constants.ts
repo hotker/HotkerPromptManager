@@ -25,6 +25,7 @@ export const AVAILABLE_MODELS = [
   { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Fast/Text)' },
   { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro (Reasoning)' },
   { id: 'gemini-2.5-flash-image', name: 'Gemini Nano banana' },
+  { id: 'gemini-3-pro-image-preview', name: 'Gemini 3.0 Pro Image (High Res)' },
 ];
 
 export const AUTHOR_INFO = {

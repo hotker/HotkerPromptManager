@@ -31,10 +31,14 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
     // Handling for Image Generation Model
     if (config.model.includes('image')) {
        const imageConfig: any = {};
+       
        if (config.aspectRatio && config.aspectRatio !== 'auto') {
            imageConfig.aspectRatio = config.aspectRatio;
        }
-       if (config.imageSize) {
+       
+       // CRITICAL FIX: imageSize is ONLY supported by gemini-3-pro-image-preview
+       // Sending it to gemini-2.5-flash-image (Nano banana) causes INVALID_ARGUMENT (400)
+       if (config.imageSize && config.model === 'gemini-3-pro-image-preview') {
            imageConfig.imageSize = config.imageSize;
        }
 
@@ -91,6 +95,12 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
     if (error.message?.includes('403')) throw new Error("ERR_403");
     if (error.message?.includes('429')) throw new Error("ERR_429");
     if (error.message?.includes('503')) throw new Error("ERR_503");
+    
+    // Return explicit error for invalid arguments to help debugging
+    if (error.status === 400 || error.message?.includes('INVALID_ARGUMENT')) {
+        return `API Error (400): Request contained invalid arguments for this model. (Likely imageSize on unsupported model)`;
+    }
+
     throw new Error(error.message || "ERR_UNKNOWN");
   }
 };
