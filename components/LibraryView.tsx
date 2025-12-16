@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PromptModule, ModuleType } from '../types';
 import { MODULE_COLORS } from '../constants';
-import { Plus, Trash2, Edit2, Search, Copy, Check, Filter, X, MoreHorizontal, LayoutList, LayoutGrid } from 'lucide-react';
+import { Plus, Trash2, Edit2, Search, Copy, Check, Filter, X, MoreHorizontal, LayoutList, LayoutGrid, Image as ImageIcon, Link } from 'lucide-react';
 import { Language, translations } from '../translations';
 
 interface LibraryViewProps {
@@ -154,12 +154,19 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
               <p>No modules found</p>
            </div>
         ) : viewMode === 'list' ? (
-          // LIST VIEW: Productivity focused
+          // LIST VIEW: Enhanced with Thumbnails
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
              {filteredModules.map((module, index) => (
                <div key={module.id} className={`group flex items-start p-4 hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 gap-4 cursor-pointer`} onClick={() => openModal(module)}>
-                 <div className="pt-1">
-                    <span className={`block w-2 h-2 rounded-full ${MODULE_COLORS[module.type].split(' ')[0].replace('bg-', 'bg-')}`}></span>
+                 {/* List Thumbnail */}
+                 <div className="shrink-0 pt-1">
+                    {module.imageUrl ? (
+                       <img src={module.imageUrl} alt={module.title} className="w-12 h-12 rounded-md object-cover border border-slate-200 bg-slate-100 shadow-sm" />
+                    ) : (
+                       <div className={`w-12 h-12 rounded-md flex items-center justify-center border border-slate-100 ${MODULE_COLORS[module.type].replace('text-', 'text-opacity-50 text-').replace('border-', 'bg-opacity-20 bg-')}`}>
+                          <ImageIcon size={20} className="opacity-40" />
+                       </div>
+                    )}
                  </div>
                  
                  <div className="flex-1 min-w-0">
@@ -208,26 +215,40 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
              ))}
           </div>
         ) : (
-          // GRID VIEW
+          // GRID VIEW: Enhanced with Top Image Banner
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredModules.map(module => (
-              <div key={module.id} className="prod-card flex flex-col h-64 hover:-translate-y-1 transition-transform cursor-pointer group" onClick={() => openModal(module)}>
-                 <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50 rounded-t-lg">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${MODULE_COLORS[module.type]}`}>
-                        {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
-                    </span>
-                    <button className="text-slate-400 hover:text-slate-600"><MoreHorizontal size={16}/></button>
-                 </div>
+              <div key={module.id} className="prod-card flex flex-col h-72 hover:-translate-y-1 transition-transform cursor-pointer group overflow-hidden" onClick={() => openModal(module)}>
+                 {/* Card Header / Image Area */}
+                 {module.imageUrl ? (
+                    <div className="h-32 w-full relative bg-slate-100 border-b border-slate-100">
+                       <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover" />
+                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60"></div>
+                       <div className="absolute top-2 left-2">
+                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm bg-white/90 backdrop-blur text-slate-800 border-none`}>
+                               {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
+                           </span>
+                       </div>
+                       <button className="absolute top-2 right-2 text-white/80 hover:text-white"><MoreHorizontal size={16}/></button>
+                    </div>
+                 ) : (
+                    <div className="p-4 border-b border-slate-100 flex justify-between items-start bg-slate-50 rounded-t-lg">
+                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${MODULE_COLORS[module.type]}`}>
+                           {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
+                       </span>
+                       <button className="text-slate-400 hover:text-slate-600"><MoreHorizontal size={16}/></button>
+                    </div>
+                 )}
                  
-                 <div className="p-4 flex-1 flex flex-col min-h-0">
+                 <div className="p-4 flex-1 flex flex-col min-h-0 bg-white">
                     <h3 className="font-bold text-slate-800 text-sm mb-2 truncate" title={module.title}>{module.title}</h3>
-                    <div className="flex-1 bg-slate-50 rounded p-2 text-xs font-mono text-slate-500 overflow-hidden relative">
-                       <div className="absolute inset-0 p-2 overflow-hidden">{module.content}</div>
-                       <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-slate-50 to-transparent"></div>
+                    <div className={`flex-1 rounded p-2 text-xs font-mono text-slate-500 overflow-hidden relative ${module.imageUrl ? 'bg-slate-50 border border-slate-100' : 'bg-slate-50'}`}>
+                       <div className="absolute inset-0 p-2 overflow-hidden leading-relaxed">{module.content}</div>
+                       <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-slate-50 to-transparent"></div>
                     </div>
                  </div>
                  
-                 <div className="p-3 border-t border-slate-100 flex justify-between items-center bg-white rounded-b-lg">
+                 <div className="px-3 pb-3 flex justify-between items-center bg-white rounded-b-lg">
                     <div className="flex gap-1 overflow-hidden">
                        {module.tags.slice(0, 2).map(t => <span key={t} className="text-[10px] text-slate-400 bg-slate-100 px-1 rounded">#{t}</span>)}
                     </div>
@@ -245,7 +266,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
         )}
       </div>
 
-      {/* Edit/Create Modal (Sheet Style) */}
+      {/* Edit/Create Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)}></div>
@@ -278,6 +299,31 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelTags}</label>
                     <input className="prod-input" value={tags} onChange={e => setTags(e.target.value)} placeholder="tech, react, v1..." />
                   </div>
+                </div>
+
+                {/* Enhanced Image URL Input with Preview */}
+                <div>
+                   <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
+                      <ImageIcon size={14} /> {t.library.labelImage}
+                   </label>
+                   <div className="flex gap-3">
+                      <div className="relative flex-1">
+                          <input 
+                            className="prod-input pl-8" 
+                            value={imageUrl} 
+                            onChange={e => setImageUrl(e.target.value)} 
+                            placeholder="https://example.com/image.png" 
+                          />
+                          <Link size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                      </div>
+                      {imageUrl && (
+                          <div className="w-10 h-10 rounded border border-slate-200 bg-slate-50 shrink-0 overflow-hidden relative group">
+                             <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                             <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400 text-[8px] -z-10">Invalid</div>
+                          </div>
+                      )}
+                   </div>
+                   <p className="text-[10px] text-slate-400 mt-1 ml-1">Paste a direct image URL to display a thumbnail in the library.</p>
                 </div>
 
                 <div>
