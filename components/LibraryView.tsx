@@ -4,8 +4,8 @@ import { MODULE_COLORS } from '../constants';
 import { 
   Plus, Trash2, Edit2, Search, Copy, Check, Filter, X, 
   LayoutList, LayoutGrid, Image as ImageIcon, Link, 
-  User, FileText, CheckSquare, Shield, Layout, MessageSquare, Box, MoreHorizontal, ExternalLink,
-  ChevronLeft, ChevronRight
+  User, FileText, CheckSquare, Shield, Layout, MessageSquare, Box, ExternalLink,
+  ChevronLeft, ChevronRight, MoreHorizontal
 } from 'lucide-react';
 import { Language, translations } from '../translations';
 
@@ -55,13 +55,26 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
   const getModuleIcon = (type: ModuleType) => {
     switch (type) {
-      case ModuleType.ROLE: return <User size={32} />;
-      case ModuleType.CONTEXT: return <FileText size={32} />;
-      case ModuleType.TASK: return <CheckSquare size={32} />;
-      case ModuleType.CONSTRAINT: return <Shield size={32} />;
-      case ModuleType.FORMAT: return <Layout size={32} />;
-      case ModuleType.TONE: return <MessageSquare size={32} />;
-      default: return <Box size={32} />;
+      case ModuleType.ROLE: return <User />;
+      case ModuleType.CONTEXT: return <FileText />;
+      case ModuleType.TASK: return <CheckSquare />;
+      case ModuleType.CONSTRAINT: return <Shield />;
+      case ModuleType.FORMAT: return <Layout />;
+      case ModuleType.TONE: return <MessageSquare />;
+      default: return <Box />;
+    }
+  };
+
+  // Helper for Card Header Styling (No-Image Mode)
+  const getTypeStyles = (type: ModuleType) => {
+    switch (type) {
+        case ModuleType.ROLE: return { bg: 'bg-gradient-to-br from-blue-50/80 to-slate-50', icon: 'text-blue-500', badge: 'bg-blue-50 text-blue-700 border-blue-100' };
+        case ModuleType.CONTEXT: return { bg: 'bg-gradient-to-br from-purple-50/80 to-slate-50', icon: 'text-purple-500', badge: 'bg-purple-50 text-purple-700 border-purple-100' };
+        case ModuleType.TASK: return { bg: 'bg-gradient-to-br from-emerald-50/80 to-slate-50', icon: 'text-emerald-500', badge: 'bg-emerald-50 text-emerald-700 border-emerald-100' };
+        case ModuleType.CONSTRAINT: return { bg: 'bg-gradient-to-br from-rose-50/80 to-slate-50', icon: 'text-rose-500', badge: 'bg-rose-50 text-rose-700 border-rose-100' };
+        case ModuleType.FORMAT: return { bg: 'bg-gradient-to-br from-orange-50/80 to-slate-50', icon: 'text-orange-500', badge: 'bg-orange-50 text-orange-700 border-orange-100' };
+        case ModuleType.TONE: return { bg: 'bg-gradient-to-br from-pink-50/80 to-slate-50', icon: 'text-pink-500', badge: 'bg-pink-50 text-pink-700 border-pink-100' };
+        default: return { bg: 'bg-gradient-to-br from-slate-100 to-slate-50', icon: 'text-slate-500', badge: 'bg-slate-100 text-slate-700 border-slate-200' };
     }
   };
 
@@ -274,30 +287,42 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
              ))}
           </div>
         ) : (
-          // GRID VIEW
+          // GRID VIEW (Redesigned)
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {paginatedModules.map(module => (
-              <div key={module.id} className="group relative bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-[340px]" onClick={() => openModal(module)}>
+            {paginatedModules.map(module => {
+              const typeStyle = getTypeStyles(module.type);
+              return (
+              <div key={module.id} className="group relative bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-[320px]" onClick={() => openModal(module)}>
                  
-                 {/* 1. Header Area */}
-                 <div className="relative h-[45%] shrink-0 overflow-hidden bg-slate-50">
+                 {/* 1. Header Area (Information or Image) */}
+                 <div className={`relative h-[40%] shrink-0 overflow-hidden border-b border-slate-50 ${!module.imageUrl ? typeStyle.bg : 'bg-slate-100'}`}>
                     {module.imageUrl ? (
-                       <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                       // Scenario A: With Image
+                       <>
+                           <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                           {/* Tag on Top Right */}
+                           <div className="absolute top-3 right-3 z-10">
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm border bg-white/95 backdrop-blur-sm text-slate-700 border-slate-200">
+                                   {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
+                              </span>
+                           </div>
+                       </>
                     ) : (
-                       <div className={`w-full h-full flex flex-col items-center justify-center gap-2 ${MODULE_COLORS[module.type].replace('text-', 'text-opacity-20 text-').replace('border-', 'bg-opacity-10 bg-')}`}>
-                          {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 48, className: 'opacity-20' })}
+                       // Scenario B: No Image (Header Mode)
+                       <div className="w-full h-full p-5 flex justify-between items-start">
+                          {/* Left: Icon Container */}
+                          <div className="w-10 h-10 rounded-lg bg-white/60 backdrop-blur-sm border border-white/50 shadow-sm flex items-center justify-center">
+                             {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 20, className: typeStyle.icon, strokeWidth: 1.5 })}
+                          </div>
+                          {/* Right: Type Tag */}
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md border ${typeStyle.badge} bg-white/50 backdrop-blur-sm shadow-sm`}>
+                             {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
+                          </span>
                        </div>
                     )}
-                    
-                    {/* Badge Overlay */}
-                    <div className="absolute top-3 left-3">
-                       <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md shadow-sm border bg-white/95 backdrop-blur-sm text-slate-700 border-slate-200`}>
-                           {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
-                       </span>
-                    </div>
 
-                    {/* Quick Actions Overlay */}
-                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+                    {/* Quick Actions Overlay (Unified for both types) */}
+                    <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 z-20">
                         {module.imageUrl && (
                             <a 
                                 href={module.imageUrl} 
@@ -305,7 +330,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
                                 className="p-2 rounded-full bg-white text-slate-700 hover:text-blue-600 hover:scale-110 transition-all shadow-lg"
-                                title="Open Original Image"
+                                title="Open Image"
                             >
                                 <ExternalLink size={18} />
                             </a>
@@ -337,11 +362,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                  {/* 2. Content Body */}
                  <div className="flex-1 p-4 flex flex-col min-h-0 bg-white relative">
                     <div className="mb-2">
-                       <h3 className="font-bold text-slate-800 text-sm truncate" title={module.title}>{module.title}</h3>
+                       <h3 className="font-bold text-slate-800 text-sm truncate pr-2" title={module.title}>{module.title}</h3>
                     </div>
 
-                    <div className="flex-1 relative overflow-hidden min-h-0">
-                       <p className="text-xs text-slate-500 font-mono leading-relaxed line-clamp-4 opacity-80 group-hover:opacity-100 transition-opacity">
+                    <div className="flex-1 relative overflow-hidden min-h-0 group/text">
+                       <p className="text-xs text-slate-500 font-mono leading-relaxed line-clamp-5 group-hover/text:text-slate-700 transition-colors">
                          {module.content}
                        </p>
                        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
@@ -349,29 +374,27 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
                     {/* Tags Area */}
                     {module.tags.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1.5 max-h-12 overflow-hidden">
+                        <div className="mt-3 flex flex-wrap gap-1.5 h-6 overflow-hidden">
                              {module.tags.map(tag => (
-                                 <span key={tag} className="text-[10px] text-slate-500 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md whitespace-nowrap" title={tag}>
+                                 <span key={tag} className="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded whitespace-nowrap" title={tag}>
                                     #{tag}
                                  </span>
                              ))}
                         </div>
                     )}
 
-                    {/* Quick Copy Footer */}
+                    {/* Footer Info */}
                     <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center shrink-0">
-                       <span className="text-[10px] text-slate-400">{module.content.length} chars</span>
-                       <button 
-                          onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
-                          className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded transition-colors ${copiedId === module.id ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'}`}
-                       >
-                         {copiedId === module.id ? <Check size={12}/> : <Copy size={12}/>}
-                         {copiedId === module.id ? t.library.copySuccess : 'Copy'}
-                       </button>
+                       <span className="text-[10px] text-slate-400 font-medium">{module.content.length} chars</span>
+                       {copiedId === module.id && (
+                          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium animate-in fade-in slide-in-from-bottom-1">
+                             <Check size={10} /> Copied
+                          </span>
+                       )}
                     </div>
                  </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
 
