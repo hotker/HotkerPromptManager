@@ -7,10 +7,11 @@
 /* Mobile Full Screen Fixes */
 html, body, #root {
   height: 100%;
+  height: 100vh; /* Fallback for browsers not supporting dvh */
   height: 100dvh; /* Dynamic Viewport Height: Excludes browser address bar */
   width: 100%;
   overflow: hidden; /* Prevent global scroll */
-  overscroll-behavior: none; /* Disable iOS elastic bounce */
+  overscroll-behavior: none; /* Disable bounce effects */
   -webkit-overflow-scrolling: touch;
 }
 
