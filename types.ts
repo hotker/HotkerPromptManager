@@ -68,3 +68,11 @@ export interface User {
 }
 
 export type ViewState = 'dashboard' | 'library' | 'builder' | 'history';
+
+// Global declarations for Gemini API Studio environment
+declare global {
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
+}
