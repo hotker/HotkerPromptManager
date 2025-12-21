@@ -77,41 +77,60 @@ export const onRequestGet = async (context: PagesContext) => {
 
 export const onRequestPost = async (context: PagesContext) => {
   const { request, env } = context;
+  const url = new URL(request.url);
 
   if (!env.NANO_DB && !env.DB) {
      return response({ error: '系统配置错误：未检测到绑定的数据库资源 (KV 或 D1)' }, 503);
   }
 
   try {
-    // Read text directly to support both application/json and text/plain (WAF bypass)
+    // 1. Try to get userId from URL first (Preferred new method)
+    let userId = url.searchParams.get('userId');
     const rawText = await request.text();
+
     if (!rawText) {
        return response({ error: 'Empty request body' }, 400);
     }
     
-    let body: any;
-    try {
-        body = JSON.parse(rawText);
-    } catch (e) {
-        return response({ error: 'Invalid JSON body' }, 400);
-    }
+    let data;
 
-    let { userId, data, payload } = body;
-    
-    if (!userId) {
-      return response({ error: '同步负载格式错误: 缺少 userId' }, 400);
-    }
-    
-    // Support Base64 payload to bypass WAF or large JSON issues
-    if (payload) {
+    // 2. Hybrid Parsing: Check if it's the old JSON wrapper or the new Raw Base64
+    // If it starts with '{', it's likely JSON (Legacy/Fallback)
+    if (rawText.trim().startsWith('{')) {
         try {
-            const decodedStr = decodeBase64(payload);
+            const body = JSON.parse(rawText);
+            if (!userId) userId = body.userId; // Fallback to body userId
+            
+            if (body.payload) {
+                // Base64 inside JSON
+                const decodedStr = decodeBase64(body.payload);
+                data = JSON.parse(decodedStr);
+            } else if (body.data) {
+                // Plain JSON (Oldest format)
+                data = body.data;
+            } else {
+                return response({ error: 'Invalid legacy payload format' }, 400);
+            }
+        } catch (e) {
+            return response({ error: 'Invalid JSON body' }, 400);
+        }
+    } else {
+        // 3. New Method: Treat entire body as Raw Base64
+        // This bypasses WAF because there is no JSON structure to inspect
+        try {
+            const decodedStr = decodeBase64(rawText);
             data = JSON.parse(decodedStr);
         } catch (e) {
-            return response({ error: '无效的 Base64 负载数据' }, 400);
+            return response({ error: 'Invalid Raw Base64 payload' }, 400);
         }
-    } else if (!data) {
-        return response({ error: '同步负载格式错误: 缺少 data' }, 400);
+    }
+    
+    if (!userId) {
+      return response({ error: '同步负载格式错误: 缺少 userId (请在 URL 参数中提供)' }, 400);
+    }
+
+    if (!data) {
+        return response({ error: '数据解析为空' }, 400);
     }
     
     // Store as plain JSON string in DB
