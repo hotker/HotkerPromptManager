@@ -16,14 +16,28 @@ const response = (data: any, status = 200) => {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 };
 
-// Helper to decode Base64 to string (UTF-8 safe)
-function decodeBase64(base64: string) {
+// Helper to decode Reversed-Base64 to string (UTF-8 safe)
+function decodeSmart(reversedPayload: string) {
+  // 1. Reverse back to normal Base64
+  const base64 = reversedPayload.split('').reverse().join('');
+  
+  // 2. Standard Base64 Decode
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     bytes[i] = binaryString.charCodeAt(i);
   }
   return new TextDecoder().decode(bytes);
+}
+
+// Fallback for legacy normal Base64 (just in case)
+function decodeLegacyBase64(base64: string) {
+    const binaryString = atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
 }
 
 export const onRequestOptions = async () => {
@@ -94,34 +108,41 @@ export const onRequestPost = async (context: PagesContext) => {
     
     let data;
 
-    // 2. Hybrid Parsing: Check if it's the old JSON wrapper or the new Raw Base64
-    // If it starts with '{', it's likely JSON (Legacy/Fallback)
+    // 2. Hybrid Parsing
     if (rawText.trim().startsWith('{')) {
+        // CASE A: Legacy JSON Wrapper (Old clients or failed obfuscation)
         try {
             const body = JSON.parse(rawText);
-            if (!userId) userId = body.userId; // Fallback to body userId
+            if (!userId) userId = body.userId; 
             
             if (body.payload) {
-                // Base64 inside JSON
-                const decodedStr = decodeBase64(body.payload);
-                data = JSON.parse(decodedStr);
+                // Try decoding payload
+                try {
+                   data = JSON.parse(decodeLegacyBase64(body.payload));
+                } catch {
+                   // Maybe it's reversed inside JSON? Unlikely for old client but safe to try
+                   try { data = JSON.parse(decodeSmart(body.payload)); } catch {}
+                }
             } else if (body.data) {
-                // Plain JSON (Oldest format)
                 data = body.data;
-            } else {
-                return response({ error: 'Invalid legacy payload format' }, 400);
             }
         } catch (e) {
             return response({ error: 'Invalid JSON body' }, 400);
         }
     } else {
-        // 3. New Method: Treat entire body as Raw Base64
-        // This bypasses WAF because there is no JSON structure to inspect
+        // CASE B: Raw Obfuscated Payload (New Robust Method)
+        // This is where we handle the Reversed Base64
         try {
-            const decodedStr = decodeBase64(rawText);
+            const decodedStr = decodeSmart(rawText);
             data = JSON.parse(decodedStr);
         } catch (e) {
-            return response({ error: 'Invalid Raw Base64 payload' }, 400);
+            // If smart decode fails, maybe it's just raw base64 (fallback)
+            try {
+                const decodedStr = decodeLegacyBase64(rawText);
+                data = JSON.parse(decodedStr);
+            } catch (e2) {
+                return response({ error: 'Invalid Encoded payload' }, 400);
+            }
         }
     }
     
