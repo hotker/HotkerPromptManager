@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { LibraryView } from './components/LibraryView';
@@ -12,16 +11,14 @@ import { apiService, UserData } from './services/apiService';
 import { INITIAL_MODULES } from './constants';
 import { Language, translations } from './translations';
 
-// Debounce Hook to prevent API spamming
+// 防抖延迟缩短至 1s，提升实时感
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [value, delay]);
   return debouncedValue;
 }
@@ -29,10 +26,7 @@ function useDebounce<T>(value: T, delay: number): T {
 const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  
-  const [lang, setLangState] = useState<Language>(() => {
-    return (localStorage.getItem('hotker_lang') as Language) || 'zh';
-  });
+  const [lang, setLangState] = useState<Language>(() => (localStorage.getItem('hotker_lang') as Language) || 'zh');
 
   const setLang = (l: Language) => {
     setLangState(l);
@@ -43,31 +37,26 @@ const App = () => {
 
   useEffect(() => {
     const user = authService.getCurrentUser();
-    if (user) {
-      setCurrentUser(user);
-    }
+    if (user) setCurrentUser(user);
     setIsLoadingAuth(false);
   }, []);
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-  };
-
+  const handleLogin = (user: User) => setCurrentUser(user);
   const handleLogout = () => {
     authService.logout();
     setCurrentUser(null);
   };
 
   if (isLoadingAuth) {
-    return <div className="h-screen bg-slate-50 flex flex-col items-center justify-center text-slate-500">
-       <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-       <span className="font-medium text-sm tracking-wide">{t.app.initializing}</span>
-    </div>;
+    return (
+      <div className="h-screen bg-slate-50 flex flex-col items-center justify-center text-slate-500">
+        <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <span className="font-medium text-sm tracking-wide">{t.app.initializing}</span>
+      </div>
+    );
   }
 
-  if (!currentUser) {
-    return <AuthPage onLogin={handleLogin} lang={lang} setLang={setLang} />;
-  }
+  if (!currentUser) return <AuthPage onLogin={handleLogin} lang={lang} setLang={setLang} />;
 
   return (
     <AuthenticatedApp 
@@ -88,22 +77,19 @@ const AuthenticatedApp: React.FC<{
   const [view, setView] = useState<ViewState>('dashboard');
   const t = translations[lang];
   
-  // Data State
   const [modules, setModules] = useState<PromptModule[]>([]);
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [logs, setLogs] = useState<RunLog[]>([]);
   const [userApiKey, setUserApiKey] = useState<string>('');
   
-  // Sync State
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [syncErrorMsg, setSyncErrorMsg] = useState<string | undefined>(undefined);
 
-  // 1. Load Data
+  // 1. 数据加载
   useEffect(() => {
     const loadCloudData = async () => {
       const cloudData = await apiService.loadData(currentUser.id);
-      
       if (cloudData && cloudData.modules && cloudData.modules.length > 0) {
         setModules(cloudData.modules);
         setTemplates(cloudData.templates || []);
@@ -114,25 +100,22 @@ const AuthenticatedApp: React.FC<{
       }
       setIsDataLoaded(true);
     };
-
     loadCloudData();
   }, [currentUser.id]);
 
-  // 2. Prepare Data
+  // 2. 准备同步数据（自动修剪过长的日志以提升同步效率）
   const currentData: UserData = {
     modules,
     templates,
-    logs,
+    logs: logs.slice(0, 50), 
     apiKey: userApiKey
   };
 
-  // 3. Debounce
-  const debouncedData = useDebounce(currentData, 2000);
-
-  // 4. Enhanced Save with Race Condition Prevention
+  const debouncedData = useDebounce(currentData, 1200);
   const saveAbortControllerRef = useRef<AbortController | null>(null);
   const isFirstRender = useRef(true);
 
+  // 3. 实时同步效应
   useEffect(() => {
     if (!isDataLoaded) return;
     if (isFirstRender.current) {
@@ -141,38 +124,24 @@ const AuthenticatedApp: React.FC<{
     }
 
     const saveData = async () => {
-      // Abort previous request if still pending
-      if (saveAbortControllerRef.current) {
-        saveAbortControllerRef.current.abort();
-      }
-      
+      if (saveAbortControllerRef.current) saveAbortControllerRef.current.abort();
       const controller = new AbortController();
       saveAbortControllerRef.current = controller;
 
       setSyncStatus('saving');
-      setSyncErrorMsg(undefined);
-
       try {
         await apiService.saveData(currentUser.id, debouncedData, controller.signal);
         setSyncStatus('saved');
+        setSyncErrorMsg(undefined);
       } catch (e: any) {
         if (e.name === 'AbortError') return;
-        console.error("Sync failed", e);
         setSyncStatus('error');
         setSyncErrorMsg(e.message);
       }
     };
-
     saveData();
-
-    return () => {
-      if (saveAbortControllerRef.current) {
-        saveAbortControllerRef.current.abort();
-      }
-    };
   }, [debouncedData, currentUser.id, isDataLoaded]);
 
-  // Manual retry capability
   const handleForceSync = () => {
     setSyncStatus('saving');
     apiService.saveData(currentUser.id, currentData)
@@ -192,29 +161,12 @@ const AuthenticatedApp: React.FC<{
     );
   }
 
-  const handleSaveTemplate = (newTemplate: PromptTemplate) => {
-    setTemplates(prev => [newTemplate, ...prev]);
-  };
-
-  const handleAddLog = (newLog: RunLog) => {
-    setLogs(prev => [newLog, ...prev]);
-  };
-
-  const handleUpdateLog = (id: string, updates: Partial<RunLog>) => {
-    setLogs(prev => prev.map(log => log.id === id ? { ...log, ...updates } : log));
-  };
-
-  const handleUpdateModule = (updatedModule: PromptModule) => {
-    setModules(prev => prev.map(m => m.id === updatedModule.id ? updatedModule : m));
-  };
-
   return (
     <div className="flex h-[100dvh] bg-slate-50 text-slate-900 font-sans overflow-hidden">
       <Sidebar 
         currentView={view} 
         setView={setView} 
         currentUser={currentUser}
-        // FIX: Change handleLogout to onLogout to resolve "Cannot find name 'handleLogout'" error.
         onLogout={onLogout}
         userApiKey={userApiKey}
         setUserApiKey={setUserApiKey}
@@ -229,30 +181,22 @@ const AuthenticatedApp: React.FC<{
         <div className="flex-1 overflow-hidden relative bg-white md:bg-slate-50 md:p-2">
           {view === 'dashboard' && (
             <Dashboard 
-              modules={modules} 
-              templates={templates} 
-              logs={logs}
-              setModules={setModules}
-              setTemplates={setTemplates}
-              setLogs={setLogs}
-              currentUser={currentUser}
-              lang={lang}
+              modules={modules} templates={templates} logs={logs}
+              setModules={setModules} setTemplates={setTemplates} setLogs={setLogs}
+              currentUser={currentUser} lang={lang}
             />
           )}
           {view === 'library' && <LibraryView modules={modules} setModules={setModules} lang={lang} />}
           {view === 'builder' && (
             <BuilderView 
-              modules={modules} 
-              templates={templates} 
-              saveTemplate={handleSaveTemplate}
-              addLog={handleAddLog}
-              onUpdateModule={handleUpdateModule}
-              userApiKey={userApiKey}
-              currentUser={currentUser}
-              lang={lang}
+              modules={modules} templates={templates} 
+              saveTemplate={(t) => setTemplates(prev => [t, ...prev])}
+              addLog={(l) => setLogs(prev => [l, ...prev])}
+              onUpdateModule={(m) => setModules(prev => prev.map(old => old.id === m.id ? m : old))}
+              userApiKey={userApiKey} currentUser={currentUser} lang={lang}
             />
           )}
-          {view === 'history' && <HistoryView logs={logs} updateLog={handleUpdateLog} lang={lang} />}
+          {view === 'history' && <HistoryView logs={logs} updateLog={(id, updates) => setLogs(prev => prev.map(log => log.id === id ? { ...log, ...updates } : log))} lang={lang} />}
         </div>
       </main>
     </div>

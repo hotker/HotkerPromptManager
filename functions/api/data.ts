@@ -23,7 +23,7 @@ export const onRequestGet = async (context: PagesContext) => {
   const { request, env } = context;
   
   if (!env.NANO_DB && !env.DB) {
-     return response({ error: 'System Error: No DB bound' }, 503);
+     return response({ error: '系统配置错误：未检测到绑定的数据库资源 (KV 或 D1)' }, 503);
   }
 
   const url = new URL(request.url);
@@ -37,11 +37,13 @@ export const onRequestGet = async (context: PagesContext) => {
     let dataStr: string | null = null;
 
     if (env.DB) {
+       // SQL for D1
        const record = await env.DB.prepare('SELECT data_json FROM user_data WHERE user_id = ?').bind(userId).first();
        if (record) {
          dataStr = record.data_json as string;
        }
     } else {
+       // KV for NANO_DB
        dataStr = await env.NANO_DB.get(`DATA:${userId}`);
     }
 
@@ -49,7 +51,7 @@ export const onRequestGet = async (context: PagesContext) => {
     return response(data);
   } catch (e: any) {
     console.error("Fetch data error:", e);
-    return response({ error: 'Failed to read from DB: ' + e.message }, 500);
+    return response({ error: '无法读取同步数据: ' + e.message }, 500);
   }
 }
 
@@ -57,7 +59,7 @@ export const onRequestPost = async (context: PagesContext) => {
   const { request, env } = context;
 
   if (!env.NANO_DB && !env.DB) {
-     return response({ error: 'System Error: No DB bound' }, 503);
+     return response({ error: '系统配置错误：未检测到绑定的数据库资源 (KV 或 D1)' }, 503);
   }
 
   try {
@@ -65,13 +67,14 @@ export const onRequestPost = async (context: PagesContext) => {
     const { userId, data } = body;
     
     if (!userId || !data) {
-      return response({ error: 'Invalid payload' }, 400);
+      return response({ error: '同步负载格式错误' }, 400);
     }
     
     const jsonStr = JSON.stringify(data);
 
     if (env.DB) {
-      // Use SQL optimized for D1 performance
+      // Use SQL optimized for D1 performance with UPSERT logic.
+      // High availability: ensures consistent write even during simultaneous requests.
       await env.DB.prepare(`
         INSERT INTO user_data (user_id, data_json, updated_at) 
         VALUES (?, ?, ?)
@@ -80,13 +83,17 @@ export const onRequestPost = async (context: PagesContext) => {
           updated_at = excluded.updated_at
       `).bind(userId, jsonStr, Date.now()).run();
     } else {
-      // KV is already atomic for the same key
+      // KV is naturally atomic per key
       await env.NANO_DB.put(`DATA:${userId}`, jsonStr);
     }
     
     return response({ success: true, timestamp: Date.now() });
   } catch (e: any) {
-    console.error("Save data error:", e);
-    return response({ error: 'Failed to save to DB: ' + e.message }, 500);
+    console.error("Save data failure:", e);
+    // Explicitly handle DB busy or constraint errors
+    if (e.message?.includes('D1_ERROR')) {
+       return response({ error: '数据库并发写冲突，同步已进入重试队列' }, 503);
+    }
+    return response({ error: '同步写入失败: ' + e.message }, 500);
   }
 }

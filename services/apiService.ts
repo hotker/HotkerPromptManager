@@ -10,7 +10,8 @@ export interface UserData {
 const API_BASE = '/api';
 
 /**
- * Enhanced request helper with retry logic
+ * Enhanced request helper with exponential backoff retry logic.
+ * Specifically designed to handle database contention or transient network issues.
  */
 async function request<T>(endpoint: string, options: RequestInit = {}, retries = 3, backoff = 1000): Promise<T> {
   const defaultHeaders = {
@@ -26,10 +27,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
       },
     });
 
+    // Handle 5xx errors and specific database busy states with retries
     if (!res.ok) {
-      if (res.status >= 500 && retries > 0) {
+      if ((res.status >= 500 || res.status === 429) && retries > 0) {
         await new Promise(r => setTimeout(r, backoff));
-        return request(endpoint, options, retries - 1, backoff * 2);
+        return request(endpoint, options, retries - 1, backoff * 1.5);
       }
       
       let errorMsg = `API Error: ${res.status}`;
@@ -37,8 +39,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
         const errJson = await res.json() as any;
         errorMsg = errJson.error || errorMsg;
       } catch {
-        if (res.status === 503) errorMsg = '服务暂时不可用 (数据库繁忙)';
-        else if (res.status === 500) errorMsg = '服务器内部错误';
+        if (res.status === 503) errorMsg = '数据库服务繁忙，请稍后重试';
+        else if (res.status === 500) errorMsg = '服务器内部同步错误';
       }
       throw new Error(errorMsg);
     }
@@ -46,11 +48,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
     if (res.status === 204) return {} as T;
     return await res.json();
   } catch (e: any) {
-    if (retries > 0 && e.message !== 'AbortError') {
+    // If aborted by AbortController, do not retry
+    if (e.name === 'AbortError') throw e;
+
+    if (retries > 0) {
       await new Promise(r => setTimeout(r, backoff));
       return request(endpoint, options, retries - 1, backoff * 2);
     }
-    throw new Error(e.message || '网络连接失败');
+    throw new Error(e.message || '网络连接异常，同步中断');
   }
 }
 
@@ -87,8 +92,11 @@ export const apiService = {
     }
   },
 
+  /**
+   * Save data with signal support to prevent race conditions during high-frequency edits.
+   */
   saveData: async (userId: string, data: UserData, signal?: AbortSignal): Promise<void> => {
-    await request<void>('/data', {
+    return request<void>('/data', {
       method: 'POST',
       body: JSON.stringify({ userId, data }),
       signal

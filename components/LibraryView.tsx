@@ -65,7 +65,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
     }
   };
 
-  // Helper for Card Header Styling (No-Image Mode)
   const getTypeStyles = (type: ModuleType) => {
     switch (type) {
         case ModuleType.ROLE: return { bg: 'bg-gradient-to-br from-blue-50/80 to-slate-50', icon: 'text-blue-500', badge: 'bg-blue-50 text-blue-700 border-blue-100' };
@@ -113,11 +112,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       createdAt: editingModule ? editingModule.createdAt : Date.now(),
     };
 
-    if (editingModule) {
-      setModules(prev => prev.map(m => m.id === editingModule.id ? newModule : m));
-    } else {
-      setModules(prev => [newModule, ...prev]);
-    }
+    setModules(prev => {
+      if (editingModule) {
+        return prev.map(m => m.id === editingModule.id ? newModule : m);
+      }
+      return [newModule, ...prev];
+    });
+    
     setIsModalOpen(false);
   };
 
@@ -141,12 +142,10 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
     return matchesSearch && matchesType;
   });
 
-  // Pagination Logic
   const totalPages = Math.ceil(filteredModules.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedModules = filteredModules.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // Pagination Window Generator
   const getPageNumbers = () => {
     const windowSize = 5;
     const pages = [];
@@ -226,11 +225,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
               <p>{t.library.noModulesFound}</p>
            </div>
         ) : viewMode === 'list' ? (
-          // LIST VIEW
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
              {paginatedModules.map((module, index) => (
                <div key={module.id} className={`group flex items-start p-4 hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 gap-4 cursor-pointer`} onClick={() => openModal(module)}>
-                 {/* List Thumbnail */}
                  <div className="shrink-0 pt-1">
                     {module.imageUrl ? (
                        <img src={module.imageUrl} alt={module.title} className="w-12 h-12 rounded-md object-cover border border-slate-200 bg-slate-100 shadow-sm" />
@@ -287,20 +284,15 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
              ))}
           </div>
         ) : (
-          // GRID VIEW (Redesigned)
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {paginatedModules.map(module => {
               const typeStyle = getTypeStyles(module.type);
               return (
               <div key={module.id} className="group relative bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-[320px]" onClick={() => openModal(module)}>
-                 
-                 {/* 1. Header Area (Information or Image) */}
                  <div className={`relative h-[40%] shrink-0 overflow-hidden border-b border-slate-50 ${!module.imageUrl ? typeStyle.bg : 'bg-slate-100'}`}>
                     {module.imageUrl ? (
-                       // Scenario A: With Image
                        <>
                            <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                           {/* Tag on Top Right */}
                            <div className="absolute top-3 right-3 z-10">
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm border bg-white/95 backdrop-blur-sm text-slate-700 border-slate-200">
                                    {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
@@ -308,20 +300,16 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                            </div>
                        </>
                     ) : (
-                       // Scenario B: No Image (Header Mode)
                        <div className="w-full h-full p-5 flex justify-between items-start">
-                          {/* Left: Icon Container */}
                           <div className="w-10 h-10 rounded-lg bg-white/60 backdrop-blur-sm border border-white/50 shadow-sm flex items-center justify-center">
                              {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 20, className: typeStyle.icon, strokeWidth: 1.5 })}
                           </div>
-                          {/* Right: Type Tag */}
                           <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md border ${typeStyle.badge} bg-white/50 backdrop-blur-sm shadow-sm`}>
                              {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
                           </span>
                        </div>
                     )}
 
-                    {/* Quick Actions Overlay (Unified for both types) */}
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 z-20">
                         {module.imageUrl && (
                             <a 
@@ -359,7 +347,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     </div>
                  </div>
                  
-                 {/* 2. Content Body */}
                  <div className="flex-1 p-4 flex flex-col min-h-0 bg-white relative">
                     <div className="mb-2">
                        <h3 className="font-bold text-slate-800 text-sm truncate pr-2" title={module.title}>{module.title}</h3>
@@ -372,7 +359,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                        <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
                     </div>
 
-                    {/* Tags Area */}
                     {module.tags.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-1.5 h-6 overflow-hidden">
                              {module.tags.map(tag => (
@@ -383,7 +369,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                         </div>
                     )}
 
-                    {/* Footer Info */}
                     <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center shrink-0">
                        <span className="text-[10px] text-slate-400 font-medium">{module.content.length} chars</span>
                        {copiedId === module.id && (
@@ -398,7 +383,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
           </div>
         )}
 
-        {/* Pagination Controls */}
         {totalPages > 1 && (
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 pt-6 pb-2 gap-4">
                 <div className="text-xs text-slate-500 order-2 sm:order-1">
@@ -415,7 +399,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                         <ChevronLeft size={16} />
                     </button>
                     
-                    {/* Numeric Pagination Buttons */}
                     <div className="flex items-center gap-1">
                       {getPageNumbers().map(pageNum => (
                         <button
@@ -445,7 +428,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
         )}
       </div>
 
-      {/* Edit/Create Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex justify-end">
           <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)}></div>
@@ -469,8 +451,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelType}</label>
                     <select className="prod-input" value={type} onChange={e => setType(e.target.value as ModuleType)}>
-                      {Object.values(ModuleType).map(t => (
-                        <option key={t} value={t}>{translations[lang].moduleType[t as keyof typeof translations['en']['moduleType']] || t}</option>
+                      {Object.values(ModuleType).map(t_val => (
+                        <option key={t_val} value={t_val}>{translations[lang].moduleType[t_val as keyof typeof translations['en']['moduleType']] || t_val}</option>
                       ))}
                     </select>
                   </div>
@@ -480,7 +462,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                   </div>
                 </div>
 
-                {/* Enhanced Image URL Input with Preview */}
                 <div>
                    <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
                       <ImageIcon size={14} /> {t.library.labelImage}
