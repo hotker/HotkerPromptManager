@@ -118,7 +118,8 @@ export const apiService = {
 
     // 3. 封装为文件上传 (Multipart/Form-Data)
     // 使用 application/octet-stream 模拟通用二进制文件，避开文本检查
-    const blob = new Blob([binaryData], { type: 'application/octet-stream' });
+    // Fix TS Error: Cast to any to avoid "SharedArrayBuffer" mismatch in Blob constructor types
+    const blob = new Blob([binaryData as any], { type: 'application/octet-stream' });
     const formData = new FormData();
     formData.append('file', blob, 'data.bin');
 
