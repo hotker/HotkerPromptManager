@@ -6,7 +6,7 @@ import {
   LayoutList, LayoutGrid, Image as ImageIcon, Link, 
   User, FileText, CheckSquare, Shield, Layout, MessageSquare, Box, ExternalLink,
   ChevronLeft, ChevronRight, Maximize2, AlertCircle, Cloud, CloudOff, RefreshCw,
-  Eye, Settings, Code, Tag, Info
+  Eye, Settings, Code, Tag, Info, FileJson
 } from 'lucide-react';
 import { Language, translations } from '../translations';
 
@@ -64,13 +64,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
   const getTypeStyles = (type: ModuleType) => {
     switch (type) {
-        case ModuleType.ROLE: return { bg: 'bg-gradient-to-br from-blue-400/20 to-indigo-500/10', icon: 'text-blue-600', badge: 'bg-blue-100 text-blue-700 border-blue-200' };
-        case ModuleType.CONTEXT: return { bg: 'bg-gradient-to-br from-purple-400/20 to-fuchsia-500/10', icon: 'text-purple-600', badge: 'bg-purple-100 text-purple-700 border-purple-200' };
-        case ModuleType.TASK: return { bg: 'bg-gradient-to-br from-emerald-400/20 to-teal-500/10', icon: 'text-emerald-600', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200' };
-        case ModuleType.CONSTRAINT: return { bg: 'bg-gradient-to-br from-rose-400/20 to-pink-500/10', icon: 'text-rose-600', badge: 'bg-rose-100 text-rose-700 border-rose-200' };
-        case ModuleType.FORMAT: return { bg: 'bg-gradient-to-br from-orange-400/20 to-amber-500/10', icon: 'text-orange-600', badge: 'bg-orange-100 text-orange-700 border-orange-200' };
-        case ModuleType.TONE: return { bg: 'bg-gradient-to-br from-pink-400/20 to-rose-500/10', icon: 'text-pink-600', badge: 'bg-pink-100 text-pink-700 border-pink-200' };
-        default: return { bg: 'bg-gradient-to-br from-slate-200 to-slate-50', icon: 'text-slate-600', badge: 'bg-slate-200 text-slate-700 border-slate-300' };
+        case ModuleType.ROLE: return { bg: 'bg-blue-50/50', border: 'border-blue-100', icon: 'text-blue-500', badge: 'bg-blue-100 text-blue-700 border-blue-200', textBg: 'bg-blue-50/30' };
+        case ModuleType.CONTEXT: return { bg: 'bg-purple-50/50', border: 'border-purple-100', icon: 'text-purple-500', badge: 'bg-purple-100 text-purple-700 border-purple-200', textBg: 'bg-purple-50/30' };
+        case ModuleType.TASK: return { bg: 'bg-emerald-50/50', border: 'border-emerald-100', icon: 'text-emerald-500', badge: 'bg-emerald-100 text-emerald-700 border-emerald-200', textBg: 'bg-emerald-50/30' };
+        case ModuleType.CONSTRAINT: return { bg: 'bg-rose-50/50', border: 'border-rose-100', icon: 'text-rose-500', badge: 'bg-rose-100 text-rose-700 border-rose-200', textBg: 'bg-rose-50/30' };
+        case ModuleType.FORMAT: return { bg: 'bg-orange-50/50', border: 'border-orange-100', icon: 'text-orange-500', badge: 'bg-orange-100 text-orange-700 border-orange-200', textBg: 'bg-orange-50/30' };
+        case ModuleType.TONE: return { bg: 'bg-pink-50/50', border: 'border-pink-100', icon: 'text-pink-500', badge: 'bg-pink-100 text-pink-700 border-pink-200', textBg: 'bg-pink-50/30' };
+        default: return { bg: 'bg-slate-50/50', border: 'border-slate-100', icon: 'text-slate-500', badge: 'bg-slate-100 text-slate-700 border-slate-200', textBg: 'bg-slate-50/30' };
     }
   };
 
@@ -119,12 +119,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       return [newModule, ...prev];
     });
 
-    if (!editingModule) {
-      setSearchTerm('');
-      setFilterType('ALL');
-      setCurrentPage(1);
-    }
-
     setIsSaving(false);
     setIsModalOpen(false);
   };
@@ -153,22 +147,18 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedModules = filteredModules.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // Helper for live preview styling
-  const currentTypeStyle = getTypeStyles(type);
-
   return (
-    <div className="h-full flex flex-col bg-slate-50 overflow-hidden md:rounded-tl-3xl md:border-l md:border-t md:border-slate-200">
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden md:rounded-tl-[2.5rem] md:border-l md:border-t md:border-slate-200">
       
       {/* Top Toolbar */}
-      <div className="px-8 py-6 border-b border-slate-200 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shrink-0 shadow-sm z-10">
-        <div className="flex items-center gap-5">
-          <div>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">{t.library.title}</h2>
-            <p className="text-[10px] text-slate-400 mt-1 font-black uppercase tracking-[0.2em]">{modules.length} {t.library.modulesAvailable}</p>
+      <div className="px-10 py-8 border-b border-slate-200 bg-white flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shrink-0 shadow-sm z-10">
+        <div className="flex items-center gap-6">
+          <div className="bg-slate-900 p-3 rounded-2xl text-white shadow-xl shadow-slate-900/20">
+             <Box size={28} strokeWidth={2.5} />
           </div>
-          <div className="hidden lg:flex items-center gap-2 pl-6 border-l border-slate-100">
-            {syncStatus === 'saving' && <div className="flex items-center gap-1.5 text-[10px] font-black text-blue-500 animate-pulse uppercase tracking-widest"><RefreshCw size={12} className="animate-spin" /> Syncing</div>}
-            {syncStatus === 'saved' && <div className="flex items-center gap-1.5 text-[10px] font-black text-emerald-500 opacity-60 uppercase tracking-widest"><Cloud size={12} /> Live</div>}
+          <div>
+            <h2 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">{t.library.title}</h2>
+            <p className="text-[10px] text-slate-400 mt-2 font-black uppercase tracking-[0.3em] opacity-60">{modules.length} {t.library.modulesAvailable}</p>
           </div>
         </div>
         
@@ -179,27 +169,27 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                 placeholder={t.library.searchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-slate-100 border-none rounded-2xl px-5 py-4 pl-12 text-sm font-medium focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-inner"
+                className="w-full bg-slate-100 border-none rounded-2xl px-6 py-4 pl-14 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/10 outline-none transition-all shadow-inner"
               />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
            </div>
 
-           <div className="flex items-center bg-slate-100 rounded-2xl p-1 gap-1">
-             <button onClick={() => setViewMode('list')} className={`p-3 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white shadow-md text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}><LayoutList size={20}/></button>
-             <button onClick={() => setViewMode('grid')} className={`p-3 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white shadow-md text-blue-600' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid size={20}/></button>
+           <div className="flex items-center bg-slate-100 rounded-2xl p-1.5 gap-1 shadow-inner">
+             <button onClick={() => setViewMode('list')} className={`p-3 rounded-xl transition-all ${viewMode === 'list' ? 'bg-white shadow-lg text-blue-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}><LayoutList size={20}/></button>
+             <button onClick={() => setViewMode('grid')} className={`p-3 rounded-xl transition-all ${viewMode === 'grid' ? 'bg-white shadow-lg text-blue-600 scale-105' : 'text-slate-400 hover:text-slate-600'}`}><LayoutGrid size={20}/></button>
            </div>
 
-           <button onClick={() => openModal()} className="btn-primary py-4 px-8 rounded-2xl shadow-2xl shadow-blue-500/30 active:scale-95 transition-all">
-             <Plus size={20} strokeWidth={3} /> <span className="hidden sm:inline font-black uppercase tracking-widest text-xs">{t.library.createBtn}</span>
+           <button onClick={() => openModal()} className="btn-primary py-4 px-10 rounded-2xl shadow-2xl shadow-blue-500/30 active:scale-95 transition-all">
+             <Plus size={20} strokeWidth={3} /> <span className="hidden sm:inline font-black uppercase tracking-[0.2em] text-xs">{t.library.createBtn}</span>
            </button>
         </div>
       </div>
 
       {/* Filter Bar */}
-      <div className="px-8 py-4 border-b border-slate-100 bg-white flex items-center gap-4 overflow-x-auto no-scrollbar">
+      <div className="px-10 py-5 border-b border-slate-100 bg-white flex items-center gap-4 overflow-x-auto no-scrollbar">
         <button 
           onClick={() => setFilterType('ALL')}
-          className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap border-2 ${filterType === 'ALL' ? 'bg-slate-900 border-slate-900 text-white shadow-xl scale-105' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}`}
+          className={`px-8 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.25em] transition-all whitespace-nowrap border-2 ${filterType === 'ALL' ? 'bg-slate-900 border-slate-900 text-white shadow-2xl scale-105' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}`}
         >
           {t.moduleType['ALL']}
         </button>
@@ -207,7 +197,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
            <button 
              key={type_val}
              onClick={() => setFilterType(type_val)}
-             className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] transition-all whitespace-nowrap border-2 ${filterType === type_val ? 'bg-slate-900 border-slate-900 text-white shadow-xl scale-105' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}`}
+             className={`px-8 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[0.25em] transition-all whitespace-nowrap border-2 ${filterType === type_val ? 'bg-slate-900 border-slate-900 text-white shadow-2xl scale-105' : 'bg-white border-slate-100 text-slate-400 hover:border-slate-300'}`}
            >
              {t.moduleType[type_val as keyof typeof t.moduleType] || type_val}
            </button>
@@ -215,37 +205,37 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-10 custom-scrollbar" ref={scrollContainerRef}>
+      <div className="flex-1 overflow-y-auto p-12 custom-scrollbar bg-slate-50/30" ref={scrollContainerRef}>
         {paginatedModules.length === 0 ? (
-           <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-50">
-              <Box size={80} strokeWidth={0.5} className="mb-6" />
-              <p className="font-black tracking-[0.3em] uppercase text-xs">{t.library.noModulesFound}</p>
+           <div className="h-full flex flex-col items-center justify-center text-slate-300 opacity-40">
+              <Box size={100} strokeWidth={0.5} className="mb-8" />
+              <p className="font-black tracking-[0.5em] uppercase text-[10px]">{t.library.noModulesFound}</p>
            </div>
         ) : viewMode === 'list' ? (
-          <div className="max-w-5xl mx-auto space-y-4">
+          <div className="max-w-6xl mx-auto space-y-6">
              {paginatedModules.map((module) => (
-               <div key={module.id} className="group flex items-center p-6 bg-white border border-slate-200 rounded-3xl hover:border-blue-400 hover:shadow-2xl transition-all cursor-pointer gap-8" onClick={() => openModal(module)}>
-                 <div className="shrink-0 w-24 h-24 rounded-2xl overflow-hidden border-2 border-slate-50 bg-slate-50 shadow-sm">
+               <div key={module.id} className="group flex items-center p-8 bg-white border border-slate-200 rounded-[2.5rem] hover:border-blue-400 hover:shadow-2xl hover:shadow-blue-500/5 transition-all cursor-pointer gap-10" onClick={() => openModal(module)}>
+                 <div className="shrink-0 w-28 h-28 rounded-[2rem] overflow-hidden border-2 border-slate-50 bg-slate-50 shadow-inner">
                     {module.imageUrl ? (
-                       <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-700" />
+                       <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover group-hover:scale-110 transition-all duration-[1s]" />
                     ) : (
                        <div className={`w-full h-full flex items-center justify-center ${getTypeStyles(module.type).bg}`}>
-                          {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 36, className: 'opacity-40' })}
+                          {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 40, className: 'opacity-30' })}
                        </div>
                     )}
                  </div>
                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-4 mb-2">
-                      <h3 className="text-xl font-black text-slate-900 truncate tracking-tight">{module.title}</h3>
-                      <span className={`text-[8px] px-3 py-1 rounded-full font-black uppercase tracking-widest ${getTypeStyles(module.type).badge}`}>
+                    <div className="flex items-center gap-4 mb-3">
+                      <h3 className="text-2xl font-black text-slate-900 truncate tracking-tight uppercase group-hover:text-blue-600 transition-colors">{module.title}</h3>
+                      <span className={`text-[8px] px-3 py-1.5 rounded-full font-black uppercase tracking-widest ${getTypeStyles(module.type).badge}`}>
                         {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 font-mono line-clamp-1 opacity-50">{module.content}</p>
+                    <p className="text-xs text-slate-400 font-mono line-clamp-2 leading-relaxed opacity-60 pr-10">{module.content}</p>
                  </div>
-                 <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                    <button onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }} className="p-4 rounded-2xl border-2 border-slate-100 bg-white hover:border-blue-400 hover:text-blue-600 transition-all shadow-sm"><Copy size={20}/></button>
-                    <button onClick={(e) => { e.stopPropagation(); handleDelete(module.id); }} className="p-4 rounded-2xl border-2 border-slate-100 bg-white hover:border-red-400 hover:text-red-600 transition-all shadow-sm"><Trash2 size={20}/></button>
+                 <div className="flex items-center gap-4 opacity-0 group-hover:opacity-100 transition-all translate-x-10 group-hover:translate-x-0">
+                    <button onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }} className="p-5 rounded-[1.5rem] border-2 border-slate-100 bg-white hover:border-blue-400 hover:text-blue-600 hover:shadow-xl transition-all"><Copy size={24}/></button>
+                    <button onClick={(e) => { e.stopPropagation(); handleDelete(module.id); }} className="p-5 rounded-[1.5rem] border-2 border-slate-100 bg-white hover:border-red-400 hover:text-red-600 hover:shadow-xl transition-all"><Trash2 size={24}/></button>
                  </div>
                </div>
              ))}
@@ -254,224 +244,261 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-12">
             {paginatedModules.map(module => {
               const typeStyle = getTypeStyles(module.type);
+              
+              // 有图卡片渲染
+              if (module.imageUrl) {
+                return (
+                  <div key={module.id} className="group flex flex-col h-[480px] bg-white border border-slate-100 rounded-[3rem] overflow-hidden hover:border-blue-500/40 hover:shadow-[0_50px_100px_-30px_rgba(59,130,246,0.2)] transition-all duration-[0.8s] cursor-pointer" onClick={() => openModal(module)}>
+                    <div className="relative h-[72%] shrink-0 overflow-hidden bg-slate-100">
+                      <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover transition-transform duration-[2.5s] group-hover:scale-110" />
+                      
+                      {/* Badge Overlays */}
+                      <div className="absolute top-6 left-6 z-10">
+                         <span className={`text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.2em] border-2 shadow-2xl backdrop-blur-md bg-white/80 ${typeStyle.badge}`}>
+                            {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
+                         </span>
+                      </div>
+
+                      {/* Floating Actions */}
+                      <div className="absolute top-6 right-6 flex flex-col gap-3 translate-x-20 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 z-20">
+                          <button onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }} className="p-4 rounded-[1.5rem] bg-white/95 backdrop-blur shadow-2xl text-slate-800 hover:text-blue-600 hover:scale-110 transition-all"><Copy size={20} /></button>
+                          <button onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(module.imageUrl || null); }} className="p-4 rounded-[1.5rem] bg-white/95 backdrop-blur shadow-2xl text-slate-800 hover:text-blue-600 hover:scale-110 transition-all"><Maximize2 size={20} /></button>
+                      </div>
+
+                      {/* Tags Overlay */}
+                      {module.tags.length > 0 && (
+                        <div className="absolute bottom-6 left-6 right-6 flex flex-wrap gap-2 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-700 z-10">
+                           {module.tags.slice(0, 3).map(tag => (
+                             <span key={tag} className="text-[8px] font-black bg-slate-900/80 backdrop-blur-md text-white px-3 py-1 rounded-full tracking-widest uppercase border border-white/10">#{tag}</span>
+                           ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 p-8 flex flex-col justify-center bg-white">
+                       <h3 className="font-black text-slate-900 text-2xl tracking-tighter truncate uppercase group-hover:text-blue-600 transition-colors leading-tight" title={module.title}>{module.title}</h3>
+                       <p className="text-[10px] text-slate-400 font-mono mt-3 opacity-50 line-clamp-1">{module.content}</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              // 纯文字卡片渲染
               return (
-              <div key={module.id} className="group flex flex-col h-[460px] bg-white border border-slate-100 rounded-[3rem] overflow-hidden hover:border-blue-500/40 hover:shadow-[0_40px_80px_-20px_rgba(59,130,246,0.15)] transition-all duration-700 cursor-pointer" onClick={() => openModal(module)}>
-                 <div className={`relative h-[78%] shrink-0 overflow-hidden ${!module.imageUrl ? typeStyle.bg : 'bg-slate-100'}`}>
-                    {module.imageUrl ? (
-                       <>
-                         <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover transition-transform duration-[2s] group-hover:scale-110" />
-                         <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 transition-all duration-500 flex items-center justify-center opacity-0 group-hover:opacity-100 z-10 backdrop-blur-[2px]">
-                            <button onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(module.imageUrl || null); }} className="p-5 bg-white/95 backdrop-blur rounded-full text-slate-950 hover:scale-125 active:scale-90 shadow-2xl transition-all duration-300"><Maximize2 size={32} strokeWidth={3} /></button>
+                <div key={module.id} className={`group flex flex-col h-[480px] ${typeStyle.bg} border-2 ${typeStyle.border} rounded-[3rem] overflow-hidden hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)] transition-all duration-700 cursor-pointer relative`} onClick={() => openModal(module)}>
+                   {/* Background Decorative Type Icon */}
+                   <div className="absolute -bottom-10 -right-10 opacity-[0.03] rotate-12 transition-transform duration-[2s] group-hover:rotate-0 pointer-events-none">
+                      {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 300 })}
+                   </div>
+
+                   <div className="p-10 flex flex-col h-full relative z-10">
+                      {/* Header */}
+                      <div className="flex justify-between items-start mb-10">
+                         <div className="bg-white p-4 rounded-[1.5rem] shadow-xl text-slate-400 group-hover:text-blue-500 transition-colors duration-500">
+                            {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 28, strokeWidth: 2.5 })}
                          </div>
-                       </>
-                    ) : (
-                       <div className="w-full h-full flex flex-col items-center justify-center gap-6">
-                          <div className="w-28 h-28 rounded-[2.5rem] bg-white/90 backdrop-blur-2xl shadow-2xl flex items-center justify-center text-slate-400 group-hover:rotate-12 transition-all duration-700 ease-out">
-                             {React.cloneElement(getModuleIcon(module.type) as React.ReactElement<any>, { size: 56, className: typeStyle.icon, strokeWidth: 1 })}
-                          </div>
-                       </div>
-                    )}
-                    <div className="absolute top-8 right-8 flex flex-col gap-4 translate-x-16 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-500 delay-75 z-20">
-                        <button onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }} className="p-4 rounded-2xl bg-white shadow-2xl text-slate-700 hover:text-blue-600 transition-all"><Copy size={22} /></button>
-                        <button onClick={(e) => { e.stopPropagation(); handleDelete(module.id); }} className="p-4 rounded-2xl bg-white shadow-2xl text-slate-700 hover:text-red-600 transition-all"><Trash2 size={22} /></button>
-                    </div>
-                 </div>
-                 <div className="flex-1 p-8 flex flex-col justify-center bg-white">
-                    <div className="flex items-center justify-between gap-4">
-                       <h3 className="font-black text-slate-900 text-2xl tracking-tighter truncate uppercase group-hover:text-blue-600 transition-colors" title={module.title}>{module.title}</h3>
-                       <span className={`text-[8px] font-black px-2.5 py-1 rounded-md uppercase tracking-[0.2em] border-2 shrink-0 ${typeStyle.badge}`}>{t.moduleType[module.type as keyof typeof t.moduleType] || module.type}</span>
-                    </div>
-                 </div>
-              </div>
-            )})}
+                         <span className={`text-[8px] font-black px-4 py-2 rounded-full uppercase tracking-[0.25em] border-2 shadow-sm ${typeStyle.badge} bg-white`}>
+                            {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
+                         </span>
+                      </div>
+
+                      {/* Content Section */}
+                      <div className="flex-1 flex flex-col min-w-0">
+                         <h3 className="font-black text-slate-900 text-3xl tracking-tighter leading-none uppercase mb-6 pr-6 group-hover:text-blue-600 transition-colors duration-500">
+                            {module.title}
+                         </h3>
+                         
+                         {/* Content Snippet (Payload) */}
+                         <div className={`flex-1 p-6 rounded-[2rem] border-2 border-dashed ${typeStyle.border} font-mono text-[11px] leading-relaxed text-slate-500 overflow-hidden relative group-hover:bg-white/50 transition-all`}>
+                            <div className="line-clamp-[10] whitespace-pre-wrap">{module.content}</div>
+                            <div className="absolute bottom-4 right-6 text-[8px] font-black text-slate-300 tracking-[0.2em] uppercase">Payload.Instruction</div>
+                         </div>
+                      </div>
+
+                      {/* Actions Footer */}
+                      <div className="mt-8 flex justify-between items-center">
+                         <div className="flex gap-2">
+                           {module.tags.slice(0, 2).map(tag => (
+                              <span key={tag} className="text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-60">#{tag}</span>
+                           ))}
+                         </div>
+                         <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
+                            <button onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }} className="p-3 bg-white shadow-xl rounded-xl text-slate-700 hover:text-blue-600 transition-all"><Copy size={16}/></button>
+                            <button onClick={(e) => { e.stopPropagation(); handleDelete(module.id); }} className="p-3 bg-white shadow-xl rounded-xl text-slate-700 hover:text-red-600 transition-all"><Trash2 size={16}/></button>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-         <div className="px-10 py-6 bg-white border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Page {currentPage} of {totalPages}</span>
+         <div className="px-10 py-8 bg-white border-t border-slate-100 flex items-center justify-between">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] opacity-60">Page {currentPage} of {totalPages}</span>
             <div className="flex gap-4">
-               <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-4 rounded-2xl border-2 border-slate-100 text-slate-600 hover:border-slate-300 disabled:opacity-20 transition-all"><ChevronLeft size={24} /></button>
-               <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-4 rounded-2xl border-2 border-slate-100 text-slate-600 hover:border-slate-300 disabled:opacity-20 transition-all"><ChevronRight size={24} /></button>
+               <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-5 rounded-[1.5rem] border-2 border-slate-100 text-slate-600 hover:border-slate-300 disabled:opacity-10 transition-all shadow-sm"><ChevronLeft size={24} /></button>
+               <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-5 rounded-[1.5rem] border-2 border-slate-100 text-slate-600 hover:border-slate-300 disabled:opacity-10 transition-all shadow-sm"><ChevronRight size={24} /></button>
             </div>
          </div>
       )}
 
-      {/* Full Resolution Lightbox */}
+      {/* Lightbox */}
       {previewImageUrl && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-12 animate-in fade-in duration-500">
-           <div className="absolute inset-0 bg-slate-950/98 backdrop-blur-3xl" onClick={() => setPreviewImageUrl(null)}></div>
-           <button onClick={() => setPreviewImageUrl(null)} className="absolute top-10 right-10 p-5 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all z-10"><X size={36} /></button>
-           <img src={previewImageUrl} alt="Preview" className="relative max-w-full max-h-[85vh] object-contain rounded-[4rem] shadow-2xl animate-in zoom-in-95 duration-700 ease-out border border-white/10" />
+           <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-3xl" onClick={() => setPreviewImageUrl(null)}></div>
+           <button onClick={() => setPreviewImageUrl(null)} className="absolute top-10 right-10 p-6 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all z-10"><X size={36} /></button>
+           <img src={previewImageUrl} alt="Preview" className="relative max-w-full max-h-[90vh] object-contain rounded-[4rem] shadow-[0_100px_150px_-50px_rgba(0,0,0,0.8)] animate-in zoom-in-95 duration-700 ease-out border border-white/10" />
         </div>
       )}
 
       {/* Advanced Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 md:p-8 animate-in fade-in duration-500">
-          <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl transition-opacity duration-700" onClick={() => setIsModalOpen(false)}></div>
+          <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-2xl transition-opacity duration-700" onClick={() => setIsModalOpen(false)}></div>
           
-          <div className="relative w-full max-w-[1200px] h-full max-h-[850px] bg-slate-50 shadow-[0_100px_150px_-50px_rgba(0,0,0,0.5)] flex flex-col animate-in zoom-in-95 duration-500 rounded-[3rem] overflow-hidden border border-white/20">
+          <div className="relative w-full max-w-[1200px] h-full max-h-[900px] bg-slate-50 shadow-[0_100px_200px_-50px_rgba(0,0,0,0.6)] flex flex-col animate-in zoom-in-95 duration-500 rounded-[4rem] overflow-hidden border border-white/20">
             
             {/* Header */}
-            <div className="px-12 py-8 bg-white border-b border-slate-200 flex justify-between items-center shrink-0">
-               <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/40">
-                    <Settings size={24} />
+            <div className="px-14 py-10 bg-white border-b border-slate-200 flex justify-between items-center shrink-0">
+               <div className="flex items-center gap-6">
+                  <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center text-white shadow-2xl shadow-slate-900/30">
+                    <Settings size={28} strokeWidth={2.5} />
                   </div>
                   <div>
                     <h3 className="font-black text-slate-900 text-3xl tracking-tighter uppercase leading-none">
-                      {editingModule ? 'Module Refactoring' : 'Protocol Initialization'}
+                      {editingModule ? 'Module Configuration' : 'Initial Registry'}
                     </h3>
-                    <p className="text-[10px] text-blue-600 font-black opacity-80 mt-1 uppercase tracking-[0.3em]">Hardware Abstraction Layer v2.1</p>
+                    <p className="text-[10px] text-blue-600 font-black opacity-80 mt-2 uppercase tracking-[0.4em]">Protocol Architecture v3.0</p>
                   </div>
                </div>
-               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 p-3 hover:bg-slate-100 rounded-full transition-all active:scale-90"><X size={32}/></button>
+               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900 p-4 hover:bg-slate-100 rounded-full transition-all active:scale-90"><X size={36}/></button>
             </div>
             
-            {/* Split View Content */}
+            {/* Split View */}
             <div className="flex-1 flex overflow-hidden">
-               
-               {/* Left: Input Controls */}
-               <div className="flex-1 overflow-y-auto p-12 custom-scrollbar bg-white">
-                  <div className="space-y-10 max-w-2xl">
-                     
+               <div className="flex-1 overflow-y-auto p-14 custom-scrollbar bg-white">
+                  <div className="space-y-12 max-w-2xl">
                      {formError && (
-                        <div className="p-6 bg-red-50 border-2 border-red-100 rounded-3xl text-red-600 text-xs font-black flex items-center gap-4 animate-shake">
-                          <AlertCircle size={20} /> {formError}
+                        <div className="p-8 bg-red-50 border-2 border-red-100 rounded-[2rem] text-red-600 text-xs font-black flex items-center gap-6 animate-shake">
+                          <AlertCircle size={24} /> {formError}
                         </div>
                      )}
 
-                     {/* Section: Identity */}
-                     <div className="space-y-6">
-                        <div className="flex items-center gap-3 text-slate-400 mb-2">
-                           <Info size={14} className="text-blue-500" />
-                           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Primary Identification</span>
+                     <div className="space-y-8">
+                        <div className="flex items-center gap-4 text-slate-400 mb-2">
+                           <Info size={16} className="text-blue-500" />
+                           <span className="text-[10px] font-black uppercase tracking-[0.3em]">Identification Registry</span>
                         </div>
                         <input 
-                           className={`w-full text-2xl font-black tracking-tighter rounded-3xl py-6 px-8 bg-slate-50 border-2 transition-all outline-none focus:ring-4 focus:ring-blue-500/10 ${!title && formError ? 'border-red-300' : 'border-slate-100 focus:border-blue-500 focus:bg-white'}`} 
+                           className={`w-full text-3xl font-black tracking-tighter rounded-[2rem] py-8 px-10 bg-slate-50 border-2 transition-all outline-none focus:ring-8 focus:ring-blue-500/5 ${!title && formError ? 'border-red-300' : 'border-slate-100 focus:border-blue-500 focus:bg-white'}`} 
                            value={title} 
                            onChange={e => setTitle(e.target.value)} 
-                           placeholder="Enter Identification Title..." 
+                           placeholder="MODULE_TITLE_GOES_HERE" 
                         />
-                        <div className="grid grid-cols-2 gap-6">
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Classification</label>
-                              <select className="w-full font-bold rounded-2xl py-4 px-6 bg-slate-50 border-2 border-slate-100 focus:border-blue-500 outline-none transition-all cursor-pointer" value={type} onChange={e => setType(e.target.value as ModuleType)}>
+                        <div className="grid grid-cols-2 gap-8">
+                           <div className="space-y-3">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-4">Classification</label>
+                              <select className="w-full font-black rounded-2xl py-5 px-8 bg-slate-50 border-2 border-slate-100 focus:border-blue-500 outline-none transition-all cursor-pointer shadow-inner uppercase text-[10px] tracking-widest" value={type} onChange={e => setType(e.target.value as ModuleType)}>
                                 {Object.values(ModuleType).map(v => <option key={v} value={v}>{t.moduleType[v as keyof typeof t.moduleType] || v}</option>)}
                               </select>
                            </div>
-                           <div className="space-y-2">
-                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Tags</label>
+                           <div className="space-y-3">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] pl-4">Tags (META_DATA)</label>
                               <div className="relative group">
-                                 <Tag size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
-                                 <input className="w-full font-bold rounded-2xl py-4 pl-12 pr-6 bg-slate-50 border-2 border-slate-100 focus:border-blue-500 outline-none transition-all" value={tags} onChange={e => setTags(e.target.value)} placeholder="tech, react, v1..." />
+                                 <Tag size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
+                                 <input className="w-full font-bold rounded-2xl py-5 pl-14 pr-8 bg-slate-50 border-2 border-slate-100 focus:border-blue-500 outline-none transition-all shadow-inner" value={tags} onChange={e => setTags(e.target.value)} placeholder="tech, prompt, kernel..." />
                               </div>
                            </div>
                         </div>
                      </div>
 
-                     {/* Section: Visuals */}
-                     <div className="space-y-6">
-                        <div className="flex items-center gap-3 text-slate-400 mb-2">
-                           <ImageIcon size={14} className="text-blue-500" />
-                           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Visual Representation</span>
+                     <div className="space-y-8">
+                        <div className="flex items-center gap-4 text-slate-400 mb-2">
+                           <ImageIcon size={16} className="text-blue-500" />
+                           <span className="text-[10px] font-black uppercase tracking-[0.3em]">Visual Assets</span>
                         </div>
                         <div className="relative group">
-                           <Link size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
+                           <Link size={18} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
                            <input 
-                              className="w-full font-mono text-xs rounded-2xl py-4 pl-12 pr-6 bg-slate-50 border-2 border-slate-100 focus:border-blue-500 outline-none transition-all" 
+                              className="w-full font-mono text-xs rounded-2xl py-5 pl-14 pr-8 bg-slate-50 border-2 border-slate-100 focus:border-blue-500 outline-none transition-all shadow-inner" 
                               value={imageUrl} 
                               onChange={e => setImageUrl(e.target.value)} 
-                              placeholder="Direct Image CDN Link (https://...)" 
+                              placeholder="https://cdn.example.com/asset_v1.png" 
                            />
                         </div>
                      </div>
 
-                     {/* Section: Instruction Payload */}
-                     <div className="space-y-6">
-                        <div className="flex items-center gap-3 text-slate-400 mb-2">
-                           <Code size={14} className="text-blue-500" />
-                           <span className="text-[10px] font-black uppercase tracking-[0.2em]">Instruction Payload</span>
+                     <div className="space-y-8">
+                        <div className="flex items-center gap-4 text-slate-400 mb-2">
+                           <Code size={16} className="text-blue-500" />
+                           <span className="text-[10px] font-black uppercase tracking-[0.3em]">Kernel Instruction Payload</span>
                         </div>
-                        <div className="relative bg-[#1e1e2e] rounded-[2.5rem] p-8 shadow-2xl border border-white/10 group focus-within:ring-4 focus-within:ring-blue-500/20 transition-all">
+                        <div className="relative bg-[#0d0d0f] rounded-[3rem] p-10 shadow-2xl border border-white/5 focus-within:ring-8 focus-within:ring-blue-500/10 transition-all">
                            <textarea 
-                              className="w-full min-h-[350px] bg-transparent text-[#cdd6f4] font-mono text-sm leading-relaxed outline-none resize-none custom-scrollbar" 
+                              className="w-full min-h-[400px] bg-transparent text-emerald-400/90 font-mono text-sm leading-relaxed outline-none resize-none custom-scrollbar placeholder:opacity-20" 
                               value={content} 
                               onChange={e => setContent(e.target.value)} 
-                              placeholder="Inject core prompt logic here..."
+                              placeholder="// Define the core prompt logic here..."
                            />
-                           <div className="absolute top-6 right-8 text-[9px] font-black text-white/20 tracking-widest uppercase">Kernel Mode</div>
+                           <div className="absolute top-8 right-10 text-[9px] font-black text-white/10 tracking-[0.4em] uppercase">SYSTEM.RAW_DATA</div>
                         </div>
-                     </div>
-
-                     {/* Section: Internal Notes */}
-                     <div className="space-y-4">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-2">Internal Operational Context</label>
-                        <input className="w-full font-medium rounded-2xl py-4 px-6 bg-slate-50 border-2 border-slate-100 focus:border-blue-500 outline-none transition-all" value={description} onChange={e => setDescription(e.target.value)} placeholder="Hidden metadata for indexing..." />
                      </div>
                   </div>
                </div>
 
-               {/* Right: Live Preview Rendering */}
-               <div className="hidden lg:flex w-[450px] bg-slate-100/50 border-l border-slate-200 flex-col items-center justify-center p-12">
-                  <div className="w-full flex flex-col items-center gap-8 animate-in fade-in slide-in-from-right-10 duration-700">
-                     <div className="flex items-center gap-3 text-slate-400 mb-2">
-                        <Eye size={14} className="text-blue-500" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">Live Simulation Rendering</span>
+               {/* Right Preview */}
+               <div className="hidden lg:flex w-[480px] bg-slate-100/50 border-l border-slate-200 flex-col items-center justify-center p-14">
+                  <div className="w-full flex flex-col items-center gap-10 animate-in fade-in slide-in-from-right-10 duration-700">
+                     <div className="flex items-center gap-4 text-slate-400">
+                        <Eye size={18} className="text-blue-500" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.4em]">Real-time Visualization</span>
                      </div>
                      
-                     {/* The Card Preview */}
-                     <div className="w-full h-[460px] bg-white border border-slate-200 rounded-[3rem] overflow-hidden shadow-2xl shadow-blue-500/10 pointer-events-none">
-                        <div className={`relative h-[78%] shrink-0 overflow-hidden ${!imageUrl ? currentTypeStyle.bg : 'bg-slate-100'}`}>
-                           {imageUrl ? (
+                     {/* Preview Card */}
+                     {imageUrl ? (
+                        <div className="w-full h-[480px] bg-white border border-slate-200 rounded-[3rem] overflow-hidden shadow-2xl shadow-blue-500/10 pointer-events-none scale-90">
+                           <div className="relative h-[72%] shrink-0 overflow-hidden bg-slate-100">
                               <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
-                           ) : (
-                              <div className="w-full h-full flex flex-col items-center justify-center gap-6">
-                                 <div className="w-28 h-28 rounded-[2.5rem] bg-white shadow-xl flex items-center justify-center text-slate-400">
-                                    {React.cloneElement(getModuleIcon(type) as React.ReactElement<any>, { size: 56, className: currentTypeStyle.icon, strokeWidth: 1 })}
-                                 </div>
+                              <div className="absolute top-6 left-6 z-10">
+                                 <span className={`text-[8px] font-black px-3 py-1.5 rounded-full uppercase tracking-[0.2em] border-2 shadow-2xl bg-white/80 ${getTypeStyles(type).badge}`}>{t.moduleType[type as keyof typeof t.moduleType] || type}</span>
                               </div>
-                           )}
-                        </div>
-                        <div className="flex-1 p-8 flex flex-col justify-center bg-white">
-                           <div className="flex items-center justify-between gap-4">
-                              <h3 className="font-black text-slate-900 text-2xl tracking-tighter truncate uppercase">{title || 'Protocol Title'}</h3>
-                              <span className={`text-[8px] font-black px-2.5 py-1 rounded-md uppercase tracking-[0.2em] border-2 shrink-0 ${currentTypeStyle.badge}`}>{t.moduleType[type as keyof typeof t.moduleType] || type}</span>
                            </div>
-                           <div className="mt-3 flex gap-2 overflow-hidden opacity-50">
-                              {(tags.split(',').filter(Boolean)[0]) && (
-                                <span className="text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded-md tracking-widest uppercase">#{tags.split(',')[0].trim()}</span>
-                              )}
+                           <div className="flex-1 p-8 flex flex-col justify-center bg-white">
+                              <h3 className="font-black text-slate-900 text-2xl tracking-tighter truncate uppercase">{title || 'PROTOCOL_NAME'}</h3>
+                              <p className="text-[10px] text-slate-400 font-mono mt-3 opacity-50 line-clamp-1">{content || 'Payload content will appear here...'}</p>
                            </div>
                         </div>
-                     </div>
+                     ) : (
+                        <div className={`w-full h-[480px] ${getTypeStyles(type).bg} border-2 ${getTypeStyles(type).border} rounded-[3rem] overflow-hidden shadow-2xl pointer-events-none scale-90 p-10 flex flex-col`}>
+                           <div className="flex justify-between items-start mb-10">
+                              <div className="bg-white p-4 rounded-[1.5rem] shadow-xl text-blue-500">{React.cloneElement(getModuleIcon(type) as React.ReactElement<any>, { size: 28, strokeWidth: 2.5 })}</div>
+                              <span className={`text-[8px] font-black px-4 py-2 rounded-full uppercase tracking-[0.25em] border-2 bg-white ${getTypeStyles(type).badge}`}>{t.moduleType[type as keyof typeof t.moduleType] || type}</span>
+                           </div>
+                           <h3 className="font-black text-slate-900 text-3xl tracking-tighter uppercase mb-6">{title || 'PROTOCOL_NAME'}</h3>
+                           <div className={`flex-1 p-6 rounded-[2rem] border-2 border-dashed ${getTypeStyles(type).border} font-mono text-[11px] leading-relaxed text-slate-500 overflow-hidden`}>
+                              {content || 'Instruction data is currently empty...'}
+                           </div>
+                        </div>
+                     )}
 
-                     <p className="text-[10px] text-center text-slate-400 leading-relaxed max-w-[280px] font-medium italic">
-                        The simulation above shows how this protocol will appear in your global module architecture.
+                     <p className="text-[10px] text-center text-slate-400 leading-relaxed max-w-[280px] font-black uppercase tracking-[0.1em] opacity-40">
+                        This digital twin represents how your module will be deployed across the architecture.
                      </p>
                   </div>
                </div>
-
             </div>
 
-            {/* Footer Actions */}
-            <div className="px-12 py-10 bg-white border-t border-slate-100 flex justify-end gap-6 shrink-0">
-              <button onClick={() => setIsModalOpen(false)} className="px-10 py-5 rounded-3xl font-black uppercase tracking-widest text-[10px] text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all">Cancel</button>
-              <button onClick={handleSave} disabled={isSaving} className="px-16 py-5 rounded-3xl bg-blue-600 text-white font-black uppercase tracking-[0.2em] text-[11px] min-w-[220px] shadow-2xl shadow-blue-500/40 active:scale-95 transition-all">
-                {isSaving ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Processing...</span>
-                  </div>
-                ) : (
-                  <span>Commit Changes</span>
-                )}
+            {/* Footer */}
+            <div className="px-14 py-12 bg-white border-t border-slate-100 flex justify-end gap-6 shrink-0">
+              <button onClick={() => setIsModalOpen(false)} className="px-12 py-6 rounded-[2rem] font-black uppercase tracking-[0.3em] text-[10px] text-slate-400 hover:text-slate-900 hover:bg-slate-50 transition-all">Abort_Process</button>
+              <button onClick={handleSave} disabled={isSaving} className="px-20 py-6 rounded-[2rem] bg-slate-900 text-white font-black uppercase tracking-[0.3em] text-[11px] min-w-[260px] shadow-2xl shadow-slate-900/30 active:scale-95 transition-all">
+                {isSaving ? 'Writing_Data...' : 'Commit_Protocol'}
               </button>
             </div>
-
           </div>
         </div>
       )}
