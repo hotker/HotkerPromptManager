@@ -1,3 +1,4 @@
+
 // Prompt Module Types
 export enum ModuleType {
   ROLE = '角色',

@@ -10,6 +10,13 @@ import {
 } from 'lucide-react';
 import { Language, translations } from '../translations';
 
+interface LibraryViewProps {
+  modules: PromptModule[];
+  setModules: React.Dispatch<React.SetStateAction<PromptModule[]>>;
+  lang: Language;
+  syncStatus?: 'saved' | 'saving' | 'error';
+}
+
 const ITEMS_PER_PAGE = 12;
 
 export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, lang }) => {
@@ -300,7 +307,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                   </div>
 
                   {/* Improved Proportions for Type vs Tags */}
-                  <div className="grid grid-cols-[3fr_2fr] gap-4">
+                  <div className="grid grid-cols-[1fr_2fr] gap-4">
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Classification</label>
                       <select className="prod-input font-bold py-3 px-4 h-[46px]" value={type} onChange={e => setType(e.target.value as ModuleType)}>
@@ -317,15 +324,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                   <div className="space-y-2">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visual Asset (URL)</label>
                      <div className="flex gap-3 items-center">
-                       {imageUrl ? (
-                         <div className="w-12 h-12 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 shrink-0 shadow-inner">
+                       <div className="w-12 h-12 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 shrink-0 shadow-inner flex items-center justify-center">
+                         {imageUrl ? (
                            <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                         </div>
-                       ) : (
-                         <div className="w-12 h-12 rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-slate-300 bg-slate-50 shrink-0">
-                           <ImageIcon size={16} />
-                         </div>
-                       )}
+                         ) : (
+                           <ImageIcon size={16} className="text-slate-300" />
+                         )}
+                       </div>
                        <input className="prod-input font-mono text-xs py-3 px-4 flex-1" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://unsplash.com/photo-..." />
                      </div>
                   </div>
