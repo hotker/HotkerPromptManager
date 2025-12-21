@@ -16,6 +16,29 @@ const response = (data: any, status = 200) => {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 };
 
+// --- XOR 解密算法 ---
+function xorDecode(base64Str: string): string {
+  try {
+    const key = "HotkerSync2025_Secret";
+    const binary = atob(base64Str);
+    const dataBytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      dataBytes[i] = binary.charCodeAt(i);
+    }
+    
+    const keyBytes = new TextEncoder().encode(key);
+    const output = new Uint8Array(dataBytes.length);
+    
+    for (let i = 0; i < dataBytes.length; i++) {
+      output[i] = dataBytes[i] ^ keyBytes[i % keyBytes.length];
+    }
+    
+    return new TextDecoder().decode(output);
+  } catch (e) {
+    throw new Error("Payload Decryption Failed");
+  }
+}
+
 export const onRequestOptions = async () => {
   return new Response(null, { headers: CORS_HEADERS });
 };
@@ -38,14 +61,12 @@ export const onRequestGet = async (context: PagesContext) => {
     let dataStr: string | null = null;
 
     if (env.DB) {
-       // SQL for D1
        try {
          const record = await env.DB.prepare('SELECT data_json FROM user_data WHERE user_id = ?').bind(userId).first();
          if (record && record.data_json) {
            dataStr = record.data_json as string;
          }
        } catch (dbErr: any) {
-         // 如果表不存在，返回默认值而不是报错，防止应用崩溃
          if (dbErr.message?.includes('no such table')) {
             console.warn("D1 table user_data not found, using default data");
          } else {
@@ -53,7 +74,6 @@ export const onRequestGet = async (context: PagesContext) => {
          }
        }
     } else {
-       // KV for NANO_DB
        dataStr = await env.NANO_DB.get(`DATA:${userId}`);
     }
 
@@ -74,57 +94,48 @@ export const onRequestPost = async (context: PagesContext) => {
   }
 
   try {
-    // 1. Try to get userId from URL first
-    let userId = url.searchParams.get('userId');
-    const contentType = request.headers.get('content-type') || '';
+    const userId = url.searchParams.get('userId');
+    const rawText = await request.text();
     
-    let data: any = null;
+    if (!rawText) return response({ error: 'Empty Body' }, 400);
 
-    // 2. Strategy: Multipart Form Data (Robust WAF Bypass)
-    if (contentType.includes('multipart/form-data')) {
+    let data;
+
+    // 智能解析逻辑
+    // 1. 如果不是以 '{' 开头，假设是 XOR 混淆数据 (新的 WAF 绕过方案)
+    if (!rawText.trim().startsWith('{')) {
         try {
-            const formData = await request.formData();
-            const file = formData.get('file');
-            
-            if (file && typeof file !== 'string') {
-               // It's a File/Blob
-               const text = await file.text();
-               data = JSON.parse(text);
-            } else {
-               return response({ error: 'Invalid file upload' }, 400);
-            }
+            const jsonStr = xorDecode(rawText);
+            data = JSON.parse(jsonStr);
         } catch (e) {
-            return response({ error: 'Failed to parse form data' }, 400);
+            // 解密失败，可能不是混淆数据
         }
-    } 
-    // 3. Fallback: Raw Text/JSON (Legacy support)
-    else {
+    }
+    
+    // 2. 如果解密失败或看起来像普通 JSON，尝试标准解析 (兼容旧版)
+    if (!data) {
         try {
-            const rawText = await request.text();
-            if (rawText.trim().startsWith('{')) {
-                const body = JSON.parse(rawText);
-                if (!userId) userId = body.userId;
-                data = body.data || body; // Handle both wrapper and direct
+            const body = JSON.parse(rawText);
+            // 兼容旧的包装格式 { userId, data }
+            data = body.data || body;
+            // 如果 URL 没带 userId，尝试从 body 拿
+            if (!userId && body.userId) {
+                 return response({ error: '请更新客户端: userId 必须通过 URL 传递' }, 400);
             }
         } catch (e) {
-            // Ignore parse errors here, checks below will catch empty data
+            return response({ error: '数据格式无法识别 (Crypto/JSON Parse Error)' }, 400);
         }
     }
 
     if (!userId) {
-      return response({ error: '同步负载格式错误: 缺少 userId (请在 URL 参数中提供)' }, 400);
-    }
-
-    if (!data) {
-        return response({ error: '数据解析失败或格式不支持' }, 400);
+      return response({ error: '缺少 userId 参数' }, 400);
     }
     
-    // Store as plain JSON string in DB
+    // 保存逻辑
     const jsonStr = JSON.stringify(data);
 
     if (env.DB) {
       try {
-        // 使用更兼容的 UPSERT 语法
         await env.DB.prepare(`
           INSERT INTO user_data (user_id, data_json, updated_at) 
           VALUES (?, ?, ?)
@@ -134,7 +145,7 @@ export const onRequestPost = async (context: PagesContext) => {
         `).bind(userId, jsonStr, Date.now()).run();
       } catch (dbErr: any) {
         if (dbErr.message?.includes('no such table')) {
-          return response({ error: 'D1 数据库表未初始化，请参考 DEPLOY.md 执行建表 SQL。' }, 500);
+          return response({ error: 'D1 数据库表未初始化' }, 500);
         }
         throw dbErr;
       }
@@ -145,9 +156,6 @@ export const onRequestPost = async (context: PagesContext) => {
     return response({ success: true, timestamp: Date.now() });
   } catch (e: any) {
     console.error("Save data failure:", e);
-    if (e.message?.includes('D1_ERROR') || e.message?.includes('busy')) {
-       return response({ error: '数据库并发冲突或繁忙，请稍后重试' }, 503);
-    }
     return response({ error: '同步写入失败: ' + e.message }, 500);
   }
 }
