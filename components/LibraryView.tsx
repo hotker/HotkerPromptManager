@@ -26,6 +26,9 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const [formError, setFormError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
+  // New State for Lightbox
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  
   const t = translations[lang];
 
   // Form State
@@ -46,6 +49,13 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterType]);
+
+  // Reset scroll to top when page changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [currentPage]);
 
   const getTypeStyles = (type: ModuleType) => {
     switch (type) {
@@ -235,7 +245,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     {/* Quick Actions (Hover Only) */}
                     <div className="absolute top-5 right-5 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                        {module.imageUrl && (
-                         <button onClick={(e) => { e.stopPropagation(); window.open(module.imageUrl, '_blank'); }} className="p-2.5 bg-white/90 backdrop-blur text-slate-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all" title="View Original Image">
+                         <button onClick={(e) => { e.stopPropagation(); setViewingImage(module.imageUrl!); }} className="p-2.5 bg-white/90 backdrop-blur text-slate-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all" title="View Original Image">
                            <Maximize size={16} />
                          </button>
                        )}
@@ -306,17 +316,21 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                      <input className="prod-input font-bold py-3 px-4" value={title} onChange={e => setTitle(e.target.value)} placeholder={t.library.placeholderTitle} />
                   </div>
 
-                  {/* Improved Proportions for Type vs Tags */}
-                  <div className="grid grid-cols-[1fr_2fr] gap-4">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.library.labelType}</label>
-                      <select className="prod-input font-bold py-3 px-4 h-[46px]" value={type} onChange={e => setType(e.target.value as ModuleType)}>
+                  {/* Improved Proportions for Type vs Tags - Fixed Layout Alignment */}
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="w-full sm:w-1/3 space-y-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest truncate" title={t.library.labelType}>
+                         {t.library.labelType}
+                      </label>
+                      <select className="prod-input font-bold py-3 px-4 h-[46px] w-full" value={type} onChange={e => setType(e.target.value as ModuleType)}>
                         {Object.values(ModuleType).map(v => <option key={v} value={v}>{t.moduleType[v as keyof typeof t.moduleType] || v}</option>)}
                       </select>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.library.labelTags}</label>
-                      <input className="prod-input font-bold py-3 px-4 h-[46px]" value={tags} onChange={e => setTags(e.target.value)} placeholder={t.library.placeholderTags} />
+                    <div className="w-full sm:w-2/3 space-y-2">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest truncate" title={t.library.labelTags}>
+                         {t.library.labelTags}
+                      </label>
+                      <input className="prod-input font-bold py-3 px-4 h-[46px] w-full" value={tags} onChange={e => setTags(e.target.value)} placeholder={t.library.placeholderTags} />
                     </div>
                   </div>
 
@@ -348,6 +362,21 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {viewingImage && (
+        <div className="fixed inset-0 z-[200] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4 sm:p-8 animate-in fade-in duration-200" onClick={() => setViewingImage(null)}>
+           <button className="absolute top-6 right-6 p-3 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all" onClick={() => setViewingImage(null)}>
+             <X size={24} />
+           </button>
+           <img 
+             src={viewingImage} 
+             alt="Original" 
+             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl shadow-black/50"
+             onClick={(e) => e.stopPropagation()}
+           />
         </div>
       )}
     </div>
