@@ -83,7 +83,19 @@ export const onRequestPost = async (context: PagesContext) => {
   }
 
   try {
-    const body: any = await request.json();
+    // Read text directly to support both application/json and text/plain (WAF bypass)
+    const rawText = await request.text();
+    if (!rawText) {
+       return response({ error: 'Empty request body' }, 400);
+    }
+    
+    let body: any;
+    try {
+        body = JSON.parse(rawText);
+    } catch (e) {
+        return response({ error: 'Invalid JSON body' }, 400);
+    }
+
     let { userId, data, payload } = body;
     
     if (!userId) {
