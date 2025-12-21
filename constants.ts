@@ -1,7 +1,9 @@
+
 import { FixedConfig, ModuleType, PromptModule } from "./types";
 
 export const DEFAULT_CONFIG: FixedConfig = {
-  model: 'gemini-2.5-flash',
+  // Use recommended gemini-3-flash-preview for basic text tasks
+  model: 'gemini-3-flash-preview',
   temperature: 0.7,
   topK: 40,
   outputFormat: 'text',
@@ -22,7 +24,8 @@ export const MODULE_COLORS: Record<ModuleType, string> = {
 };
 
 export const AVAILABLE_MODELS = [
-  { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Fast/Text)' },
+  // Update to use the latest model names from guidelines
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3.0 Flash (Fast/Text)' },
   { id: 'gemini-3-pro-preview', name: 'Gemini 3.0 Pro (Reasoning)' },
   { id: 'gemini-2.5-flash-image', name: 'Gemini Nano banana' },
   { id: 'gemini-3-pro-image-preview', name: 'Gemini 3.0 Pro Image (High Res)' },

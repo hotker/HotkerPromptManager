@@ -1,9 +1,11 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { FixedConfig } from "../types";
 
-// Standard Vite environment variable access
+// Standard environment variable access as per @google/genai guidelines
 const getEnvApiKey = () => {
-  return (import.meta as any).env.VITE_API_KEY || '';
+  // Always use process.env.API_KEY directly as specified in the guidelines
+  return process.env.API_KEY || '';
 };
 
 interface ApiKeyOptions {
@@ -25,6 +27,7 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
     throw new Error("ERR_API_KEY_MISSING");
   }
 
+  // Use named parameter to initialize GoogleGenAI as required
   const ai = new GoogleGenAI({ apiKey: finalApiKey });
 
   try {
@@ -36,15 +39,15 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
            imageConfig.aspectRatio = config.aspectRatio;
        }
        
-       // CRITICAL FIX: imageSize is ONLY supported by gemini-3-pro-image-preview
-       // Sending it to gemini-2.5-flash-image (Nano banana) causes INVALID_ARGUMENT (400)
+       // CRITICAL: imageSize is ONLY supported by gemini-3-pro-image-preview
        if (config.imageSize && config.model === 'gemini-3-pro-image-preview') {
            imageConfig.imageSize = config.imageSize;
        }
 
+       // Use generateContent for nano banana series models
        const response = await ai.models.generateContent({
          model: config.model,
-         contents: prompt,
+         contents: { parts: [{ text: prompt }] },
          config: {
              imageConfig: Object.keys(imageConfig).length > 0 ? imageConfig : undefined
          }
@@ -71,6 +74,7 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
 
     } else {
       // Standard Text Generation
+      // Use ai.models.generateContent directly with model and prompt as per guidelines
       const response = await ai.models.generateContent({
         model: config.model,
         contents: prompt,
@@ -81,7 +85,8 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
         },
       });
 
-      if (!response.text) {
+      // Directly access .text property, not as a method, as specified in instructions
+      if (response.text === undefined) {
           if (response.candidates && response.candidates.length > 0 && response.candidates[0].finishReason) {
               return `ERR_FINISH_REASON${response.candidates[0].finishReason}`;
           }
@@ -96,7 +101,6 @@ export const generateResponse = async (prompt: string, config: FixedConfig, opti
     if (error.message?.includes('429')) throw new Error("ERR_429");
     if (error.message?.includes('503')) throw new Error("ERR_503");
     
-    // Return explicit error for invalid arguments to help debugging
     if (error.status === 400 || error.message?.includes('INVALID_ARGUMENT')) {
         return `API Error (400): Request contained invalid arguments for this model. (Likely imageSize on unsupported model)`;
     }

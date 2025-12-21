@@ -10,9 +10,9 @@ export interface UserData {
 const API_BASE = '/api';
 
 /**
- * Helper to handle fetch requests consistently
+ * Enhanced request helper with retry logic
  */
-async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+async function request<T>(endpoint: string, options: RequestInit = {}, retries = 3, backoff = 1000): Promise<T> {
   const defaultHeaders = {
     'Content-Type': 'application/json',
   };
@@ -26,36 +26,36 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       },
     });
 
-    // Handle generic HTTP errors
     if (!res.ok) {
+      if (res.status >= 500 && retries > 0) {
+        await new Promise(r => setTimeout(r, backoff));
+        return request(endpoint, options, retries - 1, backoff * 2);
+      }
+      
       let errorMsg = `API Error: ${res.status}`;
       try {
         const errJson = await res.json() as any;
         errorMsg = errJson.error || errorMsg;
       } catch {
-        // Fallback for non-JSON errors (like 503 from Cloudflare infrastructure)
-        if (res.status === 503) errorMsg = '服务暂时不可用 (数据库连接中...)';
+        if (res.status === 503) errorMsg = '服务暂时不可用 (数据库繁忙)';
         else if (res.status === 500) errorMsg = '服务器内部错误';
       }
       throw new Error(errorMsg);
     }
 
-    // Handle 204 No Content or empty bodies
-    if (res.status === 204) {
-      return {} as T;
-    }
-
+    if (res.status === 204) return {} as T;
     return await res.json();
   } catch (e: any) {
-    // If it's already an Error object with a message, rethrow it
-    // Otherwise, wrap it in a generic network error
-    throw new Error(e.message || '网络连接失败，请检查您的互联网连接');
+    if (retries > 0 && e.message !== 'AbortError') {
+      await new Promise(r => setTimeout(r, backoff));
+      return request(endpoint, options, retries - 1, backoff * 2);
+    }
+    throw new Error(e.message || '网络连接失败');
   }
 }
 
 export const apiService = {
   // --- Auth ---
-  
   register: async (username: string, password: string): Promise<User> => {
     return request<User>('/auth?action=register', {
       method: 'POST',
@@ -78,22 +78,20 @@ export const apiService = {
   },
 
   // --- Data Sync ---
-
   loadData: async (userId: string): Promise<UserData | null> => {
     try {
-      return await request<UserData>(`/data?userId=${userId}`);
+      return await request<UserData>(`/data?userId=${userId}`, { method: 'GET' }, 2);
     } catch (e) {
-      // For loadData specifically, we often want to fail gracefully (return null) 
-      // rather than crashing the UI, allowing the app to fall back to "Offline/Demo" mode.
       console.warn("Cloud data sync unavailable:", e);
       return null;
     }
   },
 
-  saveData: async (userId: string, data: UserData): Promise<void> => {
+  saveData: async (userId: string, data: UserData, signal?: AbortSignal): Promise<void> => {
     await request<void>('/data', {
       method: 'POST',
-      body: JSON.stringify({ userId, data })
+      body: JSON.stringify({ userId, data }),
+      signal
     });
   }
 };

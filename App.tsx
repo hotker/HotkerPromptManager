@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { LibraryView } from './components/LibraryView';
@@ -128,8 +129,10 @@ const AuthenticatedApp: React.FC<{
   // 3. Debounce
   const debouncedData = useDebounce(currentData, 2000);
 
-  // 4. Save
+  // 4. Enhanced Save with Race Condition Prevention
+  const saveAbortControllerRef = useRef<AbortController | null>(null);
   const isFirstRender = useRef(true);
+
   useEffect(() => {
     if (!isDataLoaded) return;
     if (isFirstRender.current) {
@@ -138,12 +141,22 @@ const AuthenticatedApp: React.FC<{
     }
 
     const saveData = async () => {
+      // Abort previous request if still pending
+      if (saveAbortControllerRef.current) {
+        saveAbortControllerRef.current.abort();
+      }
+      
+      const controller = new AbortController();
+      saveAbortControllerRef.current = controller;
+
       setSyncStatus('saving');
       setSyncErrorMsg(undefined);
+
       try {
-        await apiService.saveData(currentUser.id, debouncedData);
+        await apiService.saveData(currentUser.id, debouncedData, controller.signal);
         setSyncStatus('saved');
       } catch (e: any) {
+        if (e.name === 'AbortError') return;
         console.error("Sync failed", e);
         setSyncStatus('error');
         setSyncErrorMsg(e.message);
@@ -151,7 +164,24 @@ const AuthenticatedApp: React.FC<{
     };
 
     saveData();
+
+    return () => {
+      if (saveAbortControllerRef.current) {
+        saveAbortControllerRef.current.abort();
+      }
+    };
   }, [debouncedData, currentUser.id, isDataLoaded]);
+
+  // Manual retry capability
+  const handleForceSync = () => {
+    setSyncStatus('saving');
+    apiService.saveData(currentUser.id, currentData)
+      .then(() => setSyncStatus('saved'))
+      .catch(e => {
+        setSyncStatus('error');
+        setSyncErrorMsg(e.message);
+      });
+  };
 
   if (!isDataLoaded) {
     return (
@@ -184,6 +214,7 @@ const AuthenticatedApp: React.FC<{
         currentView={view} 
         setView={setView} 
         currentUser={currentUser}
+        // FIX: Change handleLogout to onLogout to resolve "Cannot find name 'handleLogout'" error.
         onLogout={onLogout}
         userApiKey={userApiKey}
         setUserApiKey={setUserApiKey}
@@ -191,6 +222,7 @@ const AuthenticatedApp: React.FC<{
         syncErrorMsg={syncErrorMsg}
         lang={lang}
         setLang={setLang}
+        onForceSync={handleForceSync}
       />
       
       <main className="flex-1 h-full overflow-hidden relative flex flex-col pt-16 md:pt-0">

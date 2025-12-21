@@ -15,6 +15,7 @@ interface SidebarProps {
   syncErrorMsg?: string;
   lang: Language;
   setLang: (l: Language) => void;
+  onForceSync?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
@@ -27,7 +28,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   syncStatus = 'saved',
   syncErrorMsg,
   lang,
-  setLang
+  setLang,
+  onForceSync
 }) => {
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [tempKey, setTempKey] = useState(userApiKey);
@@ -58,12 +60,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const renderSyncStatus = () => {
     switch(syncStatus) {
       case 'saving':
-        return <span className="text-blue-500 flex items-center gap-1.5 text-xs"><RefreshCcw size={12} className="animate-spin"/> {t.sidebar.syncSaving}</span>;
+        return (
+          <div className="text-blue-500 flex items-center gap-1.5 text-[10px] font-medium animate-pulse">
+            <RefreshCcw size={10} className="animate-spin"/> 
+            {t.sidebar.syncSaving}
+          </div>
+        );
       case 'error':
-        return <span className="text-red-500 flex items-center gap-1.5 text-xs"><AlertCircle size={12}/> {t.sidebar.syncError}</span>;
+        return (
+          <button 
+            onClick={onForceSync}
+            title={syncErrorMsg || '点击重试'}
+            className="text-red-500 flex items-center gap-1.5 text-[10px] font-medium hover:bg-red-50 px-1.5 py-0.5 rounded transition-colors group"
+          >
+            <AlertCircle size={10} className="group-hover:animate-bounce"/> 
+            {t.sidebar.syncError}
+          </button>
+        );
       case 'saved':
       default:
-        return <span className="text-slate-400 flex items-center gap-1.5 text-xs"><Cloud size={12}/> {t.sidebar.syncSaved}</span>;
+        return (
+          <div className="text-slate-400 flex items-center gap-1.5 text-[10px] font-medium">
+            <Cloud size={10}/> 
+            {t.sidebar.syncSaved}
+          </div>
+        );
     }
   };
 
@@ -140,7 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Sidebar */}
       <div className="hidden md:flex w-20 lg:w-64 bg-white h-full border-r border-slate-200 flex-col relative z-20">
         
-        {/* Brand - Compressed Height & Visual Hierarchy */}
+        {/* Brand */}
         <div className="h-12 flex items-center gap-3 px-5 border-b border-slate-100 shrink-0">
           <div className="bg-slate-900 text-white p-1 rounded-md shadow-sm shrink-0"><Command size={16} strokeWidth={3} /></div>
           <div className="hidden lg:flex items-center gap-2 overflow-hidden whitespace-nowrap">
