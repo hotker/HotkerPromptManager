@@ -1,4 +1,5 @@
 
+
 // Prompt Module Types
 export enum ModuleType {
   ROLE = '角色',
@@ -74,5 +75,9 @@ declare global {
   interface AIStudio {
     hasSelectedApiKey: () => Promise<boolean>;
     openSelectKey: () => Promise<void>;
+  }
+
+  interface Window {
+    aistudio?: AIStudio;
   }
 }
