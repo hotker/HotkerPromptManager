@@ -18,6 +18,11 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
     'Content-Type': 'application/json',
   };
 
+  // 关键修复: 如果发送的是 FormData，必须移除 Content-Type，让浏览器自动设置 multipart/form-data 和 boundary
+  if (options.body instanceof FormData) {
+    delete defaultHeaders['Content-Type'];
+  }
+
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
@@ -28,7 +33,6 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
     });
 
     if (!res.ok) {
-      // 针对数据库繁忙进行重试
       if ((res.status === 503 || res.status === 429) && retries > 0) {
         await new Promise(r => setTimeout(r, backoff));
         return request(endpoint, options, retries - 1, backoff * 1.5);
@@ -39,7 +43,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
         const errJson = await res.json() as any;
         errorMsg = errJson.error || errorMsg;
       } catch {
-        if (res.status === 403) errorMsg = 'WAF拦截: 请检查内容是否包含敏感字符 (Hex模式)';
+        if (res.status === 403) errorMsg = 'WAF拦截: 请检查内容安全策略 (Binary Mode)';
       }
       throw new Error(errorMsg);
     }
@@ -56,9 +60,9 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
   }
 }
 
-// --- XOR + Hex 混淆算法 ---
-// 将 JSON 转换为 Hex 字符串，彻底避免 Base64 特殊字符 (+, /, =) 触发 WAF
-function xorHexEncode(str: string): string {
+// --- Binary XOR 混淆算法 ---
+// 直接生成二进制 Uint8Array，不转 Hex/Base64，减小体积并伪装成普通二进制文件
+function xorEncodeBinary(str: string): Uint8Array {
   const key = "HotkerSync2025_Secret";
   const encoder = new TextEncoder();
   
@@ -69,11 +73,7 @@ function xorHexEncode(str: string): string {
   for (let i = 0; i < dataBytes.length; i++) {
     output[i] = dataBytes[i] ^ keyBytes[i % keyBytes.length];
   }
-  
-  // Convert to Hex
-  return Array.from(output)
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
+  return output;
 }
 
 export const apiService = {
@@ -113,17 +113,20 @@ export const apiService = {
     // 1. 序列化数据
     const jsonStr = JSON.stringify(data);
     
-    // 2. XOR + Hex 混淆加密
-    const payload = xorHexEncode(jsonStr);
+    // 2. Binary XOR 混淆 (生成二进制流)
+    const binaryData = xorEncodeBinary(jsonStr);
 
-    // 3. 发送纯文本 Payload
+    // 3. 封装为文件上传 (Multipart/Form-Data)
+    // 使用 application/octet-stream 模拟通用二进制文件，避开文本检查
+    const blob = new Blob([binaryData], { type: 'application/octet-stream' });
+    const formData = new FormData();
+    formData.append('file', blob, 'data.bin');
+
+    // 4. 发送 FormData
     return request<void>(`/data?userId=${encodeURIComponent(userId)}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain', // 纯文本，内容只有 [0-9a-f]
-        'X-Sync-Version': 'v4-hex'
-      },
-      body: payload,
+      // headers 中不要设置 Content-Type，fetch 会自动生成带 boundary 的 header
+      body: formData,
       signal
     });
   }
