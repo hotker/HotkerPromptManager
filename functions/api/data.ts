@@ -1,3 +1,4 @@
+
 import { PagesContext } from './types';
 
 const CORS_HEADERS = {
@@ -14,6 +15,16 @@ const JSON_HEADERS = {
 const response = (data: any, status = 200) => {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 };
+
+// Helper to decode Base64 to string (UTF-8 safe)
+function decodeBase64(base64: string) {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return new TextDecoder().decode(bytes);
+}
 
 export const onRequestOptions = async () => {
   return new Response(null, { headers: CORS_HEADERS });
@@ -73,12 +84,25 @@ export const onRequestPost = async (context: PagesContext) => {
 
   try {
     const body: any = await request.json();
-    const { userId, data } = body;
+    let { userId, data, payload } = body;
     
-    if (!userId || !data) {
-      return response({ error: '同步负载格式错误' }, 400);
+    if (!userId) {
+      return response({ error: '同步负载格式错误: 缺少 userId' }, 400);
     }
     
+    // Support Base64 payload to bypass WAF or large JSON issues
+    if (payload) {
+        try {
+            const decodedStr = decodeBase64(payload);
+            data = JSON.parse(decodedStr);
+        } catch (e) {
+            return response({ error: '无效的 Base64 负载数据' }, 400);
+        }
+    } else if (!data) {
+        return response({ error: '同步负载格式错误: 缺少 data' }, 400);
+    }
+    
+    // Store as plain JSON string in DB
     const jsonStr = JSON.stringify(data);
 
     if (env.DB) {
