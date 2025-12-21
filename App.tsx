@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { LibraryView } from './components/LibraryView';
 import { BuilderView } from './components/BuilderView';
@@ -11,7 +11,7 @@ import { apiService, UserData } from './services/apiService';
 import { INITIAL_MODULES } from './constants';
 import { Language, translations } from './translations';
 
-// 防抖延迟：1.2秒是权衡体验与性能的最佳平衡点
+// 优化后的防抖 Hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -89,44 +89,50 @@ const AuthenticatedApp: React.FC<{
   // 1. 数据初始加载
   useEffect(() => {
     const loadCloudData = async () => {
-      const cloudData = await apiService.loadData(currentUser.id);
-      if (cloudData && (cloudData.modules?.length > 0 || cloudData.templates?.length > 0)) {
-        setModules(cloudData.modules || []);
-        setTemplates(cloudData.templates || []);
-        setLogs(cloudData.logs || []);
-        setUserApiKey(cloudData.apiKey || '');
-      } else {
+      try {
+        const cloudData = await apiService.loadData(currentUser.id);
+        if (cloudData && (cloudData.modules?.length > 0 || cloudData.templates?.length > 0)) {
+          setModules(cloudData.modules || []);
+          setTemplates(cloudData.templates || []);
+          setLogs(cloudData.logs || []);
+          setUserApiKey(cloudData.apiKey || '');
+        } else {
+          setModules(INITIAL_MODULES);
+        }
+      } catch (e) {
+        console.error("Load data failed, fallback to initials", e);
         setModules(INITIAL_MODULES);
+      } finally {
+        setIsDataLoaded(true);
       }
-      setIsDataLoaded(true);
     };
     loadCloudData();
   }, [currentUser.id]);
 
-  // 2. 准备同步数据（自动修剪过长的日志以提升同步效率）
-  const currentData: UserData = {
+  // 2. 稳定数据引用：只有核心业务数据变化时，currentData 才会变化
+  const currentData = useMemo<UserData>(() => ({
     modules,
     templates,
-    logs: logs.slice(0, 50), // 仅同步最近50条日志，节省流量
+    logs: logs.slice(0, 50),
     apiKey: userApiKey
-  };
+  }), [modules, templates, logs, userApiKey]);
 
-  const debouncedData = useDebounce(currentData, 1200);
+  // 3. 极速防抖：500ms 延迟足以过滤快速点击，同时保证保存的即时性
+  const debouncedData = useDebounce(currentData, 500);
   const saveAbortControllerRef = useRef<AbortController | null>(null);
   const isFirstRender = useRef(true);
 
-  // 3. 实时同步效应：监听 debouncedData 变化并持久化
+  // 4. 核心保存逻辑：深度绑定 debouncedData
   useEffect(() => {
     if (!isDataLoaded) return;
     
-    // 跳过首次加载引发的同步
+    // 跳过初次渲染引发的保存
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
 
     const saveData = async () => {
-      // 终止之前的同步请求，防止竞态冲突
       if (saveAbortControllerRef.current) {
         saveAbortControllerRef.current.abort();
       }
@@ -140,7 +146,7 @@ const AuthenticatedApp: React.FC<{
         setSyncStatus('saved');
         setSyncErrorMsg(undefined);
       } catch (e: any) {
-        if (e.name === 'AbortError') return; // 被取消的请求不显示错误
+        if (e.name === 'AbortError') return;
         console.error("Critical Sync Error:", e);
         setSyncStatus('error');
         setSyncErrorMsg(e.message);
@@ -212,7 +218,8 @@ const AuthenticatedApp: React.FC<{
             <LibraryView 
               modules={modules} 
               setModules={setModules} 
-              lang={lang} 
+              lang={lang}
+              syncStatus={syncStatus}
             />
           )}
           {view === 'builder' && (
