@@ -107,7 +107,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
             <div className="max-w-2xl mx-auto space-y-6 pb-20">
                <div className="mb-4">
                   <div className="flex items-center justify-between mb-4"><div className="flex items-center gap-2 text-slate-400"><Layers size={14} /><span className="text-xs font-bold uppercase tracking-widest">{t.builder.flowTitle}</span></div><button onClick={() => saveTemplate({ id: crypto.randomUUID(), name: templateName, description: 'Builder Session', moduleIds: selectedModuleIds, config, createdAt: Date.now(), updatedAt: Date.now() })} className="text-xs flex items-center gap-1.5 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"><Save size={14} /> <span>{t.builder.saveTemplateBtn}</span></button></div>
-                  <input className="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 text-slate-900 w-full outline-none" value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder="Untitled Template" />
+                  <input className="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 text-slate-900 w-full outline-none" value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder={t.builder.untitledTemplate} />
                </div>
 
                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">

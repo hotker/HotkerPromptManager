@@ -274,7 +274,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
          <footer className="px-10 py-3 bg-white border-t border-slate-100 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-1">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-60">
-                {t.library.showing} {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredModules.length)} {t.library.of} {filteredModules.length}
+                {t.library.showing} {(currentPage - 1) * ITEMS_PER_PAGE + 1} {t.library.to} {Math.min(currentPage * ITEMS_PER_PAGE, filteredModules.length)} {t.library.of} {filteredModules.length}
               </span>
             </div>
 
@@ -294,7 +294,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onClick={() => setIsModalOpen(false)}></div>
           <div className="relative w-full max-w-[850px] bg-white shadow-2xl rounded-[3rem] overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
             <div className="px-10 py-8 border-b border-slate-100 flex justify-between items-center">
-               <h3 className="text-xl font-bold text-slate-900">{editingModule ? 'EDIT PROTOCOL' : 'NEW PROTOCOL'}</h3>
+               <h3 className="text-xl font-bold text-slate-900">{editingModule ? t.library.modalEdit : t.library.modalCreate}</h3>
                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-900"><CloseIcon size={24}/></button>
             </div>
             
@@ -302,27 +302,27 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                <div className="space-y-6">
                   {formError && <div className="p-4 bg-red-50 text-red-600 text-xs font-bold rounded-xl">{formError}</div>}
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Identification (Title)</label>
-                     <input className="prod-input font-bold py-3 px-4" value={title} onChange={e => setTitle(e.target.value)} placeholder="Enter Title..." />
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.library.labelTitle}</label>
+                     <input className="prod-input font-bold py-3 px-4" value={title} onChange={e => setTitle(e.target.value)} placeholder={t.library.placeholderTitle} />
                   </div>
 
                   {/* Improved Proportions for Type vs Tags */}
                   <div className="grid grid-cols-[1fr_2fr] gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Classification</label>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.library.labelType}</label>
                       <select className="prod-input font-bold py-3 px-4 h-[46px]" value={type} onChange={e => setType(e.target.value as ModuleType)}>
                         {Object.values(ModuleType).map(v => <option key={v} value={v}>{t.moduleType[v as keyof typeof t.moduleType] || v}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Meta Tags</label>
-                      <input className="prod-input font-bold py-3 px-4 h-[46px]" value={tags} onChange={e => setTags(e.target.value)} placeholder="tag1, tag2" />
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.library.labelTags}</label>
+                      <input className="prod-input font-bold py-3 px-4 h-[46px]" value={tags} onChange={e => setTags(e.target.value)} placeholder={t.library.placeholderTags} />
                     </div>
                   </div>
 
                   {/* Visual Asset with Inline Preview */}
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visual Asset (URL)</label>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.library.labelImage}</label>
                      <div className="flex gap-3 items-center">
                        <div className="w-12 h-12 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 shrink-0 shadow-inner flex items-center justify-center">
                          {imageUrl ? (
@@ -331,20 +331,20 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                            <ImageIcon size={16} className="text-slate-300" />
                          )}
                        </div>
-                       <input className="prod-input font-mono text-xs py-3 px-4 flex-1" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://unsplash.com/photo-..." />
+                       <input className="prod-input font-mono text-xs py-3 px-4 flex-1" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder={t.library.placeholderImage} />
                      </div>
                   </div>
                </div>
                <div className="space-y-2 flex flex-col">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payload Content (Core Prompt)</label>
-                  <textarea className="flex-1 min-h-[250px] bg-slate-50 border border-slate-200 rounded-3xl p-6 font-mono text-xs leading-relaxed outline-none focus:border-blue-500" value={content} onChange={e => setContent(e.target.value)} placeholder="Enter instructions here..." />
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.library.labelContent}</label>
+                  <textarea className="flex-1 min-h-[250px] bg-slate-50 border border-slate-200 rounded-3xl p-6 font-mono text-xs leading-relaxed outline-none focus:border-blue-500" value={content} onChange={e => setContent(e.target.value)} placeholder={t.library.placeholderContent} />
                </div>
             </div>
 
             <div className="p-10 bg-slate-50 border-t border-slate-100 flex justify-end gap-4">
-              <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 rounded-xl font-bold text-xs text-slate-400 hover:text-slate-900 uppercase tracking-widest">Discard</button>
+              <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 rounded-xl font-bold text-xs text-slate-400 hover:text-slate-900 uppercase tracking-widest">{t.library.btnCancel}</button>
               <button onClick={handleSave} disabled={isSaving} className="px-12 py-3 bg-slate-900 rounded-xl text-white font-bold text-xs uppercase shadow-xl tracking-widest transition-transform active:scale-95">
-                {isSaving ? 'Saving...' : 'Confirm Entry'}
+                {isSaving ? t.library.saving : t.library.btnSave}
               </button>
             </div>
           </div>
