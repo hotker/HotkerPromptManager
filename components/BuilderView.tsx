@@ -17,7 +17,7 @@ interface BuilderViewProps {
   saveTemplate: (t: PromptTemplate) => void;
   addLog: (l: RunLog) => void;
   onUpdateModule: (m: PromptModule) => void;
-  userApiKey: string;
+  userApiKey: string; // Deprecated, kept for prop compatibility
   currentUser: User;
   lang: Language;
 }
@@ -29,9 +29,6 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
   const [templateName, setTemplateName] = useState(t.builder.defaultTemplateName);
   const [config, setConfig] = useState<FixedConfig>(DEFAULT_CONFIG);
   
-  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
-  const [editingContent, setEditingContent] = useState('');
-
   const [isRunning, setIsRunning] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [executionError, setExecutionError] = useState<string | null>(null);
@@ -59,7 +56,8 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
     const startTime = Date.now();
 
     try {
-      const output = await generateResponse(compiledPrompt, config, { apiKey: userApiKey, allowSystemKey: false });
+      // Guidelines: geminiService now obtains API key from environment internally
+      const output = await generateResponse(compiledPrompt, config);
       if (output.startsWith('ERR_')) throw new Error(output);
       setResult(output);
       addLog({ id: crypto.randomUUID(), templateId: 'unsaved', templateName, finalPrompt: compiledPrompt, output, status: 'success', timestamp: Date.now(), durationMs: Date.now() - startTime });

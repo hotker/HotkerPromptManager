@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { LayoutGrid, Library, TestTube2, History, LogOut, Settings, KeyRound, X, Cloud, RefreshCcw, AlertCircle, Menu, Command, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Library, TestTube2, History, LogOut, KeyRound, X, Cloud, RefreshCcw, AlertCircle, Menu, Command, ChevronRight, ExternalLink } from 'lucide-react';
 import { ViewState, User } from '../types';
 import { Language, translations } from '../translations';
 import { AUTHOR_INFO } from '../constants';
@@ -9,7 +10,7 @@ interface SidebarProps {
   setView: (view: ViewState) => void;
   currentUser: User | null;
   onLogout: () => void;
-  userApiKey: string;
+  userApiKey: string; // Deprecated: API key is now strictly from environment
   setUserApiKey: (key: string) => void;
   syncStatus?: 'saved' | 'saving' | 'error';
   syncErrorMsg?: string;
@@ -31,8 +32,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setLang,
   onForceSync
 }) => {
-  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
-  const [tempKey, setTempKey] = useState(userApiKey);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const t = translations[lang];
@@ -44,17 +43,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'history', label: t.sidebar.history, icon: <History size={18} /> },
   ];
 
-  const hasValidKey = !!userApiKey;
+  // Guidelines: API key handling is managed by the execution environment via process.env.API_KEY.
+  const hasValidKey = true; 
 
-  const handleSaveKey = () => {
-    setUserApiKey(tempKey.trim());
-    setIsKeyModalOpen(false);
-  };
-
-  const openKeyModal = () => {
-    setTempKey(userApiKey);
-    setIsKeyModalOpen(true);
-    setIsMobileMenuOpen(false);
+  const handleOpenKeySelection = async () => {
+    // Guidelines: Use openSelectKey to allow users to select their paid project key for Imagen/Veo.
+    if (typeof window !== 'undefined' && window.aistudio) {
+      await window.aistudio.openSelectKey();
+    }
   };
 
   const renderSyncStatus = () => {
@@ -147,9 +143,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                      </div>
                  </div>
 
-                 <button onClick={openKeyModal} className="w-full btn-secondary text-xs">
-                    <KeyRound size={14} /> {t.sidebar.apiKeyConfig}
+                 {/* Guidelines: Mandatory key selection for advanced models */}
+                 <button onClick={handleOpenKeySelection} className="w-full btn-secondary text-xs flex items-center justify-center gap-2">
+                    <KeyRound size={14} /> {t.sidebar.apiConfigTitle}
                  </button>
+                 <a 
+                   href="https://ai.google.dev/gemini-api/docs/billing" 
+                   target="_blank" 
+                   rel="noreferrer"
+                   className="w-full flex items-center justify-center gap-1 text-[10px] text-blue-500 hover:underline"
+                 >
+                   {t.sidebar.apiConfigDesc} <ExternalLink size={10} />
+                 </a>
                  <button onClick={onLogout} className="w-full btn-ghost text-xs text-red-600 hover:text-red-700 hover:bg-red-50">
                     <LogOut size={14} /> {t.sidebar.logout}
                  </button>
@@ -195,14 +200,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-100">
-           {/* API Status */}
+           {/* API Status - Fixed for injected env */}
            <div className="flex items-center justify-between px-2 mb-4">
               <div className="flex items-center gap-2">
-                 <div className={`w-2 h-2 rounded-full ${hasValidKey ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
-                 <span className="hidden lg:block text-xs text-slate-500 font-medium">{hasValidKey ? t.sidebar.apiKeyConnected : t.sidebar.apiKeyMissing}</span>
+                 <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                 <span className="hidden lg:block text-xs text-slate-500 font-medium">{t.sidebar.apiKeyConnected}</span>
               </div>
-              <button onClick={openKeyModal} className="text-slate-400 hover:text-slate-900 transition-colors p-1 hover:bg-slate-100 rounded">
-                 <Settings size={14} />
+              <button onClick={handleOpenKeySelection} title={t.sidebar.apiConfigTitle} className="text-slate-400 hover:text-slate-900 transition-colors p-1 hover:bg-slate-100 rounded">
+                 <KeyRound size={14} />
               </button>
            </div>
 
@@ -228,41 +233,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
            </div>
         </div>
       </div>
-
-      {/* API Key Modal */}
-      {isKeyModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-[70] p-4 transition-opacity">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 border border-slate-200 transform transition-all scale-100">
-            <div className="flex justify-between items-start mb-6">
-               <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                    <KeyRound size={20} />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">{t.sidebar.apiConfigTitle}</h3>
-                    <p className="text-slate-500 text-xs mt-0.5">{t.sidebar.apiConfigDesc}</p>
-                  </div>
-               </div>
-               <button onClick={() => setIsKeyModalOpen(false)} className="text-slate-400 hover:text-slate-900"><X size={20} /></button>
-            </div>
-            
-            <input 
-              type="password"
-              className="prod-input mb-6 font-mono text-xs"
-              value={tempKey}
-              onChange={(e) => setTempKey(e.target.value)}
-              placeholder="sk-..."
-              autoFocus
-            />
-            <div className="flex justify-end gap-3">
-               <button onClick={() => setIsKeyModalOpen(false)} className="btn-secondary">{t.sidebar.cancel}</button>
-               <button onClick={handleSaveKey} className="btn-primary">
-                 {t.sidebar.connect}
-               </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 };

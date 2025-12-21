@@ -1,19 +1,14 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { PromptModule, ModuleType } from '../types';
 import { 
   Plus, Trash2, Search, Copy, X, 
   Box, ChevronLeft, ChevronRight, AlertCircle,
   Settings, Terminal, Tag, X as CloseIcon,
-  ChevronsLeft, ChevronsRight
+  ChevronsLeft, ChevronsRight, Maximize, ExternalLink,
+  Image as ImageIcon
 } from 'lucide-react';
 import { Language, translations } from '../translations';
-
-interface LibraryViewProps {
-  modules: PromptModule[];
-  setModules: React.Dispatch<React.SetStateAction<PromptModule[]>>;
-  lang: Language;
-  syncStatus?: 'saved' | 'saving' | 'error';
-}
 
 const ITEMS_PER_PAGE = 12;
 
@@ -113,7 +108,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const totalPages = Math.ceil(filteredModules.length / ITEMS_PER_PAGE);
   const paginatedModules = filteredModules.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-  // Helper to generate page numbers
   const renderPageNumbers = () => {
     const pages = [];
     const maxVisible = 5;
@@ -224,7 +218,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                       </div>
                     )}
                     
-                    {/* Role Badge (Referencing top-left "角色" in prompt image) */}
+                    {/* Role Badge */}
                     <div className="absolute top-5 left-5 z-10">
                        <span className={`text-[10px] font-bold px-4 py-1.5 rounded-xl shadow-sm ${typeStyle.badge}`}>
                           {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
@@ -232,19 +226,23 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     </div>
 
                     {/* Quick Actions (Hover Only) */}
-                    <div className="absolute top-5 right-5 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-5 right-5 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                       {module.imageUrl && (
+                         <button onClick={(e) => { e.stopPropagation(); window.open(module.imageUrl, '_blank'); }} className="p-2.5 bg-white/90 backdrop-blur text-slate-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all" title="View Original Image">
+                           <Maximize size={16} />
+                         </button>
+                       )}
                        <button onClick={(e) => { e.stopPropagation(); navigator.clipboard.writeText(module.content); }} className="p-2.5 bg-white/90 backdrop-blur text-slate-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all"><Copy size={16} /></button>
                        <button onClick={(e) => { e.stopPropagation(); handleDelete(module.id); }} className="p-2.5 bg-white/90 backdrop-blur text-slate-600 rounded-xl hover:bg-red-600 hover:text-white transition-all"><Trash2 size={16} /></button>
                     </div>
                   </div>
                   
-                  {/* Content Area (Reference: Tight spacing between Title and Tags) */}
+                  {/* Content Area */}
                   <div className="flex-1 px-7 py-6 flex flex-col bg-white">
                      <h3 className="text-xl font-bold text-[#0F172A] leading-[1.3] line-clamp-2 mb-4 group-hover:text-blue-600 transition-colors">
                        {module.title}
                      </h3>
 
-                     {/* Tags Section (Referencing the grey pills in prompt image) */}
                      <div className="mt-auto flex flex-wrap gap-2">
                         {module.tags.length > 0 ? (
                            module.tags.slice(0, 2).map(tag => (
@@ -253,11 +251,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                              </span>
                            ))
                         ) : (
-                           <span className="text-[11px] font-bold text-[#94A3B8] bg-[#F8FAFC] px-4 py-2 rounded-xl">Prompt</span>
-                        )}
-                        {/* Always show a placeholder tag if none to match style */}
-                        {module.tags.length === 0 && (
-                          <span className="text-[11px] font-bold text-[#94A3B8] bg-[#F8FAFC] px-4 py-2 rounded-xl">Module</span>
+                           <span className="text-[11px] font-bold text-[#94A3B8] bg-[#F8FAFC] px-4 py-2 rounded-xl">Module</span>
                         )}
                      </div>
                   </div>
@@ -268,7 +262,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
         )}
       </div>
 
-      {/* Optimized Pagination Bar */}
+      {/* Pagination Bar */}
       {totalPages > 1 && (
          <footer className="px-10 py-3 bg-white border-t border-slate-100 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-1">
@@ -278,41 +272,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
             </div>
 
             <div className="flex items-center gap-1">
-               <button 
-                 disabled={currentPage === 1} 
-                 onClick={() => setCurrentPage(1)} 
-                 className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"
-                 title="First Page"
-               >
-                 <ChevronsLeft size={16} />
-               </button>
-               <button 
-                 disabled={currentPage === 1} 
-                 onClick={() => setCurrentPage(p => p - 1)} 
-                 className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"
-               >
-                 <ChevronLeft size={18} />
-               </button>
-
-               <div className="flex items-center gap-1 mx-2">
-                 {renderPageNumbers()}
-               </div>
-
-               <button 
-                 disabled={currentPage === totalPages} 
-                 onClick={() => setCurrentPage(p => p + 1)} 
-                 className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"
-               >
-                 <ChevronRight size={18} />
-               </button>
-               <button 
-                 disabled={currentPage === totalPages} 
-                 onClick={() => setCurrentPage(totalPages)} 
-                 className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"
-                 title="Last Page"
-               >
-                 <ChevronsRight size={16} />
-               </button>
+               <button disabled={currentPage === 1} onClick={() => setCurrentPage(1)} className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"><ChevronsLeft size={16} /></button>
+               <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"><ChevronLeft size={18} /></button>
+               <div className="flex items-center gap-1 mx-2">{renderPageNumbers()}</div>
+               <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"><ChevronRight size={18} /></button>
+               <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(totalPages)} className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"><ChevronsRight size={16} /></button>
             </div>
          </footer>
       )}
@@ -331,35 +295,52 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                <div className="space-y-6">
                   {formError && <div className="p-4 bg-red-50 text-red-600 text-xs font-bold rounded-xl">{formError}</div>}
                   <div className="space-y-2">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Identification</label>
+                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Identification (Title)</label>
                      <input className="prod-input font-bold py-3 px-4" value={title} onChange={e => setTitle(e.target.value)} placeholder="Enter Title..." />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+
+                  {/* Improved Proportions for Type vs Tags */}
+                  <div className="grid grid-cols-[3fr_2fr] gap-4">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Type</label>
-                      <select className="prod-input font-bold py-3 px-4" value={type} onChange={e => setType(e.target.value as ModuleType)}>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Classification</label>
+                      <select className="prod-input font-bold py-3 px-4 h-[46px]" value={type} onChange={e => setType(e.target.value as ModuleType)}>
                         {Object.values(ModuleType).map(v => <option key={v} value={v}>{t.moduleType[v as keyof typeof t.moduleType] || v}</option>)}
                       </select>
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Meta Tags</label>
-                      <input className="prod-input font-bold py-3 px-4" value={tags} onChange={e => setTags(e.target.value)} placeholder="tag, tag" />
+                      <input className="prod-input font-bold py-3 px-4 h-[46px]" value={tags} onChange={e => setTags(e.target.value)} placeholder="tag1, tag2" />
                     </div>
                   </div>
+
+                  {/* Visual Asset with Inline Preview */}
                   <div className="space-y-2">
                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Visual Asset (URL)</label>
-                     <input className="prod-input font-mono text-xs py-3 px-4" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://..." />
+                     <div className="flex gap-3 items-center">
+                       {imageUrl ? (
+                         <div className="w-12 h-12 rounded-xl border border-slate-200 overflow-hidden bg-slate-50 shrink-0 shadow-inner">
+                           <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                         </div>
+                       ) : (
+                         <div className="w-12 h-12 rounded-xl border border-dashed border-slate-200 flex items-center justify-center text-slate-300 bg-slate-50 shrink-0">
+                           <ImageIcon size={16} />
+                         </div>
+                       )}
+                       <input className="prod-input font-mono text-xs py-3 px-4 flex-1" value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://unsplash.com/photo-..." />
+                     </div>
                   </div>
                </div>
                <div className="space-y-2 flex flex-col">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payload Content</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payload Content (Core Prompt)</label>
                   <textarea className="flex-1 min-h-[250px] bg-slate-50 border border-slate-200 rounded-3xl p-6 font-mono text-xs leading-relaxed outline-none focus:border-blue-500" value={content} onChange={e => setContent(e.target.value)} placeholder="Enter instructions here..." />
                </div>
             </div>
 
             <div className="p-10 bg-slate-50 border-t border-slate-100 flex justify-end gap-4">
-              <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 rounded-xl font-bold text-xs text-slate-400 hover:text-slate-900 uppercase">Discard</button>
-              <button onClick={handleSave} disabled={isSaving} className="px-12 py-3 bg-slate-900 rounded-xl text-white font-bold text-xs uppercase shadow-xl">{isSaving ? 'Saving...' : 'Confirm Entry'}</button>
+              <button onClick={() => setIsModalOpen(false)} className="px-8 py-3 rounded-xl font-bold text-xs text-slate-400 hover:text-slate-900 uppercase tracking-widest">Discard</button>
+              <button onClick={handleSave} disabled={isSaving} className="px-12 py-3 bg-slate-900 rounded-xl text-white font-bold text-xs uppercase shadow-xl tracking-widest transition-transform active:scale-95">
+                {isSaving ? 'Saving...' : 'Confirm Entry'}
+              </button>
             </div>
           </div>
         </div>
