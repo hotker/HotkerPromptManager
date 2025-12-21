@@ -3,7 +3,8 @@ import { PromptModule, ModuleType } from '../types';
 import { 
   Plus, Trash2, Search, Copy, X, 
   Box, ChevronLeft, ChevronRight, AlertCircle,
-  Settings, Terminal, Tag, X as CloseIcon
+  Settings, Terminal, Tag, X as CloseIcon,
+  ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import { Language, translations } from '../translations';
 
@@ -111,6 +112,35 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
   const totalPages = Math.ceil(filteredModules.length / ITEMS_PER_PAGE);
   const paginatedModules = filteredModules.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // Helper to generate page numbers
+  const renderPageNumbers = () => {
+    const pages = [];
+    const maxVisible = 5;
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(totalPages, start + maxVisible - 1);
+    
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(
+        <button
+          key={i}
+          onClick={() => setCurrentPage(i)}
+          className={`w-8 h-8 rounded-lg text-xs font-bold transition-all ${
+            currentPage === i 
+            ? 'bg-slate-900 text-white shadow-md scale-110' 
+            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+          }`}
+        >
+          {i}
+        </button>
+      );
+    }
+    return pages;
+  };
 
   return (
     <div className="h-full flex flex-col bg-[#F8FAFC] overflow-hidden md:rounded-tl-[3rem] shadow-sm relative border-l border-slate-200">
@@ -238,13 +268,51 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
         )}
       </div>
 
-      {/* Pagination */}
+      {/* Optimized Pagination Bar */}
       {totalPages > 1 && (
-         <footer className="px-10 py-6 bg-white border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-50">PAGE {currentPage} / {totalPages}</span>
-            <div className="flex gap-2">
-               <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)} className="p-3 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30"><ChevronLeft size={18} /></button>
-               <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)} className="p-3 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30"><ChevronRight size={18} /></button>
+         <footer className="px-10 py-3 bg-white border-t border-slate-100 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-60">
+                {t.library.showing} {(currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredModules.length)} {t.library.of} {filteredModules.length}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1">
+               <button 
+                 disabled={currentPage === 1} 
+                 onClick={() => setCurrentPage(1)} 
+                 className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"
+                 title="First Page"
+               >
+                 <ChevronsLeft size={16} />
+               </button>
+               <button 
+                 disabled={currentPage === 1} 
+                 onClick={() => setCurrentPage(p => p - 1)} 
+                 className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"
+               >
+                 <ChevronLeft size={18} />
+               </button>
+
+               <div className="flex items-center gap-1 mx-2">
+                 {renderPageNumbers()}
+               </div>
+
+               <button 
+                 disabled={currentPage === totalPages} 
+                 onClick={() => setCurrentPage(p => p + 1)} 
+                 className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"
+               >
+                 <ChevronRight size={18} />
+               </button>
+               <button 
+                 disabled={currentPage === totalPages} 
+                 onClick={() => setCurrentPage(totalPages)} 
+                 className="p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-900 disabled:opacity-20 transition-all"
+                 title="Last Page"
+               >
+                 <ChevronsRight size={16} />
+               </button>
             </div>
          </footer>
       )}
