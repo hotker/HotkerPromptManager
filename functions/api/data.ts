@@ -38,9 +38,18 @@ export const onRequestGet = async (context: PagesContext) => {
 
     if (env.DB) {
        // SQL for D1
-       const record = await env.DB.prepare('SELECT data_json FROM user_data WHERE user_id = ?').bind(userId).first();
-       if (record) {
-         dataStr = record.data_json as string;
+       try {
+         const record = await env.DB.prepare('SELECT data_json FROM user_data WHERE user_id = ?').bind(userId).first();
+         if (record && record.data_json) {
+           dataStr = record.data_json as string;
+         }
+       } catch (dbErr: any) {
+         // 如果表不存在，返回默认值而不是报错，防止应用崩溃
+         if (dbErr.message?.includes('no such table')) {
+            console.warn("D1 table user_data not found, using default data");
+         } else {
+            throw dbErr;
+         }
        }
     } else {
        // KV for NANO_DB
@@ -73,26 +82,30 @@ export const onRequestPost = async (context: PagesContext) => {
     const jsonStr = JSON.stringify(data);
 
     if (env.DB) {
-      // Use SQL optimized for D1 performance with UPSERT logic.
-      // High availability: ensures consistent write even during simultaneous requests.
-      await env.DB.prepare(`
-        INSERT INTO user_data (user_id, data_json, updated_at) 
-        VALUES (?, ?, ?)
-        ON CONFLICT(user_id) DO UPDATE SET 
-          data_json = excluded.data_json, 
-          updated_at = excluded.updated_at
-      `).bind(userId, jsonStr, Date.now()).run();
+      try {
+        // 使用更兼容的 UPSERT 语法
+        await env.DB.prepare(`
+          INSERT INTO user_data (user_id, data_json, updated_at) 
+          VALUES (?, ?, ?)
+          ON CONFLICT(user_id) DO UPDATE SET 
+            data_json = excluded.data_json, 
+            updated_at = excluded.updated_at
+        `).bind(userId, jsonStr, Date.now()).run();
+      } catch (dbErr: any) {
+        if (dbErr.message?.includes('no such table')) {
+          return response({ error: 'D1 数据库表未初始化，请参考 DEPLOY.md 执行建表 SQL。' }, 500);
+        }
+        throw dbErr;
+      }
     } else {
-      // KV is naturally atomic per key
       await env.NANO_DB.put(`DATA:${userId}`, jsonStr);
     }
     
     return response({ success: true, timestamp: Date.now() });
   } catch (e: any) {
     console.error("Save data failure:", e);
-    // Explicitly handle DB busy or constraint errors
-    if (e.message?.includes('D1_ERROR')) {
-       return response({ error: '数据库并发写冲突，同步已进入重试队列' }, 503);
+    if (e.message?.includes('D1_ERROR') || e.message?.includes('busy')) {
+       return response({ error: '数据库并发冲突或繁忙，请稍后重试' }, 503);
     }
     return response({ error: '同步写入失败: ' + e.message }, 500);
   }

@@ -11,7 +11,6 @@ import { apiService, UserData } from './services/apiService';
 import { INITIAL_MODULES } from './constants';
 import { Language, translations } from './translations';
 
-// 优化后的防抖 Hook
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -91,17 +90,24 @@ const AuthenticatedApp: React.FC<{
     const loadCloudData = async () => {
       try {
         const cloudData = await apiService.loadData(currentUser.id);
-        if (cloudData && (cloudData.modules?.length > 0 || cloudData.templates?.length > 0)) {
-          setModules(cloudData.modules || []);
-          setTemplates(cloudData.templates || []);
-          setLogs(cloudData.logs || []);
-          setUserApiKey(cloudData.apiKey || '');
+        if (cloudData) {
+          // 只有当云端确实有数据时才覆盖
+          if (cloudData.modules?.length > 0 || cloudData.templates?.length > 0 || cloudData.apiKey) {
+             setModules(cloudData.modules || []);
+             setTemplates(cloudData.templates || []);
+             setLogs(cloudData.logs || []);
+             setUserApiKey(cloudData.apiKey || '');
+          } else {
+             setModules(INITIAL_MODULES);
+          }
         } else {
           setModules(INITIAL_MODULES);
         }
-      } catch (e) {
-        console.error("Load data failed, fallback to initials", e);
+      } catch (e: any) {
+        console.error("Critical Load data failed:", e);
         setModules(INITIAL_MODULES);
+        setSyncStatus('error');
+        setSyncErrorMsg(e.message);
       } finally {
         setIsDataLoaded(true);
       }
@@ -109,7 +115,7 @@ const AuthenticatedApp: React.FC<{
     loadCloudData();
   }, [currentUser.id]);
 
-  // 2. 稳定数据引用：只有核心业务数据变化时，currentData 才会变化
+  // 2. 稳定数据引用
   const currentData = useMemo<UserData>(() => ({
     modules,
     templates,
@@ -117,20 +123,22 @@ const AuthenticatedApp: React.FC<{
     apiKey: userApiKey
   }), [modules, templates, logs, userApiKey]);
 
-  // 3. 极速防抖：500ms 延迟足以过滤快速点击，同时保证保存的即时性
-  const debouncedData = useDebounce(currentData, 500);
+  // 3. 极速防抖
+  const debouncedData = useDebounce(currentData, 600);
   const saveAbortControllerRef = useRef<AbortController | null>(null);
-  const isFirstRender = useRef(true);
+  const lastSavedJson = useRef<string>("");
 
-  // 4. 核心保存逻辑：深度绑定 debouncedData
+  // 4. 核心保存逻辑
   useEffect(() => {
     if (!isDataLoaded) return;
     
-    // 跳过初次渲染引发的保存
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
+    // 通过序列化对比，防止因某些无关紧要的重绘导致的无效同步
+    const currentJson = JSON.stringify(debouncedData);
+    if (lastSavedJson.current === "") {
+        lastSavedJson.current = currentJson;
+        return;
     }
+    if (lastSavedJson.current === currentJson) return;
 
     const saveData = async () => {
       if (saveAbortControllerRef.current) {
@@ -145,9 +153,10 @@ const AuthenticatedApp: React.FC<{
         await apiService.saveData(currentUser.id, debouncedData, controller.signal);
         setSyncStatus('saved');
         setSyncErrorMsg(undefined);
+        lastSavedJson.current = currentJson;
       } catch (e: any) {
         if (e.name === 'AbortError') return;
-        console.error("Critical Sync Error:", e);
+        console.error("Sync Failure:", e);
         setSyncStatus('error');
         setSyncErrorMsg(e.message);
       }
@@ -168,6 +177,7 @@ const AuthenticatedApp: React.FC<{
       .then(() => {
         setSyncStatus('saved');
         setSyncErrorMsg(undefined);
+        lastSavedJson.current = JSON.stringify(currentData);
       })
       .catch(e => {
         setSyncStatus('error');
