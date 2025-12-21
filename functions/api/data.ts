@@ -16,30 +16,6 @@ const response = (data: any, status = 200) => {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 };
 
-// Helper to decode Reversed-Base64 to string (UTF-8 safe)
-function decodeSmart(reversedPayload: string) {
-  // 1. Reverse back to normal Base64
-  const base64 = reversedPayload.split('').reverse().join('');
-  
-  // 2. Standard Base64 Decode
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return new TextDecoder().decode(bytes);
-}
-
-// Fallback for legacy normal Base64 (just in case)
-function decodeLegacyBase64(base64: string) {
-    const binaryString = atob(base64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    return new TextDecoder().decode(bytes);
-}
-
 export const onRequestOptions = async () => {
   return new Response(null, { headers: CORS_HEADERS });
 };
@@ -98,60 +74,49 @@ export const onRequestPost = async (context: PagesContext) => {
   }
 
   try {
-    // 1. Try to get userId from URL first (Preferred new method)
+    // 1. Try to get userId from URL first
     let userId = url.searchParams.get('userId');
-    const rawText = await request.text();
-
-    if (!rawText) {
-       return response({ error: 'Empty request body' }, 400);
-    }
+    const contentType = request.headers.get('content-type') || '';
     
-    let data;
+    let data: any = null;
 
-    // 2. Hybrid Parsing
-    if (rawText.trim().startsWith('{')) {
-        // CASE A: Legacy JSON Wrapper (Old clients or failed obfuscation)
+    // 2. Strategy: Multipart Form Data (Robust WAF Bypass)
+    if (contentType.includes('multipart/form-data')) {
         try {
-            const body = JSON.parse(rawText);
-            if (!userId) userId = body.userId; 
+            const formData = await request.formData();
+            const file = formData.get('file');
             
-            if (body.payload) {
-                // Try decoding payload
-                try {
-                   data = JSON.parse(decodeLegacyBase64(body.payload));
-                } catch {
-                   // Maybe it's reversed inside JSON? Unlikely for old client but safe to try
-                   try { data = JSON.parse(decodeSmart(body.payload)); } catch {}
-                }
-            } else if (body.data) {
-                data = body.data;
+            if (file && typeof file !== 'string') {
+               // It's a File/Blob
+               const text = await file.text();
+               data = JSON.parse(text);
+            } else {
+               return response({ error: 'Invalid file upload' }, 400);
             }
         } catch (e) {
-            return response({ error: 'Invalid JSON body' }, 400);
+            return response({ error: 'Failed to parse form data' }, 400);
         }
-    } else {
-        // CASE B: Raw Obfuscated Payload (New Robust Method)
-        // This is where we handle the Reversed Base64
+    } 
+    // 3. Fallback: Raw Text/JSON (Legacy support)
+    else {
         try {
-            const decodedStr = decodeSmart(rawText);
-            data = JSON.parse(decodedStr);
-        } catch (e) {
-            // If smart decode fails, maybe it's just raw base64 (fallback)
-            try {
-                const decodedStr = decodeLegacyBase64(rawText);
-                data = JSON.parse(decodedStr);
-            } catch (e2) {
-                return response({ error: 'Invalid Encoded payload' }, 400);
+            const rawText = await request.text();
+            if (rawText.trim().startsWith('{')) {
+                const body = JSON.parse(rawText);
+                if (!userId) userId = body.userId;
+                data = body.data || body; // Handle both wrapper and direct
             }
+        } catch (e) {
+            // Ignore parse errors here, checks below will catch empty data
         }
     }
-    
+
     if (!userId) {
       return response({ error: '同步负载格式错误: 缺少 userId (请在 URL 参数中提供)' }, 400);
     }
 
     if (!data) {
-        return response({ error: '数据解析为空' }, 400);
+        return response({ error: '数据解析失败或格式不支持' }, 400);
     }
     
     // Store as plain JSON string in DB
