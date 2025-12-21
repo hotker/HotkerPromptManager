@@ -16,16 +16,19 @@ const response = (data: any, status = 200) => {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 };
 
-// --- XOR 解密算法 ---
-function xorDecode(base64Str: string): string {
+// --- Hex + XOR 解密算法 ---
+function xorHexDecode(hexStr: string): string {
   try {
     const key = "HotkerSync2025_Secret";
-    const binary = atob(base64Str);
-    const dataBytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      dataBytes[i] = binary.charCodeAt(i);
+    
+    // Hex to Uint8Array
+    if (hexStr.length % 2 !== 0) throw new Error("Invalid Hex Length");
+    const dataBytes = new Uint8Array(hexStr.length / 2);
+    for (let i = 0; i < hexStr.length; i += 2) {
+      dataBytes[i / 2] = parseInt(hexStr.substring(i, i + 2), 16);
     }
     
+    // XOR Restore
     const keyBytes = new TextEncoder().encode(key);
     const output = new Uint8Array(dataBytes.length);
     
@@ -36,6 +39,26 @@ function xorDecode(base64Str: string): string {
     return new TextDecoder().decode(output);
   } catch (e) {
     throw new Error("Payload Decryption Failed");
+  }
+}
+
+// Fallback for previous Base64-XOR (v3)
+function xorBase64Decode(base64Str: string): string {
+  try {
+    const key = "HotkerSync2025_Secret";
+    const binary = atob(base64Str);
+    const dataBytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      dataBytes[i] = binary.charCodeAt(i);
+    }
+    const keyBytes = new TextEncoder().encode(key);
+    const output = new Uint8Array(dataBytes.length);
+    for (let i = 0; i < dataBytes.length; i++) {
+      output[i] = dataBytes[i] ^ keyBytes[i % keyBytes.length];
+    }
+    return new TextDecoder().decode(output);
+  } catch (e) {
+    throw new Error("Base64 Decryption Failed");
   }
 }
 
@@ -96,34 +119,44 @@ export const onRequestPost = async (context: PagesContext) => {
   try {
     const userId = url.searchParams.get('userId');
     const rawText = await request.text();
+    const cleanText = rawText ? rawText.trim() : "";
     
-    if (!rawText) return response({ error: 'Empty Body' }, 400);
+    if (!cleanText) return response({ error: 'Empty Body' }, 400);
 
     let data;
 
     // 智能解析逻辑
-    // 1. 如果不是以 '{' 开头，假设是 XOR 混淆数据 (新的 WAF 绕过方案)
-    if (!rawText.trim().startsWith('{')) {
+    
+    // 1. 尝试 Hex-XOR 解密 (v4) - 仅包含 0-9 a-f A-F
+    if (/^[0-9a-fA-F]+$/.test(cleanText)) {
+      try {
+        const jsonStr = xorHexDecode(cleanText);
+        data = JSON.parse(jsonStr);
+      } catch (e) {
+        // Hex decode failed, might be accidental match or old format
+      }
+    }
+
+    // 2. 尝试 Base64-XOR 解密 (v3) - 如果不是 '{' 开头且不是纯 Hex
+    if (!data && !cleanText.startsWith('{')) {
         try {
-            const jsonStr = xorDecode(rawText);
+            const jsonStr = xorBase64Decode(cleanText);
             data = JSON.parse(jsonStr);
         } catch (e) {
-            // 解密失败，可能不是混淆数据
+            // Decrypt failed
         }
     }
     
-    // 2. 如果解密失败或看起来像普通 JSON，尝试标准解析 (兼容旧版)
+    // 3. 尝试标准 JSON (兼容 v1/v2 及开发调试)
     if (!data) {
         try {
             const body = JSON.parse(rawText);
-            // 兼容旧的包装格式 { userId, data }
             data = body.data || body;
-            // 如果 URL 没带 userId，尝试从 body 拿
             if (!userId && body.userId) {
                  return response({ error: '请更新客户端: userId 必须通过 URL 传递' }, 400);
             }
         } catch (e) {
-            return response({ error: '数据格式无法识别 (Crypto/JSON Parse Error)' }, 400);
+            return response({ error: '数据格式无法识别 (Hex/Crypto/JSON Parse Error)' }, 400);
         }
     }
 

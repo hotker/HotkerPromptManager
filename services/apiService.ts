@@ -39,7 +39,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
         const errJson = await res.json() as any;
         errorMsg = errJson.error || errorMsg;
       } catch {
-        if (res.status === 403) errorMsg = 'WAF拦截: 请检查内容是否包含敏感字符';
+        if (res.status === 403) errorMsg = 'WAF拦截: 请检查内容是否包含敏感字符 (Hex模式)';
       }
       throw new Error(errorMsg);
     }
@@ -56,10 +56,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
   }
 }
 
-// --- XOR 混淆算法 ---
-// 将有意义的 JSON 字符串转换为无意义的二进制乱码，彻底破坏 WAF 特征匹配
-function xorEncode(str: string): string {
-  const key = "HotkerSync2025_Secret"; // 固定混淆密钥
+// --- XOR + Hex 混淆算法 ---
+// 将 JSON 转换为 Hex 字符串，彻底避免 Base64 特殊字符 (+, /, =) 触发 WAF
+function xorHexEncode(str: string): string {
+  const key = "HotkerSync2025_Secret";
   const encoder = new TextEncoder();
   
   const dataBytes = encoder.encode(str);
@@ -70,13 +70,10 @@ function xorEncode(str: string): string {
     output[i] = dataBytes[i] ^ keyBytes[i % keyBytes.length];
   }
   
-  // 将 Uint8Array 转换为二进制字符串以便进行 Base64 编码
-  let binary = '';
-  const len = output.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(output[i]);
-  }
-  return btoa(binary);
+  // Convert to Hex
+  return Array.from(output)
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 export const apiService = {
@@ -116,15 +113,15 @@ export const apiService = {
     // 1. 序列化数据
     const jsonStr = JSON.stringify(data);
     
-    // 2. XOR 混淆加密 (核心修复: 破坏所有 JSON/SQL 结构特征)
-    const payload = xorEncode(jsonStr);
+    // 2. XOR + Hex 混淆加密
+    const payload = xorHexEncode(jsonStr);
 
     // 3. 发送纯文本 Payload
     return request<void>(`/data?userId=${encodeURIComponent(userId)}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'text/plain', // 使用 text/plain 避免 JSON 解析器介入
-        'X-Sync-Version': 'v3-xor'
+        'Content-Type': 'text/plain', // 纯文本，内容只有 [0-9a-f]
+        'X-Sync-Version': 'v4-hex'
       },
       body: payload,
       signal
