@@ -11,7 +11,7 @@ import { apiService, UserData } from './services/apiService';
 import { INITIAL_MODULES } from './constants';
 import { Language, translations } from './translations';
 
-// 防抖延迟缩短至 1s，提升实时感
+// 防抖延迟：1.2秒是权衡体验与性能的最佳平衡点
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
@@ -86,12 +86,12 @@ const AuthenticatedApp: React.FC<{
   const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [syncErrorMsg, setSyncErrorMsg] = useState<string | undefined>(undefined);
 
-  // 1. 数据加载
+  // 1. 数据初始加载
   useEffect(() => {
     const loadCloudData = async () => {
       const cloudData = await apiService.loadData(currentUser.id);
-      if (cloudData && cloudData.modules && cloudData.modules.length > 0) {
-        setModules(cloudData.modules);
+      if (cloudData && (cloudData.modules?.length > 0 || cloudData.templates?.length > 0)) {
+        setModules(cloudData.modules || []);
         setTemplates(cloudData.templates || []);
         setLogs(cloudData.logs || []);
         setUserApiKey(cloudData.apiKey || '');
@@ -107,7 +107,7 @@ const AuthenticatedApp: React.FC<{
   const currentData: UserData = {
     modules,
     templates,
-    logs: logs.slice(0, 50), 
+    logs: logs.slice(0, 50), // 仅同步最近50条日志，节省流量
     apiKey: userApiKey
   };
 
@@ -115,16 +115,22 @@ const AuthenticatedApp: React.FC<{
   const saveAbortControllerRef = useRef<AbortController | null>(null);
   const isFirstRender = useRef(true);
 
-  // 3. 实时同步效应
+  // 3. 实时同步效应：监听 debouncedData 变化并持久化
   useEffect(() => {
     if (!isDataLoaded) return;
+    
+    // 跳过首次加载引发的同步
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
 
     const saveData = async () => {
-      if (saveAbortControllerRef.current) saveAbortControllerRef.current.abort();
+      // 终止之前的同步请求，防止竞态冲突
+      if (saveAbortControllerRef.current) {
+        saveAbortControllerRef.current.abort();
+      }
+      
       const controller = new AbortController();
       saveAbortControllerRef.current = controller;
 
@@ -134,18 +140,29 @@ const AuthenticatedApp: React.FC<{
         setSyncStatus('saved');
         setSyncErrorMsg(undefined);
       } catch (e: any) {
-        if (e.name === 'AbortError') return;
+        if (e.name === 'AbortError') return; // 被取消的请求不显示错误
+        console.error("Critical Sync Error:", e);
         setSyncStatus('error');
         setSyncErrorMsg(e.message);
       }
     };
+
     saveData();
+
+    return () => {
+      if (saveAbortControllerRef.current) {
+        saveAbortControllerRef.current.abort();
+      }
+    };
   }, [debouncedData, currentUser.id, isDataLoaded]);
 
   const handleForceSync = () => {
     setSyncStatus('saving');
     apiService.saveData(currentUser.id, currentData)
-      .then(() => setSyncStatus('saved'))
+      .then(() => {
+        setSyncStatus('saved');
+        setSyncErrorMsg(undefined);
+      })
       .catch(e => {
         setSyncStatus('error');
         setSyncErrorMsg(e.message);
@@ -181,22 +198,42 @@ const AuthenticatedApp: React.FC<{
         <div className="flex-1 overflow-hidden relative bg-white md:bg-slate-50 md:p-2">
           {view === 'dashboard' && (
             <Dashboard 
-              modules={modules} templates={templates} logs={logs}
-              setModules={setModules} setTemplates={setTemplates} setLogs={setLogs}
-              currentUser={currentUser} lang={lang}
+              modules={modules} 
+              templates={templates} 
+              logs={logs}
+              setModules={setModules} 
+              setTemplates={setTemplates} 
+              setLogs={setLogs}
+              currentUser={currentUser} 
+              lang={lang}
             />
           )}
-          {view === 'library' && <LibraryView modules={modules} setModules={setModules} lang={lang} />}
+          {view === 'library' && (
+            <LibraryView 
+              modules={modules} 
+              setModules={setModules} 
+              lang={lang} 
+            />
+          )}
           {view === 'builder' && (
             <BuilderView 
-              modules={modules} templates={templates} 
+              modules={modules} 
+              templates={templates} 
               saveTemplate={(t) => setTemplates(prev => [t, ...prev])}
               addLog={(l) => setLogs(prev => [l, ...prev])}
               onUpdateModule={(m) => setModules(prev => prev.map(old => old.id === m.id ? m : old))}
-              userApiKey={userApiKey} currentUser={currentUser} lang={lang}
+              userApiKey={userApiKey} 
+              currentUser={currentUser} 
+              lang={lang}
             />
           )}
-          {view === 'history' && <HistoryView logs={logs} updateLog={(id, updates) => setLogs(prev => prev.map(log => log.id === id ? { ...log, ...updates } : log))} lang={lang} />}
+          {view === 'history' && (
+            <HistoryView 
+              logs={logs} 
+              updateLog={(id, updates) => setLogs(prev => prev.map(log => log.id === id ? { ...log, ...updates } : log))} 
+              lang={lang} 
+            />
+          )}
         </div>
       </main>
     </div>

@@ -5,7 +5,7 @@ import {
   Plus, Trash2, Edit2, Search, Copy, Check, Filter, X, 
   LayoutList, LayoutGrid, Image as ImageIcon, Link, 
   User, FileText, CheckSquare, Shield, Layout, MessageSquare, Box, ExternalLink,
-  ChevronLeft, ChevronRight, MoreHorizontal
+  ChevronLeft, ChevronRight, MoreHorizontal, AlertCircle
 } from 'lucide-react';
 import { Language, translations } from '../translations';
 
@@ -21,6 +21,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<PromptModule | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const t = translations[lang];
@@ -45,13 +47,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterType]);
-
-  // Scroll to top when page changes
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [currentPage]);
 
   const getModuleIcon = (type: ModuleType) => {
     switch (type) {
@@ -78,6 +73,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   };
 
   const openModal = (module?: PromptModule) => {
+    setFormError(null);
     if (module) {
       setEditingModule(module);
       setTitle(module.title);
@@ -98,28 +94,45 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
     setIsModalOpen(true);
   };
 
-  const handleSave = () => {
-    if (!title.trim() || !content.trim()) return;
+  const handleSave = async () => {
+    if (!title.trim() || !content.trim()) {
+      setFormError(lang === 'zh' ? '标题和内容不能为空' : 'Title and content are required');
+      return;
+    }
 
+    setIsSaving(true);
+    
     const newModule: PromptModule = {
       id: editingModule ? editingModule.id : crypto.randomUUID(),
-      title,
-      description,
-      content,
+      title: title.trim(),
+      description: description.trim(),
+      content: content.trim(),
       type,
       tags: tags.split(',').map(t => t.trim()).filter(Boolean),
       imageUrl: imageUrl.trim(),
       createdAt: editingModule ? editingModule.createdAt : Date.now(),
     };
 
+    // 更新本地状态
     setModules(prev => {
       if (editingModule) {
         return prev.map(m => m.id === editingModule.id ? newModule : m);
       }
       return [newModule, ...prev];
     });
-    
-    setIsModalOpen(false);
+
+    // 如果是新增，清空过滤器以确保新模块可见
+    if (!editingModule) {
+      setSearchTerm('');
+      setFilterType('ALL');
+      setCurrentPage(1);
+    }
+
+    // 模拟轻微延迟以提供视觉反馈
+    setTimeout(() => {
+      setIsSaving(false);
+      setIsModalOpen(false);
+    }, 300);
   };
 
   const handleDelete = (id: string) => {
@@ -146,23 +159,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedModules = filteredModules.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  const getPageNumbers = () => {
-    const windowSize = 5;
-    const pages = [];
-    if (totalPages <= windowSize) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      let start = Math.max(1, currentPage - Math.floor(windowSize / 2));
-      let end = start + windowSize - 1;
-      if (end > totalPages) {
-        end = totalPages;
-        start = Math.max(1, end - windowSize + 1);
-      }
-      for (let i = start; i <= end; i++) pages.push(i);
-    }
-    return pages;
-  };
-
   return (
     <div className="h-full flex flex-col bg-slate-50/50 md:rounded-tl-xl md:border-l md:border-t md:border-slate-200 overflow-hidden">
       
@@ -183,6 +179,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                 className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 pl-9 text-sm focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all"
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
+                  <X size={14} />
+                </button>
+              )}
            </div>
 
            <div className="flex items-center border border-slate-200 rounded-lg p-1 bg-slate-50 gap-1">
@@ -218,15 +219,15 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50" ref={scrollContainerRef}>
-        
         {paginatedModules.length === 0 ? (
            <div className="h-64 flex flex-col items-center justify-center text-slate-400">
-              <Search size={48} className="mb-4 opacity-20" />
+              <Box size={48} className="mb-4 opacity-20" />
               <p>{t.library.noModulesFound}</p>
+              {searchTerm && <button onClick={() => setSearchTerm('')} className="mt-2 text-blue-600 text-sm hover:underline">清除搜索</button>}
            </div>
         ) : viewMode === 'list' ? (
           <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-             {paginatedModules.map((module, index) => (
+             {paginatedModules.map((module) => (
                <div key={module.id} className={`group flex items-start p-4 hover:bg-blue-50/50 transition-colors border-b border-slate-100 last:border-0 gap-4 cursor-pointer`} onClick={() => openModal(module)}>
                  <div className="shrink-0 pt-1">
                     {module.imageUrl ? (
@@ -248,34 +249,24 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                     <p className="text-xs text-slate-500 font-mono line-clamp-2 leading-relaxed bg-slate-50 p-2 rounded border border-slate-100 group-hover:bg-white group-hover:border-blue-100 transition-colors">
                       {module.content}
                     </p>
-                    {module.tags.length > 0 && (
-                      <div className="flex gap-2 mt-2">
-                        {module.tags.map(tag => (
-                          <span key={tag} className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">#{tag}</span>
-                        ))}
-                      </div>
-                    )}
                  </div>
 
                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity self-center">
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
                       className={`p-2 rounded-md border transition-all ${copiedId === module.id ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-white text-slate-500 border-slate-200 hover:text-blue-600 hover:border-blue-200'}`}
-                      title="Copy"
                     >
                       {copiedId === module.id ? <Check size={16} /> : <Copy size={16} />}
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); openModal(module); }}
                       className="p-2 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-900 hover:border-slate-300 transition-all"
-                      title="Edit"
                     >
                       <Edit2 size={16} />
                     </button>
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleDelete(module.id); }}
                       className="p-2 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 transition-all"
-                      title="Delete"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -291,14 +282,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
               <div key={module.id} className="group relative bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden flex flex-col h-[320px]" onClick={() => openModal(module)}>
                  <div className={`relative h-[40%] shrink-0 overflow-hidden border-b border-slate-50 ${!module.imageUrl ? typeStyle.bg : 'bg-slate-100'}`}>
                     {module.imageUrl ? (
-                       <>
-                           <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
-                           <div className="absolute top-3 right-3 z-10">
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm border bg-white/95 backdrop-blur-sm text-slate-700 border-slate-200">
-                                   {t.moduleType[module.type as keyof typeof t.moduleType] || module.type}
-                              </span>
-                           </div>
-                       </>
+                       <img src={module.imageUrl} alt={module.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     ) : (
                        <div className="w-full h-full p-5 flex justify-between items-start">
                           <div className="w-10 h-10 rounded-lg bg-white/60 backdrop-blur-sm border border-white/50 shadow-sm flex items-center justify-center">
@@ -309,38 +293,22 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                           </span>
                        </div>
                     )}
-
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 z-20">
-                        {module.imageUrl && (
-                            <a 
-                                href={module.imageUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="p-2 rounded-full bg-white text-slate-700 hover:text-blue-600 hover:scale-110 transition-all shadow-lg"
-                                title="Open Image"
-                            >
-                                <ExternalLink size={18} />
-                            </a>
-                        )}
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleCopy(module.content, module.id); }}
                           className="p-2 rounded-full bg-white text-slate-700 hover:text-blue-600 hover:scale-110 transition-all shadow-lg"
-                          title="Copy"
                         >
                           {copiedId === module.id ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
                         </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); openModal(module); }}
                           className="p-2 rounded-full bg-white text-slate-700 hover:text-blue-600 hover:scale-110 transition-all shadow-lg"
-                          title="Edit"
                         >
                           <Edit2 size={18} />
                         </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); handleDelete(module.id); }}
                           className="p-2 rounded-full bg-white text-slate-700 hover:text-red-600 hover:scale-110 transition-all shadow-lg"
-                          title="Delete"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -348,83 +316,25 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                  </div>
                  
                  <div className="flex-1 p-4 flex flex-col min-h-0 bg-white relative">
-                    <div className="mb-2">
-                       <h3 className="font-bold text-slate-800 text-sm truncate pr-2" title={module.title}>{module.title}</h3>
-                    </div>
-
-                    <div className="flex-1 relative overflow-hidden min-h-0 group/text">
-                       <p className="text-xs text-slate-500 font-mono leading-relaxed line-clamp-5 group-hover/text:text-slate-700 transition-colors">
+                    <h3 className="font-bold text-slate-800 text-sm truncate mb-2">{module.title}</h3>
+                    <div className="flex-1 relative overflow-hidden min-h-0">
+                       <p className="text-xs text-slate-500 font-mono leading-relaxed line-clamp-5">
                          {module.content}
                        </p>
-                       <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
                     </div>
-
                     {module.tags.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-1.5 h-6 overflow-hidden">
                              {module.tags.map(tag => (
-                                 <span key={tag} className="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded whitespace-nowrap" title={tag}>
+                                 <span key={tag} className="text-[10px] text-slate-500 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded whitespace-nowrap">
                                     #{tag}
                                  </span>
                              ))}
                         </div>
                     )}
-
-                    <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between items-center shrink-0">
-                       <span className="text-[10px] text-slate-400 font-medium">{module.content.length} chars</span>
-                       {copiedId === module.id && (
-                          <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-medium animate-in fade-in slide-in-from-bottom-1">
-                             <Check size={10} /> {t.library.copySuccess}
-                          </span>
-                       )}
-                    </div>
                  </div>
               </div>
             )})}
           </div>
-        )}
-
-        {totalPages > 1 && (
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-between border-t border-slate-200 pt-6 pb-2 gap-4">
-                <div className="text-xs text-slate-500 order-2 sm:order-1">
-                    {t.library.showing} <span className="font-medium">{startIndex + 1}</span> {t.library.to} <span className="font-medium">{Math.min(startIndex + ITEMS_PER_PAGE, filteredModules.length)}</span> {t.library.of} <span className="font-medium">{filteredModules.length}</span> {t.library.results}
-                </div>
-                
-                <div className="flex items-center gap-2 order-1 sm:order-2">
-                    <button 
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="p-2 rounded-md border border-slate-200 text-slate-600 hover:bg-white hover:border-blue-300 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-slate-200 disabled:cursor-not-allowed transition-all bg-slate-50"
-                        title="Previous Page"
-                    >
-                        <ChevronLeft size={16} />
-                    </button>
-                    
-                    <div className="flex items-center gap-1">
-                      {getPageNumbers().map(pageNum => (
-                        <button
-                          key={pageNum}
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={`min-w-[32px] h-8 flex items-center justify-center rounded-md text-xs font-medium transition-all ${
-                            currentPage === pageNum
-                              ? 'bg-slate-900 text-white shadow-sm'
-                              : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      ))}
-                    </div>
-                    
-                    <button 
-                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                        className="p-2 rounded-md border border-slate-200 text-slate-600 hover:bg-white hover:border-blue-300 disabled:opacity-50 disabled:hover:bg-transparent disabled:hover:border-slate-200 disabled:cursor-not-allowed transition-all bg-slate-50"
-                        title="Next Page"
-                    >
-                        <ChevronRight size={16} />
-                    </button>
-                </div>
-            </div>
         )}
       </div>
 
@@ -441,10 +351,16 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
             </div>
             
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {formError && (
+                <div className="p-3 bg-red-50 border border-red-100 rounded-lg text-red-600 text-xs flex items-center gap-2">
+                  <AlertCircle size={14} /> {formError}
+                </div>
+              )}
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelTitle}</label>
-                  <input className="prod-input font-bold" value={title} onChange={e => setTitle(e.target.value)} placeholder={t.library.placeholderTitle} autoFocus/>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelTitle} <span className="text-red-500">*</span></label>
+                  <input className={`prod-input font-bold ${!title && formError ? 'border-red-300 ring-red-50' : ''}`} value={title} onChange={e => setTitle(e.target.value)} placeholder={t.library.placeholderTitle} autoFocus/>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -466,30 +382,18 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                    <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-1">
                       <ImageIcon size={14} /> {t.library.labelImage}
                    </label>
-                   <div className="flex gap-3">
-                      <div className="relative flex-1">
-                          <input 
-                            className="prod-input pl-8" 
-                            value={imageUrl} 
-                            onChange={e => setImageUrl(e.target.value)} 
-                            placeholder="https://example.com/image.png" 
-                          />
-                          <Link size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                      </div>
-                      {imageUrl && (
-                          <div className="w-10 h-10 rounded border border-slate-200 bg-slate-50 shrink-0 overflow-hidden relative group">
-                             <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-                             <div className="absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400 text-[8px] -z-10">{t.library.invalidImage}</div>
-                          </div>
-                      )}
-                   </div>
-                   <p className="text-[10px] text-slate-400 mt-1 ml-1">{t.library.pasteImageTip}</p>
+                   <input 
+                      className="prod-input" 
+                      value={imageUrl} 
+                      onChange={e => setImageUrl(e.target.value)} 
+                      placeholder="https://example.com/image.png" 
+                    />
                 </div>
 
                 <div>
-                   <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelContent}</label>
+                   <label className="block text-sm font-medium text-slate-700 mb-1">{t.library.labelContent} <span className="text-red-500">*</span></label>
                    <textarea 
-                     className="prod-input min-h-[200px] font-mono text-sm leading-relaxed" 
+                     className={`prod-input min-h-[200px] font-mono text-sm leading-relaxed ${!content && formError ? 'border-red-300 ring-red-50' : ''}`} 
                      value={content} 
                      onChange={e => setContent(e.target.value)} 
                      placeholder={t.library.placeholderContent}
@@ -505,8 +409,15 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
             <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
               <button onClick={() => setIsModalOpen(false)} className="btn-secondary">{t.library.btnCancel}</button>
-              <button onClick={handleSave} className="btn-primary px-8">
-                {t.library.btnSave}
+              <button onClick={handleSave} disabled={isSaving} className="btn-primary px-8 relative">
+                {isSaving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>保存中...</span>
+                  </div>
+                ) : (
+                  <span>{t.library.btnSave}</span>
+                )}
               </button>
             </div>
           </div>
