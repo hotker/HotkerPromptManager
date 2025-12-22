@@ -44,12 +44,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   // Guidelines: API key handling is managed by the execution environment via process.env.API_KEY.
-  const hasValidKey = true; 
+  // Check both process.env and global window object for key presence/capability.
+  const hasValidKey = !!process.env.API_KEY || (typeof window !== 'undefined' && !!window.aistudio);
 
   const handleOpenKeySelection = async () => {
     // Guidelines: Use openSelectKey to allow users to select their paid project key for Imagen/Veo.
     if (typeof window !== 'undefined' && window.aistudio) {
-      await window.aistudio.openSelectKey();
+      try {
+        await window.aistudio.openSelectKey();
+      } catch (e) {
+        console.error("Failed to open key selection:", e);
+      }
+    } else {
+      // Provide feedback if the environment doesn't support dynamic key selection
+      alert(lang === 'zh' ? '当前环境不支持动态配置 API Key，请检查环境变量配置。' : 'Dynamic API Key configuration is not supported in this environment. Please check environment variables.');
     }
   };
 
@@ -203,8 +211,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
            {/* API Status - Fixed for injected env */}
            <div className="flex items-center justify-between px-2 mb-4">
               <div className="flex items-center gap-2">
-                 <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                 <span className="hidden lg:block text-xs text-slate-500 font-medium">{t.sidebar.apiKeyConnected}</span>
+                 <div className={`w-2 h-2 rounded-full ${hasValidKey ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></div>
+                 <span className="hidden lg:block text-xs text-slate-500 font-medium">
+                   {hasValidKey ? t.sidebar.apiKeyConnected : t.sidebar.apiKeyMissing}
+                 </span>
               </div>
               <button onClick={handleOpenKeySelection} title={t.sidebar.apiConfigTitle} className="text-slate-400 hover:text-slate-900 transition-colors p-1 hover:bg-slate-100 rounded">
                  <KeyRound size={14} />
