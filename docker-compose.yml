@@ -5,26 +5,26 @@ services:
       context: .
       dockerfile: Dockerfile
       # Note: platform for build should be specified via CLI or buildx if needed
-    
-    # Option 2: Use pre-built image from Docker Hub
-    # image: hotker/prompt-manager:latest
-    # platform: linux/amd64  # Specify platform for AMD64 servers
-    # pull_policy: always    # Always pull to get the latest pushed image
-    
+
+      # Option 2: Use pre-built image from Docker Hub
+      # image: hotker/prompt-manager:latest
+      # platform: linux/amd64  # Specify platform for AMD64 servers
+      # pull_policy: always    # Always pull to get the latest pushed image
+
     container_name: hotker-prompt-studio
     restart: unless-stopped
-    
+
     # Map container port 3000 to host port 3000
     ports:
       - "3000:3000"
-      
+
     # Persist SQLite data to the host machine
     volumes:
       - ./data:/app/data
-      
+
     # Environment Variables
-    env_file:
-      - .env
+    # env_file:
+    #   - .env
     environment:
       - NODE_ENV=production
       # Optional: Gemini API Key (Can also be set in UI)
