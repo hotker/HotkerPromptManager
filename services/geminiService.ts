@@ -3,19 +3,38 @@ import { GoogleGenAI } from "@google/genai";
 import { FixedConfig } from "../types";
 
 /**
+ * Validates a Gemini API Key by making a lightweight API call.
+ */
+export const validateApiKey = async (apiKey: string): Promise<boolean> => {
+  if (!apiKey) return false;
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    // Use a lightweight generation request to validate the key
+    await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: 'test',
+    });
+    return true;
+  } catch (e) {
+    console.warn("API Key Validation Failed:", e);
+    return false;
+  }
+};
+
+/**
  * Generates a response from Gemini models based on the provided prompt and configuration.
  * Adheres to strict guidelines for model naming, API key handling, and response processing.
  */
-export const generateResponse = async (prompt: string, config: FixedConfig): Promise<string> => {
-  // Guidelines: Always use the API key from process.env.API_KEY.
-  const apiKey = process.env.API_KEY;
+export const generateResponse = async (prompt: string, config: FixedConfig, userApiKey?: string): Promise<string> => {
+  // Guidelines: Priority: User Provided Key > process.env.API_KEY.
+  const apiKey = userApiKey || process.env.API_KEY;
 
   if (!apiKey) {
     throw new Error("ERR_API_KEY_MISSING");
   }
 
   // Guidelines: For high-quality image models like gemini-3-pro-image-preview,
-  // ensure the user has selected their own API key via the system dialog.
+  // ensure the user has selected their own API key via the system dialog (if in compatible env like IDX).
   if (config.model === 'gemini-3-pro-image-preview') {
     if (typeof window !== 'undefined' && window.aistudio) {
       const hasKey = await window.aistudio.hasSelectedApiKey();

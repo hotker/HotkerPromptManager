@@ -36,6 +36,8 @@ export const translations = {
       logout: '退出登录',
       apiKeyConnected: 'API 连接正常',
       apiKeyMissing: '需配置 Key',
+      apiKeyInvalid: 'Key 无效',
+      validating: '验证中...',
       syncSaved: '已同步',
       syncSaving: '同步中',
       syncError: '同步失败',
@@ -49,7 +51,8 @@ export const translations = {
       version: '版本',
       github: '开源仓库',
       cancel: '取消',
-      connect: '连接 API'
+      connect: '验证并连接',
+      saveKeyInfo: '您的 Key 仅存储在本地或同步至您的个人私有数据库，不会被泄露。'
     },
     // 仪表盘
     dashboard: {
@@ -232,6 +235,8 @@ export const translations = {
       logout: 'Logout',
       apiKeyConnected: 'API Connected',
       apiKeyMissing: 'Key Missing',
+      apiKeyInvalid: 'Invalid Key',
+      validating: 'Validating...',
       syncSaved: 'Synced',
       syncSaving: 'Syncing',
       syncError: 'Error',
@@ -245,7 +250,8 @@ export const translations = {
       version: 'VERSION',
       github: 'GITHUB',
       cancel: 'Cancel',
-      connect: 'Connect API'
+      connect: 'Verify & Connect',
+      saveKeyInfo: 'Your key is stored locally or synced to your private DB only.'
     },
     dashboard: {
       welcome: 'Welcome back',

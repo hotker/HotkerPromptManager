@@ -56,8 +56,8 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
     const startTime = Date.now();
 
     try {
-      // Guidelines: geminiService now obtains API key from environment internally
-      const output = await generateResponse(compiledPrompt, config);
+      // Guidelines: geminiService now obtains API key from environment internally, or uses provided user key
+      const output = await generateResponse(compiledPrompt, config, userApiKey);
       if (output.startsWith('ERR_')) throw new Error(output);
       setResult(output);
       addLog({ id: crypto.randomUUID(), templateId: 'unsaved', templateName, finalPrompt: compiledPrompt, output, status: 'success', timestamp: Date.now(), durationMs: Date.now() - startTime });

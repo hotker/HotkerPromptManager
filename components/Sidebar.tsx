@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
-import { LayoutGrid, Library, TestTube2, History, LogOut, KeyRound, X, Cloud, RefreshCcw, AlertCircle, Menu, Command, ChevronRight, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LayoutGrid, Library, TestTube2, History, LogOut, KeyRound, X, Cloud, RefreshCcw, AlertCircle, Menu, Command, ChevronRight, ExternalLink, ShieldCheck, Check } from 'lucide-react';
 import { ViewState, User } from '../types';
 import { Language, translations } from '../translations';
-import { AUTHOR_INFO } from '../constants';
+import { validateApiKey } from '../services/geminiService';
 
 interface SidebarProps {
   currentView: ViewState;
@@ -33,6 +33,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onForceSync
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+  const [localKey, setLocalKey] = useState(userApiKey);
+  const [keyStatus, setKeyStatus] = useState<'checking' | 'valid' | 'invalid' | 'unknown'>('unknown');
   
   const t = translations[lang];
 
@@ -45,10 +48,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   // Guidelines: API key handling is managed by the execution environment via process.env.API_KEY.
   // Check both process.env and global window object for key presence/capability.
-  const hasValidKey = !!process.env.API_KEY || (typeof window !== 'undefined' && !!window.aistudio);
+  // Update: Also check user provided key.
+  const hasEnvKey = !!process.env.API_KEY || (typeof window !== 'undefined' && !!window.aistudio);
+  const hasUserKey = !!userApiKey;
+
+  // Effect to validate key on load or change
+  useEffect(() => {
+    const checkKey = async () => {
+        setKeyStatus('checking');
+        if (hasUserKey) {
+            const isValid = await validateApiKey(userApiKey);
+            setKeyStatus(isValid ? 'valid' : 'invalid');
+        } else if (hasEnvKey) {
+            // Assume env key is valid initially, but we could validate it too if needed
+            setKeyStatus('valid'); 
+        } else {
+            setKeyStatus('unknown');
+        }
+    };
+    checkKey();
+  }, [userApiKey, hasEnvKey]);
 
   const handleOpenKeySelection = async () => {
-    // Guidelines: Use openSelectKey to allow users to select their paid project key for Imagen/Veo.
+    // Guidelines: Use openSelectKey to allow users to select their paid project key for Imagen/Veo if in compatible env.
     if (typeof window !== 'undefined' && window.aistudio) {
       try {
         await window.aistudio.openSelectKey();
@@ -56,10 +78,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
         console.error("Failed to open key selection:", e);
       }
     } else {
-      // Provide feedback if the environment doesn't support dynamic key selection
-      alert(lang === 'zh' ? '当前环境不支持动态配置 API Key，请检查环境变量配置。' : 'Dynamic API Key configuration is not supported in this environment. Please check environment variables.');
+      // In standalone environment, open manual config modal
+      setLocalKey(userApiKey);
+      setIsKeyModalOpen(true);
     }
   };
+
+  const handleSaveKey = async () => {
+      setKeyStatus('checking');
+      const isValid = await validateApiKey(localKey);
+      setKeyStatus(isValid ? 'valid' : 'invalid');
+      
+      if (isValid) {
+          setUserApiKey(localKey);
+          setIsKeyModalOpen(false);
+      } else {
+          // Allow saving even if validation fails? Maybe just warn.
+          // For now, let's allow it but keep modal open or show error
+          alert(t.sidebar.apiKeyInvalid);
+      }
+  };
+
+  const renderKeyStatus = () => {
+      switch(keyStatus) {
+          case 'checking':
+              return <div className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>;
+          case 'valid':
+              return <div className="w-2 h-2 rounded-full bg-emerald-500"></div>;
+          case 'invalid':
+              return <div className="w-2 h-2 rounded-full bg-red-500"></div>;
+          default:
+              return <div className="w-2 h-2 rounded-full bg-slate-300"></div>;
+      }
+  };
+
+  const getKeyStatusText = () => {
+      if (keyStatus === 'checking') return t.sidebar.validating;
+      if (keyStatus === 'valid') return t.sidebar.apiKeyConnected;
+      if (keyStatus === 'invalid') return t.sidebar.apiKeyInvalid;
+      return t.sidebar.apiKeyMissing;
+  }
 
   const renderSyncStatus = () => {
     switch(syncStatus) {
@@ -151,7 +209,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                      </div>
                  </div>
 
-                 {/* Guidelines: Mandatory key selection for advanced models */}
                  <button onClick={handleOpenKeySelection} className="w-full btn-secondary text-xs flex items-center justify-center gap-2">
                     <KeyRound size={14} /> {t.sidebar.apiConfigTitle}
                  </button>
@@ -208,12 +265,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-100">
-           {/* API Status - Fixed for injected env */}
+           {/* API Status */}
            <div className="flex items-center justify-between px-2 mb-4">
               <div className="flex items-center gap-2">
-                 <div className={`w-2 h-2 rounded-full ${hasValidKey ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'}`}></div>
+                 {renderKeyStatus()}
                  <span className="hidden lg:block text-xs text-slate-500 font-medium">
-                   {hasValidKey ? t.sidebar.apiKeyConnected : t.sidebar.apiKeyMissing}
+                   {getKeyStatusText()}
                  </span>
               </div>
               <button onClick={handleOpenKeySelection} title={t.sidebar.apiConfigTitle} className="text-slate-400 hover:text-slate-900 transition-colors p-1 hover:bg-slate-100 rounded">
@@ -243,6 +300,54 @@ export const Sidebar: React.FC<SidebarProps> = ({
            </div>
         </div>
       </div>
+
+      {/* API Key Modal */}
+      {isKeyModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsKeyModalOpen(false)}></div>
+           <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+               <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                     <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><KeyRound size={18}/></div>
+                     <h3 className="font-bold text-slate-900">{t.sidebar.apiConfigTitle}</h3>
+                  </div>
+                  <button onClick={() => setIsKeyModalOpen(false)} className="text-slate-400 hover:text-slate-900"><X size={20}/></button>
+               </div>
+               
+               <div className="p-6 space-y-4">
+                  <div className="p-3 bg-blue-50 text-blue-800 text-xs rounded-lg flex items-start gap-2 leading-relaxed">
+                     <ShieldCheck size={14} className="mt-0.5 shrink-0"/>
+                     <p>{t.sidebar.saveKeyInfo}</p>
+                  </div>
+
+                  <div>
+                     <label className="block text-xs font-bold text-slate-700 mb-2 uppercase tracking-wide">{t.sidebar.enterKey}</label>
+                     <input 
+                        type="password" 
+                        value={localKey} 
+                        onChange={(e) => setLocalKey(e.target.value)} 
+                        className="prod-input font-mono text-sm"
+                        placeholder="AIzaSy..."
+                     />
+                  </div>
+                  
+                  <div className="flex justify-end gap-3 pt-2">
+                      <button onClick={() => setIsKeyModalOpen(false)} className="px-4 py-2 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100">{t.sidebar.cancel}</button>
+                      <button onClick={handleSaveKey} disabled={!localKey || keyStatus === 'checking'} className="px-4 py-2 bg-slate-900 text-white rounded-lg text-xs font-bold hover:bg-slate-800 disabled:opacity-50 flex items-center gap-2">
+                         {keyStatus === 'checking' ? <RefreshCcw size={12} className="animate-spin"/> : <Check size={14}/>}
+                         {t.sidebar.connect}
+                      </button>
+                  </div>
+               </div>
+               
+               <div className="bg-slate-50 p-4 border-t border-slate-100 text-center">
+                   <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline font-medium inline-flex items-center gap-1">
+                      {t.sidebar.apiConfigDesc} <ExternalLink size={10}/>
+                   </a>
+               </div>
+           </div>
+        </div>
+      )}
     </>
   );
 };
