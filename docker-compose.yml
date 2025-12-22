@@ -32,3 +32,5 @@ services:
       # Optional: Google OAuth for Login
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      # Optional: Public URL for matching redirect URIs (e.g. https://prompt.hotker.com)
+      - PUBLIC_URL=${PUBLIC_URL}

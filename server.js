@@ -32,6 +32,7 @@ db.exec(`
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
+app.set('trust proxy', true);
 app.use(cors());
 app.use(express.json({ limit: UPLOAD_LIMIT }));
 app.use(express.text({ limit: UPLOAD_LIMIT }));
@@ -42,7 +43,7 @@ function xorDecodeBinary(buffer) {
     const key = "HotkerSync2025_Secret";
     const keyBytes = Buffer.from(key);
     const output = Buffer.alloc(buffer.length);
-    
+
     for (let i = 0; i < buffer.length; i++) {
       output[i] = buffer[i] ^ keyBytes[i % keyBytes.length];
     }
@@ -58,7 +59,7 @@ function xorHexDecode(hexStr) {
   const buffer = Buffer.from(hexStr, 'hex');
   const keyBytes = Buffer.from(key);
   const output = Buffer.alloc(buffer.length);
-  
+
   for (let i = 0; i < buffer.length; i++) {
     output[i] = buffer[i] ^ keyBytes[i % keyBytes.length];
   }
@@ -96,8 +97,9 @@ app.get('/api/auth', async (req, res) => {
           .send('Error: GOOGLE_CLIENT_ID not configured on server.');
       }
 
-      const redirectUri = `${req.protocol}://${req.get('host')}/api/auth?action=google-callback`;
-      
+      const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+      const redirectUri = `${baseUrl}/api/auth?action=google-callback`;
+
       console.log('------------------------------------------------');
       console.log('🔵 Google Auth Debug Info');
       console.log('   Redirect URI:', redirectUri);
@@ -134,7 +136,8 @@ app.get('/api/auth', async (req, res) => {
       }
 
       try {
-        const redirectUri = `${req.protocol}://${req.get('host')}/api/auth?action=google-callback`;
+        const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+        const redirectUri = `${baseUrl}/api/auth?action=google-callback`;
 
         // 1. Exchange code for token
         const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
@@ -303,7 +306,7 @@ app.post('/api/auth', async (req, res) => {
       if (!username || !password) return res.status(400).json({ error: 'Missing credentials' });
 
       const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-      
+
       if (!user) return res.status(404).json({ error: '用户不存在' });
       if (user.password !== password) return res.status(401).json({ error: '密码错误' });
 
@@ -315,13 +318,13 @@ app.post('/api/auth', async (req, res) => {
         avatarUrl: user.avatar_url,
         createdAt: user.created_at
       };
-      
+
       return res.json(safeUser);
 
     } else if (action === 'change-password') {
       const { username, currentPassword, newPassword } = body;
       const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-      
+
       if (!user) return res.status(404).json({ error: '用户不存在' });
       if (user.password !== currentPassword) return res.status(401).json({ error: '当前密码错误' });
 
@@ -362,17 +365,17 @@ app.post('/api/data', upload.single('file'), (req, res) => {
     if (req.file) {
       const jsonStr = xorDecodeBinary(req.file.buffer);
       data = JSON.parse(jsonStr);
-    } 
+    }
     // Strategy 2: Body parsing (Hex or JSON)
     else if (req.body) {
       // Check if body is a string (Hex/Text) or object (JSON)
       if (typeof req.body === 'string') {
         const cleanText = req.body.trim();
-         if (/^[0-9a-fA-F]+$/.test(cleanText)) {
-            try {
-              data = JSON.parse(xorHexDecode(cleanText));
-            } catch {}
-         }
+        if (/^[0-9a-fA-F]+$/.test(cleanText)) {
+          try {
+            data = JSON.parse(xorHexDecode(cleanText));
+          } catch { }
+        }
       } else if (typeof req.body === 'object') {
         // Standard JSON object via express.json()
         data = req.body.data || req.body;
@@ -382,7 +385,7 @@ app.post('/api/data', upload.single('file'), (req, res) => {
     if (!data) return res.status(400).json({ error: 'Unrecognized data format' });
 
     const jsonStr = JSON.stringify(data);
-    
+
     db.prepare(`
       INSERT INTO user_data (user_id, data_json, updated_at) 
       VALUES (?, ?, ?)
