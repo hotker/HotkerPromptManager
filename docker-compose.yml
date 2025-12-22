@@ -3,6 +3,7 @@ services:
     # Option 1: Use pre-built image from Docker Hub (recommended)
     image: hotker/prompt-manager:latest
     platform: linux/amd64  # Specify platform for AMD64 servers
+    pull_policy: always    # Always pull to get the latest pushed image
     
     # Option 2: Build from local Dockerfile (uncomment if you want to build locally)
     # build:
@@ -22,6 +23,8 @@ services:
       - ./data:/app/data
       
     # Environment Variables
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       # Optional: Gemini API Key (Can also be set in UI)
