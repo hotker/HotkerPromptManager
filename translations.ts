@@ -113,7 +113,12 @@ export const translations = {
       showing: '显示',
       to: '至',
       of: '共',
-      results: '条结果'
+      results: '条结果',
+      immersiveMode: '沉浸模式',
+      exitImmersive: '退出沉浸',
+      prev: '上一个',
+      next: '下一个',
+      enterImmersive: '进入沉浸浏览'
     },
     // 构建器
     builder: {
@@ -310,7 +315,12 @@ export const translations = {
       showing: 'Showing',
       to: 'to',
       of: 'of',
-      results: 'results'
+      results: 'results',
+      immersiveMode: 'Immersive Mode',
+      exitImmersive: 'Exit Immersive',
+      prev: 'Previous',
+      next: 'Next',
+      enterImmersive: 'Enter Immersive View'
     },
     builder: {
       tabResources: 'Library',
