@@ -1,10 +1,15 @@
-
-version: '3.8'
-
 services:
   hotker-studio:
-    # Build from the current directory using the Dockerfile
-    build: .
+    # Option 1: Use pre-built image from Docker Hub (recommended)
+    image: hotker/prompt-manager:latest
+    platform: linux/amd64  # Specify platform for AMD64 servers
+    
+    # Option 2: Build from local Dockerfile (uncomment if you want to build locally)
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   platform: linux/amd64
+    
     container_name: hotker-prompt-studio
     restart: unless-stopped
     
