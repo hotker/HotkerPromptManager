@@ -80,7 +80,188 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 2. Auth Routes
+// 2. Auth Routes (Local username/password + Google OAuth)
+
+// 2.1 Google OAuth (GET)
+app.get('/api/auth', async (req, res) => {
+  const action = req.query.action;
+
+  try {
+    // Start Google OAuth flow
+    if (action === 'google-login') {
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      if (!clientId) {
+        return res
+          .status(500)
+          .send('Error: GOOGLE_CLIENT_ID not configured on server.');
+      }
+
+      const redirectUri = `${req.protocol}://${req.get('host')}/api/auth?action=google-callback`;
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+        redirectUri
+      )}&response_type=code&scope=email%20profile`;
+
+      return res.redirect(302, googleAuthUrl);
+    }
+
+    // Google OAuth callback
+    if (action === 'google-callback') {
+      const code = req.query.code;
+      const error = req.query.error;
+
+      if (error) {
+        return res
+          .status(400)
+          .send(`Google Login Error: ${error}`);
+      }
+      if (!code) {
+        return res.status(400).send('Missing auth code');
+      }
+
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+      if (!clientId || !clientSecret) {
+        return res
+          .status(500)
+          .send('Error: Server missing Google Credentials');
+      }
+
+      try {
+        const redirectUri = `${req.protocol}://${req.get('host')}/api/auth?action=google-callback`;
+
+        // 1. Exchange code for token
+        const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            code,
+            client_id: clientId,
+            client_secret: clientSecret,
+            redirect_uri: redirectUri,
+            grant_type: 'authorization_code',
+          }),
+        });
+
+        const tokenData = await tokenResp.json();
+        if (tokenData.error) {
+          throw new Error(
+            tokenData.error_description || tokenData.error
+          );
+        }
+
+        // 2. Get User Info
+        const userResp = await fetch(
+          'https://www.googleapis.com/oauth2/v1/userinfo',
+          {
+            headers: {
+              Authorization: `Bearer ${tokenData.access_token}`,
+            },
+          }
+        );
+        const googleUser = await userResp.json();
+
+        const email = googleUser.email;
+        const avatar = googleUser.picture;
+
+        if (!email) {
+          throw new Error('Google user missing email');
+        }
+
+        // 3. Upsert User in SQLite
+        let user = db
+          .prepare('SELECT * FROM users WHERE username = ?')
+          .get(email);
+
+        if (!user) {
+          const now = Date.now();
+          const id = crypto.randomUUID();
+
+          db.prepare(
+            'INSERT INTO users (id, username, password, provider, created_at, avatar_url) VALUES (?, ?, ?, ?, ?, ?)'
+          ).run(
+            id,
+            email,
+            'google-oauth-login-only',
+            'google',
+            now,
+            avatar
+          );
+
+          user = {
+            id,
+            username: email,
+            password: 'google-oauth-login-only',
+            provider: 'google',
+            created_at: now,
+            avatar_url: avatar,
+          };
+        }
+
+        // Normalize fields to match frontend expectation (camelCase)
+        const appUser = {
+          id: user.id,
+          username: user.username,
+          provider: user.provider,
+          avatarUrl: user.avatar_url,
+          createdAt: user.created_at,
+        };
+
+        // 4. Return HTML to save session and redirect (bridge server → client)
+        const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Authenticating...</title>
+            <meta charset="utf-8" />
+            <style>
+              body {
+                background: #020617;
+                color: #facc15;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+                display: flex;
+                height: 100vh;
+                justify-content: center;
+                align-items: center;
+                margin: 0;
+              }
+            </style>
+          </head>
+          <body>
+            <div style="text-align: center;">
+              <h2>Login Successful</h2>
+              <p>Redirecting to studio...</p>
+            </div>
+            <script>
+              try {
+                const user = ${JSON.stringify(appUser)};
+                localStorage.setItem('hotker_cloud_session', JSON.stringify(user));
+                window.location.href = '/';
+              } catch (e) {
+                document.body.innerHTML = '<h3 style="color:red">Login Error: Failed to save session.</h3>';
+              }
+            </script>
+          </body>
+          </html>
+        `;
+
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.send(html);
+      } catch (e) {
+        console.error('Google OAuth Error:', e);
+        return res
+          .status(500)
+          .send(`OAuth Error: ${e.message || 'Unknown error'}`);
+      }
+    }
+
+    return res.status(400).send('Invalid GET action');
+  } catch (e) {
+    console.error(e);
+    return res.status(500).send(e.message || 'Internal Server Error');
+  }
+});
+
+// 2.2 Local username/password (POST)
 app.post('/api/auth', async (req, res) => {
   const action = req.query.action;
   const body = req.body;
