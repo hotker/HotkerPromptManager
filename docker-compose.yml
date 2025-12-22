@@ -1,0 +1,19 @@
+
+version: '3.8'
+
+services:
+  hotker-studio:
+    build: .
+    container_name: hotker-prompt-studio
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist SQLite database
+      - ./data:/app/data
+    environment:
+      # Gemini API Key (Optional if users configure it in UI)
+      - API_KEY=${API_KEY}
+      # Google OAuth (Optional)
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
