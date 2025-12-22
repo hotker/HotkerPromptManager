@@ -3,17 +3,24 @@ version: '3.8'
 
 services:
   hotker-studio:
+    # Build from the current directory using the Dockerfile
     build: .
     container_name: hotker-prompt-studio
     restart: unless-stopped
+    
+    # Map container port 3000 to host port 3000
     ports:
       - "3000:3000"
+      
+    # Persist SQLite data to the host machine
     volumes:
-      # Persist SQLite database
       - ./data:/app/data
+      
+    # Environment Variables
     environment:
-      # Gemini API Key (Optional if users configure it in UI)
+      - NODE_ENV=production
+      # Optional: Gemini API Key (Can also be set in UI)
       - API_KEY=${API_KEY}
-      # Google OAuth (Optional)
+      # Optional: Google OAuth for Login
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
