@@ -97,6 +97,13 @@ app.get('/api/auth', async (req, res) => {
       }
 
       const redirectUri = `${req.protocol}://${req.get('host')}/api/auth?action=google-callback`;
+      
+      console.log('------------------------------------------------');
+      console.log('🔵 Google Auth Debug Info');
+      console.log('   Redirect URI:', redirectUri);
+      console.log('   PLEASE ENSURE THIS EXACT URL IS ADDED TO GOOGLE CLOUD CONSOLE');
+      console.log('------------------------------------------------');
+
       const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
         redirectUri
       )}&response_type=code&scope=email%20profile`;
