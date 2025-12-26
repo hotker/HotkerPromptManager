@@ -11,16 +11,7 @@ import { apiService, UserData } from './services/apiService';
 import { INITIAL_MODULES } from './constants';
 import { Language, translations } from './translations';
 
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => clearTimeout(handler);
-  }, [value, delay]);
-  return debouncedValue;
-}
+import { useDebounce } from './hooks/useDebounce';
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -31,7 +22,7 @@ const App = () => {
     setLangState(l);
     localStorage.setItem('hotker_lang', l);
   };
-  
+
   const t = translations[lang];
 
   useEffect(() => {
@@ -58,29 +49,29 @@ const App = () => {
   if (!currentUser) return <AuthPage onLogin={handleLogin} lang={lang} setLang={setLang} />;
 
   return (
-    <AuthenticatedApp 
-      currentUser={currentUser} 
-      onLogout={handleLogout} 
-      lang={lang} 
-      setLang={setLang} 
+    <AuthenticatedApp
+      currentUser={currentUser}
+      onLogout={handleLogout}
+      lang={lang}
+      setLang={setLang}
     />
   );
 };
 
-const AuthenticatedApp: React.FC<{ 
-  currentUser: User, 
+const AuthenticatedApp: React.FC<{
+  currentUser: User,
   onLogout: () => void,
   lang: Language,
   setLang: (l: Language) => void
 }> = ({ currentUser, onLogout, lang, setLang }) => {
   const [view, setView] = useState<ViewState>('dashboard');
   const t = translations[lang];
-  
+
   const [modules, setModules] = useState<PromptModule[]>([]);
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
   const [logs, setLogs] = useState<RunLog[]>([]);
   const [userApiKey, setUserApiKey] = useState<string>('');
-  
+
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [syncErrorMsg, setSyncErrorMsg] = useState<string | undefined>(undefined);
@@ -93,12 +84,12 @@ const AuthenticatedApp: React.FC<{
         if (cloudData) {
           // 只有当云端确实有数据时才覆盖
           if (cloudData.modules?.length > 0 || cloudData.templates?.length > 0 || cloudData.apiKey) {
-             setModules(cloudData.modules || []);
-             setTemplates(cloudData.templates || []);
-             setLogs(cloudData.logs || []);
-             setUserApiKey(cloudData.apiKey || '');
+            setModules(cloudData.modules || []);
+            setTemplates(cloudData.templates || []);
+            setLogs(cloudData.logs || []);
+            setUserApiKey(cloudData.apiKey || '');
           } else {
-             setModules(INITIAL_MODULES);
+            setModules(INITIAL_MODULES);
           }
         } else {
           setModules(INITIAL_MODULES);
@@ -131,12 +122,12 @@ const AuthenticatedApp: React.FC<{
   // 4. 核心保存逻辑
   useEffect(() => {
     if (!isDataLoaded) return;
-    
+
     // 通过序列化对比，防止因某些无关紧要的重绘导致的无效同步
     const currentJson = JSON.stringify(debouncedData);
     if (lastSavedJson.current === "") {
-        lastSavedJson.current = currentJson;
-        return;
+      lastSavedJson.current = currentJson;
+      return;
     }
     if (lastSavedJson.current === currentJson) return;
 
@@ -144,7 +135,7 @@ const AuthenticatedApp: React.FC<{
       if (saveAbortControllerRef.current) {
         saveAbortControllerRef.current.abort();
       }
-      
+
       const controller = new AbortController();
       saveAbortControllerRef.current = controller;
 
@@ -196,9 +187,9 @@ const AuthenticatedApp: React.FC<{
 
   return (
     <div className="flex h-[100dvh] bg-slate-50 text-slate-900 font-sans overflow-hidden">
-      <Sidebar 
-        currentView={view} 
-        setView={setView} 
+      <Sidebar
+        currentView={view}
+        setView={setView}
         currentUser={currentUser}
         onLogout={onLogout}
         userApiKey={userApiKey}
@@ -209,46 +200,46 @@ const AuthenticatedApp: React.FC<{
         setLang={setLang}
         onForceSync={handleForceSync}
       />
-      
+
       <main className="flex-1 h-full overflow-hidden relative flex flex-col pt-16 md:pt-0">
         <div className="flex-1 overflow-hidden relative bg-white md:bg-slate-50 md:p-2">
           {view === 'dashboard' && (
-            <Dashboard 
-              modules={modules} 
-              templates={templates} 
+            <Dashboard
+              modules={modules}
+              templates={templates}
               logs={logs}
-              setModules={setModules} 
-              setTemplates={setTemplates} 
+              setModules={setModules}
+              setTemplates={setTemplates}
               setLogs={setLogs}
-              currentUser={currentUser} 
+              currentUser={currentUser}
               lang={lang}
             />
           )}
           {view === 'library' && (
-            <LibraryView 
-              modules={modules} 
-              setModules={setModules} 
+            <LibraryView
+              modules={modules}
+              setModules={setModules}
               lang={lang}
               syncStatus={syncStatus}
             />
           )}
           {view === 'builder' && (
-            <BuilderView 
-              modules={modules} 
-              templates={templates} 
+            <BuilderView
+              modules={modules}
+              templates={templates}
               saveTemplate={(t) => setTemplates(prev => [t, ...prev])}
               addLog={(l) => setLogs(prev => [l, ...prev])}
               onUpdateModule={(m) => setModules(prev => prev.map(old => old.id === m.id ? m : old))}
-              userApiKey={userApiKey} 
-              currentUser={currentUser} 
+              userApiKey={userApiKey}
+              currentUser={currentUser}
               lang={lang}
             />
           )}
           {view === 'history' && (
-            <HistoryView 
-              logs={logs} 
-              updateLog={(id, updates) => setLogs(prev => prev.map(log => log.id === id ? { ...log, ...updates } : log))} 
-              lang={lang} 
+            <HistoryView
+              logs={logs}
+              updateLog={(id, updates) => setLogs(prev => prev.map(log => log.id === id ? { ...log, ...updates } : log))}
+              lang={lang}
             />
           )}
         </div>

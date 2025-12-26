@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { LayoutGrid, Library, TestTube2, History, LogOut, KeyRound, X, Cloud, RefreshCcw, AlertCircle, Menu, Command, ChevronRight, ExternalLink, ShieldCheck, Check } from 'lucide-react';
 import { ViewState, User } from '../types';
 import { Language, translations } from '../translations';
@@ -37,6 +36,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [localKey, setLocalKey] = useState(userApiKey);
   const [keyStatus, setKeyStatus] = useState<'checking' | 'valid' | 'invalid' | 'unknown'>('unknown');
+
+  // Timer ref for hover delay
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const t = translations[lang];
 
@@ -100,6 +102,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const handleMouseEnter = () => {
+    // Clear any existing timeout (though usually none if we weren't hovering)
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+
+    // Delay expansion by 300ms to prevent accidental triggers
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(true);
+    }, 300);
+  };
+
+  const handleMouseLeave = () => {
+    // Instant collapse, and cancel any pending expansion
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    setIsHovered(false);
+  };
+
   const renderKeyStatus = () => {
     switch (keyStatus) {
       case 'checking':
@@ -150,6 +168,40 @@ export const Sidebar: React.FC<SidebarProps> = ({
         );
     }
   };
+
+  // --- Helper Classes ---
+  const isLibrary = currentView === 'library';
+
+  // Width: Expanded if hovered OR (not library AND desktop)
+  // But wait, the previous logic relied on CSS media queries for desktop check (lg:)
+  // We can't easily do JS-only desktop check without listeners/relayout.
+  // So we stick to composite classes.
+
+  // Base state: w-20
+  // Desktop idle: lg:w-64 (UNLESS library)
+  // Hovered: w-64 (Overrides everything)
+
+  let sidebarWidthClass = "w-20";
+  if (isHovered) {
+    sidebarWidthClass = "w-64";
+  } else if (isLibrary) {
+    sidebarWidthClass = "w-20"; // Stay collapsed
+  } else {
+    sidebarWidthClass = "w-20 lg:w-64"; // Default responsive behavior
+  }
+
+  // Text Visibility: 
+  // Base: Hidden (w-0 opacity-0)
+  // Desktop idle: lg:visible (UNLESS library)
+  // Hovered: Visible
+  let textVisibilityClass = "max-w-0 opacity-0";
+  if (isHovered) {
+    textVisibilityClass = "max-w-[200px] opacity-100";
+  } else if (isLibrary) {
+    textVisibilityClass = "max-w-0 opacity-0";
+  } else {
+    textVisibilityClass = "max-w-0 opacity-0 lg:max-w-[200px] lg:opacity-100";
+  }
 
   return (
     <>
@@ -230,30 +282,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Desktop Sidebar */}
       <div
-        className={`hidden md:flex bg-white h-full border-r border-slate-200 flex-col relative z-20 transition-all duration-300 ease-in-out ${isHovered
-            ? 'w-64'
-            : (currentView === 'library' ? 'w-20' : 'w-20 lg:w-64')
-          }`}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        className={`hidden md:flex bg-white h-full border-r border-slate-200 flex-col relative z-20 transition-all duration-300 ease-in-out ${sidebarWidthClass}`}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
 
         {/* Brand */}
         <div className="h-12 flex items-center px-5 border-b border-slate-100 shrink-0 overflow-hidden whitespace-nowrap">
           <div className="bg-slate-900 text-white p-1 rounded-md shadow-sm shrink-0"><Command size={16} strokeWidth={3} /></div>
 
-          <div className={`ml-3 transition-all duration-300 ease-in-out overflow-hidden flex items-center gap-2 ${isHovered || currentView !== 'library'
-              ? 'max-w-[200px] opacity-100 lg:max-w-[200px] lg:opacity-100' // Show on hover OR non-library view (desktop)
-              : 'max-w-0 opacity-0 lg:max-w-[200px] lg:opacity-100' // Hide on library collapse, but normally show on desktop if not library
-            }`.replace(/lg:max-w-\[200px\] lg:opacity-100/, currentView !== 'library' ? 'lg:max-w-[200px] lg:opacity-100' : 'lg:max-w-0 lg:opacity-0')}>
-            {/* Note: The conditional replacement above is complex, simpler to use inline style or simpler logic. Let's simplify below */}
-            <div className={`flex items-center gap-2 transition-all duration-300 ${isHovered
-                ? 'max-w-[200px] opacity-100'
-                : (currentView === 'library' ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[200px] lg:opacity-100')
-              }`}>
-              <h1 className="font-bold text-slate-900 text-sm tracking-tight">Hotker</h1>
-              <span className="text-slate-900 text-sm font-normal tracking-wide">Prompt Studio</span>
-            </div>
+          <div className={`ml-3 transition-all duration-300 ease-in-out overflow-hidden flex items-center gap-2 ${textVisibilityClass}`}>
+            <h1 className="font-bold text-slate-900 text-sm tracking-tight">Hotker</h1>
+            <span className="text-slate-900 text-sm font-normal tracking-wide">Prompt Studio</span>
           </div>
         </div>
 
@@ -264,26 +304,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.id}
               onClick={() => setView(item.id)}
               className={`w-full flex items-center px-3 py-2.5 rounded-md transition-all group ${currentView === item.id
-                  ? 'bg-slate-100 text-slate-900 shadow-sm font-medium ring-1 ring-slate-200'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
+                ? 'bg-slate-100 text-slate-900 shadow-sm font-medium ring-1 ring-slate-200'
+                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                 }`}
             >
               <span className={`shrink-0 ${currentView === item.id ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
                 {item.icon}
               </span>
 
-              <span className={`ml-3 text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered
-                  ? 'max-w-[150px] opacity-100'
-                  : (currentView === 'library' ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[150px] lg:opacity-100')
-                }`}>
+              <span className={`ml-3 text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered ? 'max-w-[150px] opacity-100' : (isLibrary ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[150px] lg:opacity-100')}`}>
                 {item.label}
               </span>
 
               {currentView === item.id && (
-                <div className={`ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0 transition-opacity duration-300 ${isHovered
-                    ? 'opacity-100'
-                    : (currentView === 'library' ? 'opacity-0' : 'opacity-0 lg:opacity-100')
-                  }`}></div>
+                <div className={`ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0 transition-opacity duration-300 ${isHovered ? 'opacity-100' : (isLibrary ? 'opacity-0' : 'opacity-0 lg:opacity-100')}`}></div>
               )}
             </button>
           ))}
@@ -292,28 +326,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 overflow-hidden">
           {/* API Status */}
-          <div className={`flex items-center transition-all duration-300 ${(isHovered || (currentView !== 'library' && typeof window !== 'undefined' && window.innerWidth >= 1024)) // Simple proxy logic handled by CSS classes properly below
+          <div className={`flex items-center transition-all duration-300 ${isHovered
               ? 'justify-between'
-              : 'justify-center'
+              : (isLibrary ? 'justify-center' : 'justify-center lg:justify-between')
             }`}>
-            {/* Note: Simply transition justify-content is hard. Better to keep 'justify-between' and hide the right element seamlessly */}
             <div className="flex items-center justify-between w-full px-2 mb-4 h-6">
               <div className="flex items-center gap-2">
                 {renderKeyStatus()}
-                <span className={`text-xs text-slate-500 font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered
-                    ? 'max-w-[100px] opacity-100'
-                    : (currentView === 'library' ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[100px] lg:opacity-100')
-                  }`}>
+                <span className={`text-xs text-slate-500 font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered ? 'max-w-[100px] opacity-100' : (isLibrary ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[100px] lg:opacity-100')}`}>
                   {getKeyStatusText()}
                 </span>
               </div>
               <button
                 onClick={handleOpenKeySelection}
                 title={t.sidebar.apiConfigTitle}
-                className={`text-slate-400 hover:text-slate-900 transition-colors p-1 hover:bg-slate-100 rounded shrink-0 ${isHovered
-                    ? 'opacity-100'
-                    : (currentView === 'library' ? 'hidden' : 'hidden lg:block')
-                  }`}
+                className={`text-slate-400 hover:text-slate-900 transition-colors p-1 hover:bg-slate-100 rounded shrink-0 ${isHovered ? 'opacity-100' : (isLibrary ? 'hidden' : 'hidden lg:block')}`}
               >
                 <KeyRound size={14} />
               </button>
@@ -321,17 +348,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
 
           {/* User Profile */}
-          <div className={`rounded-lg bg-slate-50 border border-slate-100 flex items-center mb-3 transition-all duration-300 ${isHovered || (currentView !== 'library') // Wait, we just want styling
+          <div className={`rounded-lg bg-slate-50 border border-slate-100 flex items-center mb-3 transition-all duration-300 ${isHovered
               ? 'p-2 gap-3'
-              : (currentView === 'library' ? 'p-0 border-0 bg-transparent justify-center' : 'p-0 border-0 bg-transparent justify-center lg:p-2 lg:gap-3 lg:border lg:bg-slate-50 lg:justify-start')
+              : (isLibrary ? 'p-0 border-0 bg-transparent justify-center' : 'p-0 border-0 bg-transparent justify-center lg:p-2 lg:gap-3 lg:border lg:bg-slate-50 lg:justify-start')
             }`}>
             <div className="w-8 h-8 bg-white border border-slate-200 rounded-md flex items-center justify-center text-xs font-bold text-slate-700 shadow-sm shrink-0">
               {currentUser?.username.substring(0, 1).toUpperCase()}
             </div>
-            <div className={`min-w-0 whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered
-                ? 'max-w-[120px] opacity-100'
-                : (currentView === 'library' ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[120px] lg:opacity-100')
-              }`}>
+            <div className={`min-w-0 whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered ? 'max-w-[120px] opacity-100' : (isLibrary ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[120px] lg:opacity-100')}`}>
               <p className="text-xs font-medium text-slate-900 truncate">{currentUser?.username}</p>
               <div className="flex items-center gap-1 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
@@ -340,10 +364,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          <div className={`flex justify-between items-center text-[10px] text-slate-400 px-1 whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered
-              ? 'max-h-[20px] opacity-100'
-              : (currentView === 'library' ? 'max-h-0 opacity-0' : 'max-h-0 opacity-0 lg:max-h-[20px] lg:opacity-100')
-            }`}>
+          <div className={`flex justify-between items-center text-[10px] text-slate-400 px-1 whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered ? 'max-h-[20px] opacity-100' : (isLibrary ? 'max-h-0 opacity-0' : 'max-h-0 opacity-0 lg:max-h-[20px] lg:opacity-100')}`}>
             <span>{renderSyncStatus()}</span>
             <button onClick={onLogout} className="hover:text-red-500 transition-colors flex items-center gap-1">
               <LogOut size={10} /> {t.sidebar.logout}
