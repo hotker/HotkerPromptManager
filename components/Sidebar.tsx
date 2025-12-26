@@ -187,8 +187,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     setIsMobileMenuOpen(false);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${currentView === item.id
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-slate-600 hover:bg-slate-50'
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-slate-600 hover:bg-slate-50'
                     }`}
                 >
                   {item.icon}
@@ -230,21 +230,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Desktop Sidebar */}
       <div
-        className={`hidden md:flex bg-white h-full border-r border-slate-200 flex-col relative z-20 transition-all duration-300 ease-in-out ${currentView === 'library' && !isHovered
-            ? 'w-20'
-            : 'w-20 lg:w-64'
+        className={`hidden md:flex bg-white h-full border-r border-slate-200 flex-col relative z-20 transition-all duration-300 ease-in-out ${isHovered
+            ? 'w-64'
+            : (currentView === 'library' ? 'w-20' : 'w-20 lg:w-64')
           }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
 
         {/* Brand */}
-        <div className="h-12 flex items-center gap-3 px-5 border-b border-slate-100 shrink-0 overflow-hidden">
+        <div className="h-12 flex items-center px-5 border-b border-slate-100 shrink-0 overflow-hidden whitespace-nowrap">
           <div className="bg-slate-900 text-white p-1 rounded-md shadow-sm shrink-0"><Command size={16} strokeWidth={3} /></div>
-          <div className={`flex items-center gap-2 overflow-hidden whitespace-nowrap transition-opacity duration-200 ${currentView === 'library' && !isHovered ? 'opacity-0 w-0' : 'opacity-100 w-auto hidden lg:flex'
-            }`}>
-            <h1 className="font-bold text-slate-900 text-sm tracking-tight">Hotker</h1>
-            <span className="text-slate-900 text-sm font-normal tracking-wide">Prompt Studio</span>
+
+          <div className={`ml-3 transition-all duration-300 ease-in-out overflow-hidden flex items-center gap-2 ${isHovered || currentView !== 'library'
+              ? 'max-w-[200px] opacity-100 lg:max-w-[200px] lg:opacity-100' // Show on hover OR non-library view (desktop)
+              : 'max-w-0 opacity-0 lg:max-w-[200px] lg:opacity-100' // Hide on library collapse, but normally show on desktop if not library
+            }`.replace(/lg:max-w-\[200px\] lg:opacity-100/, currentView !== 'library' ? 'lg:max-w-[200px] lg:opacity-100' : 'lg:max-w-0 lg:opacity-0')}>
+            {/* Note: The conditional replacement above is complex, simpler to use inline style or simpler logic. Let's simplify below */}
+            <div className={`flex items-center gap-2 transition-all duration-300 ${isHovered
+                ? 'max-w-[200px] opacity-100'
+                : (currentView === 'library' ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[200px] lg:opacity-100')
+              }`}>
+              <h1 className="font-bold text-slate-900 text-sm tracking-tight">Hotker</h1>
+              <span className="text-slate-900 text-sm font-normal tracking-wide">Prompt Studio</span>
+            </div>
           </div>
         </div>
 
@@ -254,7 +263,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.id}
               onClick={() => setView(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md transition-all group ${currentView === item.id
+              className={`w-full flex items-center px-3 py-2.5 rounded-md transition-all group ${currentView === item.id
                   ? 'bg-slate-100 text-slate-900 shadow-sm font-medium ring-1 ring-slate-200'
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
                 }`}
@@ -262,12 +271,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className={`shrink-0 ${currentView === item.id ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`}>
                 {item.icon}
               </span>
-              <span className={`text-sm whitespace-nowrap transition-opacity duration-200 ${currentView === 'library' && !isHovered ? 'opacity-0 w-0 hidden' : 'hidden lg:block'
+
+              <span className={`ml-3 text-sm whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered
+                  ? 'max-w-[150px] opacity-100'
+                  : (currentView === 'library' ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[150px] lg:opacity-100')
                 }`}>
                 {item.label}
               </span>
+
               {currentView === item.id && (
-                <div className={`ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0 ${currentView === 'library' && !isHovered ? 'hidden' : 'hidden lg:block'
+                <div className={`ml-auto w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0 transition-opacity duration-300 ${isHovered
+                    ? 'opacity-100'
+                    : (currentView === 'library' ? 'opacity-0' : 'opacity-0 lg:opacity-100')
                   }`}></div>
               )}
             </button>
@@ -277,31 +292,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 overflow-hidden">
           {/* API Status */}
-          <div className={`flex items-center ${currentView === 'library' && !isHovered ? 'justify-center' : 'justify-between'} px-2 mb-4`}>
-            <div className="flex items-center gap-2">
-              {renderKeyStatus()}
-              <span className={`text-xs text-slate-500 font-medium whitespace-nowrap transition-opacity duration-200 ${currentView === 'library' && !isHovered ? 'opacity-0 w-0 hidden' : 'hidden lg:block'
-                }`}>
-                {getKeyStatusText()}
-              </span>
+          <div className={`flex items-center transition-all duration-300 ${(isHovered || (currentView !== 'library' && typeof window !== 'undefined' && window.innerWidth >= 1024)) // Simple proxy logic handled by CSS classes properly below
+              ? 'justify-between'
+              : 'justify-center'
+            }`}>
+            {/* Note: Simply transition justify-content is hard. Better to keep 'justify-between' and hide the right element seamlessly */}
+            <div className="flex items-center justify-between w-full px-2 mb-4 h-6">
+              <div className="flex items-center gap-2">
+                {renderKeyStatus()}
+                <span className={`text-xs text-slate-500 font-medium whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered
+                    ? 'max-w-[100px] opacity-100'
+                    : (currentView === 'library' ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[100px] lg:opacity-100')
+                  }`}>
+                  {getKeyStatusText()}
+                </span>
+              </div>
+              <button
+                onClick={handleOpenKeySelection}
+                title={t.sidebar.apiConfigTitle}
+                className={`text-slate-400 hover:text-slate-900 transition-colors p-1 hover:bg-slate-100 rounded shrink-0 ${isHovered
+                    ? 'opacity-100'
+                    : (currentView === 'library' ? 'hidden' : 'hidden lg:block')
+                  }`}
+              >
+                <KeyRound size={14} />
+              </button>
             </div>
-            <button
-              onClick={handleOpenKeySelection}
-              title={t.sidebar.apiConfigTitle}
-              className={`text-slate-400 hover:text-slate-900 transition-colors p-1 hover:bg-slate-100 rounded ${currentView === 'library' && !isHovered ? 'hidden' : ''
-                }`}
-            >
-              <KeyRound size={14} />
-            </button>
           </div>
 
           {/* User Profile */}
-          <div className={`p-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center gap-3 mb-3 ${currentView === 'library' && !isHovered ? 'justify-center border-0 bg-transparent p-0' : ''
+          <div className={`rounded-lg bg-slate-50 border border-slate-100 flex items-center mb-3 transition-all duration-300 ${isHovered || (currentView !== 'library') // Wait, we just want styling
+              ? 'p-2 gap-3'
+              : (currentView === 'library' ? 'p-0 border-0 bg-transparent justify-center' : 'p-0 border-0 bg-transparent justify-center lg:p-2 lg:gap-3 lg:border lg:bg-slate-50 lg:justify-start')
             }`}>
             <div className="w-8 h-8 bg-white border border-slate-200 rounded-md flex items-center justify-center text-xs font-bold text-slate-700 shadow-sm shrink-0">
               {currentUser?.username.substring(0, 1).toUpperCase()}
             </div>
-            <div className={`min-w-0 whitespace-nowrap transition-opacity duration-200 ${currentView === 'library' && !isHovered ? 'opacity-0 w-0 hidden' : 'hidden lg:block'
+            <div className={`min-w-0 whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered
+                ? 'max-w-[120px] opacity-100'
+                : (currentView === 'library' ? 'max-w-0 opacity-0' : 'max-w-0 opacity-0 lg:max-w-[120px] lg:opacity-100')
               }`}>
               <p className="text-xs font-medium text-slate-900 truncate">{currentUser?.username}</p>
               <div className="flex items-center gap-1 mt-0.5">
@@ -311,7 +340,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          <div className={`flex justify-between items-center text-[10px] text-slate-400 px-1 whitespace-nowrap ${currentView === 'library' && !isHovered ? 'hidden' : 'hidden lg:flex'
+          <div className={`flex justify-between items-center text-[10px] text-slate-400 px-1 whitespace-nowrap overflow-hidden transition-all duration-300 ${isHovered
+              ? 'max-h-[20px] opacity-100'
+              : (currentView === 'library' ? 'max-h-0 opacity-0' : 'max-h-0 opacity-0 lg:max-h-[20px] lg:opacity-100')
             }`}>
             <span>{renderSyncStatus()}</span>
             <button onClick={onLogout} className="hover:text-red-500 transition-colors flex items-center gap-1">
