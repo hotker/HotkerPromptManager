@@ -221,6 +221,7 @@ const AuthenticatedApp: React.FC<{
               setModules={setModules}
               lang={lang}
               syncStatus={syncStatus}
+              currentUser={currentUser}
             />
           )}
           {view === 'builder' && (

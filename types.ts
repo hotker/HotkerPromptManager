@@ -81,3 +81,80 @@ declare global {
     aistudio?: AIStudio;
   }
 }
+
+// Version Control Types
+export interface ModuleVersion {
+  id: string;
+  moduleId: string;
+  userId: string;
+  versionNumber: number;
+  title: string;
+  description?: string;
+  content: string;
+  type: ModuleType;
+  tags: string[];
+  imageUrl?: string;
+  createdAt: number;
+  createdBy: string;
+  changeSummary?: string;
+  isTagged: boolean;
+  tagName?: string;
+}
+
+export interface TemplateVersion {
+  id: string;
+  templateId: string;
+  userId: string;
+  versionNumber: number;
+  name: string;
+  description: string;
+  moduleIds: string[];
+  config: FixedConfig;
+  createdAt: number;
+  createdBy: string;
+  changeSummary?: string;
+  isTagged: boolean;
+  tagName?: string;
+}
+
+export interface VersionDiff {
+  field: string;
+  oldValue: any;
+  newValue: any;
+  changeType: 'added' | 'removed' | 'modified';
+}
+
+// Sharing Types
+export type ShareType = 'module' | 'template' | 'batch_modules' | 'batch_templates';
+
+export interface Share {
+  id: string;
+  shareKey: string;
+  userId: string;
+  shareType: ShareType;
+  title: string;
+  description?: string;
+  dataJson: PromptModule | PromptTemplate;
+  passwordHash?: string;
+  expireAt?: number;
+  viewCount: number;
+  importCount: number;
+  createdAt: number;
+  lastAccessedAt?: number;
+  isExpired?: boolean;
+}
+
+export interface CreateShareRequest {
+  userId: string;
+  shareType: ShareType;
+  title: string;
+  description?: string;
+  data: any;
+  password?: string;
+  expiresInDays?: number;
+}
+
+export interface ShareAccessRequest {
+  shareKey: string;
+  password?: string;
+}

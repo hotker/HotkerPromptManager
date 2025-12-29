@@ -26,6 +26,68 @@ const db = new Database(DB_PATH);
 db.exec(`
   CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT, provider TEXT, created_at INTEGER, avatar_url TEXT);
   CREATE TABLE IF NOT EXISTS user_data (user_id TEXT PRIMARY KEY, data_json TEXT, updated_at INTEGER);
+  
+  -- Module版本历史
+  CREATE TABLE IF NOT EXISTS module_versions (
+    id TEXT PRIMARY KEY,
+    module_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    version_number INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    content TEXT NOT NULL,
+    type TEXT NOT NULL,
+    tags TEXT NOT NULL,
+    image_url TEXT,
+    created_at INTEGER NOT NULL,
+    created_by TEXT NOT NULL,
+    change_summary TEXT,
+    is_tagged INTEGER DEFAULT 0,
+    tag_name TEXT
+  );
+  
+  -- Template版本历史
+  CREATE TABLE IF NOT EXISTS template_versions (
+    id TEXT PRIMARY KEY,
+    template_id TEXT NOT NULL,
+    user_id TEXT NOT NULL,
+    version_number INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    description TEXT NOT NULL,
+    module_ids TEXT NOT NULL,
+    config TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    created_by TEXT NOT NULL,
+    change_summary TEXT,
+    is_tagged INTEGER DEFAULT 0,
+    tag_name TEXT
+  );
+  
+  CREATE INDEX IF NOT EXISTS idx_module_versions_module_id ON module_versions(module_id, version_number DESC);
+  CREATE INDEX IF NOT EXISTS idx_template_versions_template_id ON template_versions(template_id, version_number DESC);
+  CREATE INDEX IF NOT EXISTS idx_module_versions_user_id ON module_versions(user_id);
+  CREATE INDEX IF NOT EXISTS idx_template_versions_user_id ON template_versions(user_id);
+  
+  -- 分享记录表
+  CREATE TABLE IF NOT EXISTS shares (
+    id TEXT PRIMARY KEY,
+    share_key TEXT UNIQUE NOT NULL,
+    user_id TEXT NOT NULL,
+    share_type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    data_json TEXT NOT NULL,
+    password_hash TEXT,
+    expire_at INTEGER,
+    view_count INTEGER DEFAULT 0,
+    import_count INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL,
+    last_accessed_at INTEGER
+  );
+  
+  CREATE INDEX IF NOT EXISTS idx_shares_share_key ON shares(share_key);
+  CREATE INDEX IF NOT EXISTS idx_shares_user_id ON shares(user_id);
+  CREATE INDEX IF NOT EXISTS idx_shares_created_at ON shares(created_at DESC);
 `);
 
 // --- Express App ---
@@ -402,16 +464,573 @@ app.post('/api/data', upload.single('file'), (req, res) => {
   }
 });
 
-// --- Serve Static Frontend (Vite Build) ---
+// 4. Version History Routes
+
+// 4.1 获取模块版本历史
+app.get('/api/versions/module/:moduleId', (req, res) => {
+  const { moduleId } = req.params;
+  const { userId } = req.query;
+
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+  try {
+    const versions = db.prepare(`
+      SELECT * FROM module_versions 
+      WHERE module_id = ? AND user_id = ?
+      ORDER BY version_number DESC
+    `).all(moduleId, userId);
+
+    res.json(versions.map(v => ({
+      id: v.id,
+      moduleId: v.module_id,
+      userId: v.user_id,
+      versionNumber: v.version_number,
+      title: v.title,
+      description: v.description,
+      content: v.content,
+      type: v.type,
+      tags: JSON.parse(v.tags),
+      imageUrl: v.image_url,
+      createdAt: v.created_at,
+      createdBy: v.created_by,
+      changeSummary: v.change_summary,
+      isTagged: Boolean(v.is_tagged),
+      tagName: v.tag_name
+    })));
+  } catch (e) {
+    console.error('Fetch module versions error:', e);
+    res.status(500).json({ error: 'Failed to fetch versions' });
+  }
+});
+
+// 4.2 获取模板版本历史
+app.get('/api/versions/template/:templateId', (req, res) => {
+  const { templateId } = req.params;
+  const { userId } = req.query;
+
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+  try {
+    const versions = db.prepare(`
+      SELECT * FROM template_versions 
+      WHERE template_id = ? AND user_id = ?
+      ORDER BY version_number DESC
+    `).all(templateId, userId);
+
+    res.json(versions.map(v => ({
+      id: v.id,
+      templateId: v.template_id,
+      userId: v.user_id,
+      versionNumber: v.version_number,
+      name: v.name,
+      description: v.description,
+      moduleIds: JSON.parse(v.module_ids),
+      config: JSON.parse(v.config),
+      createdAt: v.created_at,
+      createdBy: v.created_by,
+      changeSummary: v.change_summary,
+      isTagged: Boolean(v.is_tagged),
+      tagName: v.tag_name
+    })));
+  } catch (e) {
+    console.error('Fetch template versions error:', e);
+    res.status(500).json({ error: 'Failed to fetch versions' });
+  }
+});
+
+// 4.3 创建模块版本
+app.post('/api/versions/module', (req, res) => {
+  const { moduleId, userId, module, changeSummary } = req.body;
+
+  if (!moduleId || !userId || !module) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const maxVersion = db.prepare(`
+      SELECT MAX(version_number) as max FROM module_versions 
+      WHERE module_id = ? AND user_id = ?
+    `).get(moduleId, userId);
+
+    const versionNumber = (maxVersion?.max || 0) + 1;
+    const versionId = crypto.randomUUID();
+
+    db.prepare(`
+      INSERT INTO module_versions 
+      (id, module_id, user_id, version_number, title, description, content, type, tags, image_url, created_at, created_by, change_summary)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      versionId,
+      moduleId,
+      userId,
+      versionNumber,
+      module.title,
+      module.description || null,
+      module.content,
+      module.type,
+      JSON.stringify(module.tags || []),
+      module.imageUrl || null,
+      Date.now(),
+      userId,
+      changeSummary || null
+    );
+
+    res.json({ success: true, versionNumber, versionId });
+  } catch (e) {
+    console.error('Create module version error:', e);
+    res.status(500).json({ error: 'Failed to create version' });
+  }
+});
+
+// 4.4 创建模板版本
+app.post('/api/versions/template', (req, res) => {
+  const { templateId, userId, template, changeSummary } = req.body;
+
+  if (!templateId || !userId || !template) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const maxVersion = db.prepare(`
+      SELECT MAX(version_number) as max FROM template_versions 
+      WHERE template_id = ? AND user_id = ?
+    `).get(templateId, userId);
+
+    const versionNumber = (maxVersion?.max || 0) + 1;
+    const versionId = crypto.randomUUID();
+
+    db.prepare(`
+      INSERT INTO template_versions 
+      (id, template_id, user_id, version_number, name, description, module_ids, config, created_at, created_by, change_summary)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      versionId,
+      templateId,
+      userId,
+      versionNumber,
+      template.name,
+      template.description,
+      JSON.stringify(template.moduleIds || []),
+      JSON.stringify(template.config),
+      Date.now(),
+      userId,
+      changeSummary || null
+    );
+
+    res.json({ success: true, versionNumber, versionId });
+  } catch (e) {
+    console.error('Create template version error:', e);
+    res.status(500).json({ error: 'Failed to create version' });
+  }
+});
+
+// 4.5 标记版本
+app.post('/api/versions/tag', (req, res) => {
+  const { versionId, tagName, type } = req.body;
+
+  if (!versionId || !tagName || !type) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const table = type === 'module' ? 'module_versions' : 'template_versions';
+    db.prepare(`UPDATE ${table} SET is_tagged = 1, tag_name = ? WHERE id = ?`)
+      .run(tagName, versionId);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Tag version error:', e);
+    res.status(500).json({ error: 'Failed to tag version' });
+  }
+});
+
+// 4.6 取消标记版本
+app.post('/api/versions/untag', (req, res) => {
+  const { versionId, type } = req.body;
+
+  if (!versionId || !type) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const table = type === 'module' ? 'module_versions' : 'template_versions';
+    db.prepare(`UPDATE ${table} SET is_tagged = 0, tag_name = NULL WHERE id = ?`)
+      .run(versionId);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Untag version error:', e);
+    res.status(500).json({ error: 'Failed to untag version' });
+  }
+});
+
+// 4.7 恢复到指定版本
+app.post('/api/versions/restore', (req, res) => {
+  const { versionId, type } = req.body;
+
+  if (!versionId || !type) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const table = type === 'module' ? 'module_versions' : 'template_versions';
+    const version = db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(versionId);
+
+    if (!version) {
+      return res.status(404).json({ error: 'Version not found' });
+    }
+
+    const restoredData = type === 'module' ? {
+      id: version.module_id,
+      title: version.title,
+      description: version.description,
+      content: version.content,
+      type: version.type,
+      tags: JSON.parse(version.tags),
+      imageUrl: version.image_url,
+      createdAt: version.created_at
+    } : {
+      id: version.template_id,
+      name: version.name,
+      description: version.description,
+      moduleIds: JSON.parse(version.module_ids),
+      config: JSON.parse(version.config),
+      createdAt: version.created_at,
+      updatedAt: Date.now()
+    };
+
+    res.json({ success: true, version: restoredData });
+  } catch (e) {
+    console.error('Restore version error:', e);
+    res.status(500).json({ error: 'Failed to restore version' });
+  }
+});
+
+// 5. Sharing Routes
+
+// 5.1 创建分享
+app.post('/api/shares/create', (req, res) => {
+  const { userId, shareType, title, description, data, password, expiresInDays } = req.body;
+
+  if (!userId || !shareType || !title || !data) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const shareId = crypto.randomUUID();
+    const shareKey = crypto.randomUUID().replace(/-/g, '').substring(0, 12);
+    const now = Date.now();
+
+    let expireAt = null;
+    if (expiresInDays && expiresInDays > 0) {
+      expireAt = now + (expiresInDays * 24 * 60 * 60 * 1000);
+    }
+
+    let passwordHash = null;
+    if (password && password.trim()) {
+      passwordHash = Buffer.from(password).toString('base64');
+    }
+
+    db.prepare(`
+      INSERT INTO shares 
+      (id, share_key, user_id, share_type, title, description, data_json, password_hash, expire_at, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      shareId,
+      shareKey,
+      userId,
+      shareType,
+      title,
+      description || null,
+      JSON.stringify(data),
+      passwordHash,
+      expireAt,
+      now
+    );
+
+    const baseUrl = process.env.PUBLIC_URL || `${req.protocol}://${req.get('host')}`;
+    const shareUrl = `${baseUrl}/share/${shareKey}`;
+
+    res.json({
+      success: true,
+      shareId,
+      shareKey,
+      shareUrl,
+      hasPassword: !!passwordHash,
+      expiresAt: expireAt
+    });
+  } catch (e) {
+    console.error('Create share error:', e);
+    res.status(500).json({ error: 'Failed to create share' });
+  }
+});
+
+// 5.2 访问分享
+app.post('/api/shares/access', (req, res) => {
+  const { shareKey, password } = req.body;
+
+  if (!shareKey) {
+    return res.status(400).json({ error: 'Missing share key' });
+  }
+
+  try {
+    const share = db.prepare('SELECT * FROM shares WHERE share_key = ?').get(shareKey);
+
+    if (!share) {
+      return res.status(404).json({ error: 'Share not found' });
+    }
+
+    if (share.expire_at && share.expire_at < Date.now()) {
+      return res.status(410).json({ error: 'Share expired' });
+    }
+
+    if (share.password_hash) {
+      const providedHash = password ? Buffer.from(password).toString('base64') : '';
+      if (providedHash !== share.password_hash) {
+        return res.status(401).json({ error: 'Invalid password' });
+      }
+    }
+
+    db.prepare(`
+      UPDATE shares 
+      SET view_count = view_count + 1, last_accessed_at = ?
+      WHERE share_key = ?
+    `).run(Date.now(), shareKey);
+
+    res.json({
+      success: true,
+      share: {
+        id: share.id,
+        shareType: share.share_type,
+        title: share.title,
+        description: share.description,
+        data: JSON.parse(share.data_json),
+        createdAt: share.created_at,
+        viewCount: share.view_count + 1,
+        importCount: share.import_count
+      }
+    });
+  } catch (e) {
+    console.error('Access share error:', e);
+    res.status(500).json({ error: 'Failed to access share' });
+  }
+});
+
+// 5.3 记录导入
+app.post('/api/shares/import', (req, res) => {
+  const { shareKey } = req.body;
+
+  if (!shareKey) {
+    return res.status(400).json({ error: 'Missing share key' });
+  }
+
+  try {
+    db.prepare('UPDATE shares SET import_count = import_count + 1 WHERE share_key = ?')
+      .run(shareKey);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Import tracking error:', e);
+    res.status(500).json({ error: 'Failed to track import' });
+  }
+});
+
+// 5.4 获取我的分享列表
+app.get('/api/shares/my-shares', (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Missing userId' });
+  }
+
+  try {
+    const shares = db.prepare(`
+      SELECT id, share_key, share_type, title, description, 
+             view_count, import_count, created_at, expire_at, password_hash
+      FROM shares 
+      WHERE user_id = ?
+      ORDER BY created_at DESC
+    `).all(userId);
+
+    res.json(shares.map(s => ({
+      id: s.id,
+      shareKey: s.share_key,
+      shareType: s.share_type,
+      title: s.title,
+      description: s.description,
+      viewCount: s.view_count,
+      importCount: s.import_count,
+      createdAt: s.created_at,
+      expireAt: s.expire_at,
+      hasPassword: !!s.password_hash,
+      isExpired: s.expire_at ? s.expire_at < Date.now() : false
+    })));
+  } catch (e) {
+    console.error('Get shares error:', e);
+    res.status(500).json({ error: 'Failed to fetch shares' });
+  }
+});
+
+// 5.5 删除分享
+app.delete('/api/shares/:shareId', (req, res) => {
+  const { shareId } = req.params;
+  const { userId } = req.query;
+
+  if (!shareId || !userId) {
+    return res.status(400).json({ error: 'Missing parameters' });
+  }
+
+  try {
+    db.prepare('DELETE FROM shares WHERE id = ? AND user_id = ?')
+      .run(shareId, userId);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Delete share error:', e);
+    res.status(500).json({ error: 'Failed to delete share' });
+  }
+});
+
+// ============================================
+// 智能优化助手 API
+// ============================================
+
+// Gemini API 调用辅助函数
+async function callGeminiAPI(prompt, apiKey, model = 'gemini-2.0-flash-exp') {
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{ text: prompt }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Gemini API error: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!text) {
+      throw new Error('No response from Gemini API');
+    }
+
+    return text;
+  } catch (error) {
+    console.error('Gemini API call failed:', error);
+    throw error;
+  }
+}
+
+// 提示词质量分析
+app.post('/api/optimize/analyze', async (req, res) => {
+  const { prompt, apiKey } = req.body;
+
+  if (!prompt || !apiKey) {
+    return res.status(400).json({ error: 'Missing prompt or API key' });
+  }
+
+  const analyzePrompt = `你是一个专业的提示词工程师。请分析以下提示词的质量，并提供改进建议。
+
+提示词：
+"""
+${prompt}
+"""
+
+请从以下维度进行分析：
+1. 清晰性（Clarity）：指令是否清晰明确，用户能否理解期望的输出
+2. 具体性（Specificity）：是否提供了足够的细节和约束，避免模糊性
+3. 结构化（Structure）：是否有良好的组织结构，逻辑是否清晰
+4. 完整性（Completeness）：是否包含必要的上下文信息和要求
+
+请严格按照以下 JSON 格式输出（只返回 JSON，不要包含其他文字）：
+{
+  "overallScore": 85,
+  "dimensions": {
+    "clarity": 90,
+    "specificity": 80,
+    "structure": 85,
+    "completeness": 85
+  },
+  "issues": [
+    "问题描述1",
+    "问题描述2"
+  ],
+  "suggestions": [
+    "改进建议1",
+    "改进建议2"
+  ]
+}`;
+
+  try {
+    const result = await callGeminiAPI(analyzePrompt, apiKey);
+
+    // 尝试解析 JSON 响应
+    let analysis;
+    try {
+      // 移除可能的 markdown 代码块标记
+      const cleanedResult = result.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      analysis = JSON.parse(cleanedResult);
+    } catch (parseError) {
+      console.error('Failed to parse analysis result:', result);
+      return res.status(500).json({
+        error: 'Failed to parse AI response',
+        rawResponse: result.substring(0, 500)
+      });
+    }
+
+    res.json(analysis);
+  } catch (error) {
+    console.error('Analysis error:', error);
+    res.status(500).json({ error: 'Analysis failed: ' + error.message });
+  }
+});
+
+// 提示词优化
+app.post('/api/optimize/improve', async (req, res) => {
+  const { prompt, apiKey } = req.body;
+
+  if (!prompt || !apiKey) {
+    return res.status(400).json({ error: 'Missing prompt or API key' });
+  }
+
+  const improvePrompt = `你是一个专业的提示词工程师。请优化以下提示词，使其更清晰、具体、结构化。
+
+原始提示词：
+"""
+${prompt}
+"""
+
+优化要求：
+1. 确保角色定义清晰（如果缺少，添加适当的角色定义）
+2. 任务描述具体明确（避免模糊表达）
+3. 添加必要的约束条件（如输出长度、格式等）
+4. 明确输出格式（JSON、Markdown、纯文本等）
+5. 保持原意不变，只改进表达和结构
+6. 如果原提示词已经很好，可以保持不变或小幅优化
+
+请直接返回优化后的提示词，不要包含其他解释或格式标记。`;
+
+  try {
+    const optimized = await callGeminiAPI(improvePrompt, apiKey);
+
+    res.json({
+      original: prompt,
+      optimized: optimized.trim()
+    });
+  } catch (error) {
+    console.error('Optimization error:', error);
+    res.status(500).json({ error: 'Optimization failed: ' + error.message });
+  }
+});
+
+
+// Static file serving (this should be at the end)
 app.use(express.static(path.join(__dirname, 'dist')));
+app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'dist', 'index.html')));
 
-// Handle SPA Routing (Redirect all non-API requests to index.html)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
-});
-
-// --- Start Server ---
-app.listen(PORT, () => {
-  console.log(`🚀 Hotker Prompt Studio running on port ${PORT}`);
-  console.log(`📂 Database: ${DB_PATH}`);
-});
+app.listen(PORT, () => console.log(`🚀 Hotker Prompt Studio running on port ${PORT}\n📂 Database: ${DB_PATH}`));

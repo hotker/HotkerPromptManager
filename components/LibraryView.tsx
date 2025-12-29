@@ -1,25 +1,30 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { PromptModule, ModuleType } from '../types';
+import { PromptModule, ModuleType, User } from '../types';
 import {
   Plus, Trash2, Search, Copy, X,
   Box, ChevronLeft, ChevronRight, AlertCircle,
   Settings, Terminal, Tag, X as CloseIcon,
   ChevronsLeft, ChevronsRight, Maximize, ExternalLink,
-  Image as ImageIcon, Minimize, MonitorPlay
+  Image as ImageIcon, Minimize, MonitorPlay, Clock, Share2, Download
 } from 'lucide-react';
 import { Language, translations } from '../translations';
+import { VersionHistoryModal } from './VersionHistoryModal';
+import { versionService } from '../services/versionService';
+import { ShareModal } from './ShareModal';
+import { ImportModal } from './ImportModal';
 
 interface LibraryViewProps {
   modules: PromptModule[];
   setModules: React.Dispatch<React.SetStateAction<PromptModule[]>>;
   lang: Language;
   syncStatus?: 'saved' | 'saving' | 'error';
+  currentUser?: User;
 }
 
 const ITEMS_PER_PAGE = 12;
 
-export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, lang }) => {
+export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, lang, currentUser }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<PromptModule | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -49,6 +54,16 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   // Immersive Mode State
   const [isImmersiveMode, setIsImmersiveMode] = useState(false);
   const [immersiveIndex, setImmersiveIndex] = useState(0);
+
+  // 版本历史状态
+  const [versionHistoryOpen, setVersionHistoryOpen] = useState(false);
+  const [versionHistoryModuleId, setVersionHistoryModuleId] = useState<string | null>(null);
+  const [changeSummary, setChangeSummary] = useState('');
+
+  // 分享和导入状态
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [sharingModule, setSharingModule] = useState<PromptModule | null>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
 
   useEffect(() => {
     if (isImmersiveMode) {
@@ -124,12 +139,46 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       createdAt: editingModule ? editingModule.createdAt : Date.now(),
     };
     setModules(prev => editingModule ? prev.map(m => m.id === editingModule.id ? newModule : m) : [newModule, ...prev]);
+
+    // 如果是编辑模式且用户已登录，创建版本记录
+    if (editingModule && currentUser) {
+      await versionService.createModuleVersion(
+        editingModule.id,
+        currentUser.id,
+        newModule,
+        changeSummary || undefined
+      );
+      setChangeSummary(''); // 重置修改说明
+    }
+
     setIsSaving(false);
     setIsModalOpen(false);
   };
 
   const handleDelete = (id: string) => {
     if (confirm(t.library.deleteConfirm)) setModules(prev => prev.filter(m => m.id !== id));
+  };
+
+  const openVersionHistory = (moduleId: string) => {
+    setVersionHistoryModuleId(moduleId);
+    setVersionHistoryOpen(true);
+  };
+
+  const handleRestoreVersion = (version: PromptModule) => {
+    setModules(prev => prev.map(m => m.id === version.id ? version : m));
+  };
+
+  const openShareModal = (module: PromptModule) => {
+    setSharingModule(module);
+    setShareModalOpen(true);
+  };
+
+  const handleImport = (item: PromptModule, type: 'module' | 'template') => {
+    if (type === 'module') {
+      // 生成新ID避免冲突
+      const newModule = { ...item, id: crypto.randomUUID(), createdAt: Date.now() };
+      setModules(prev => [newModule, ...prev]);
+    }
   };
 
   const filteredModules = modules.filter(m => {
@@ -216,10 +265,16 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
             >
               <MonitorPlay size={20} />
             </button>
-            <button onClick={() => openModal()} className="h-[48px] bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-6 rounded-2xl shadow-lg shadow-blue-500/10 transition-all">
-              <Plus size={18} strokeWidth={3} />
-              <span className="font-bold text-sm">{t.library.createBtn}</span>
-            </button>
+            <div className="flex gap-3">
+              <button onClick={() => setImportModalOpen(true)} className="px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center gap-2 shadow-sm">
+                <Download size={18} />
+                <span>{t.library.importPrompt}</span>
+              </button>
+              <button onClick={() => openModal()} className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all font-medium flex items-center gap-2 shadow-lg shadow-blue-500/30">
+                <Plus size={18} />
+                <span>{t.library.createBtn}</span>
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -280,6 +335,30 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
                     {/* Quick Actions (Hover Only) */}
                     <div className="absolute top-5 right-5 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      {currentUser && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openVersionHistory(module.id);
+                          }}
+                          className="p-2.5 bg-white/90 backdrop-blur text-slate-600 rounded-xl hover:bg-yellow-600 hover:text-white transition-all"
+                          title={t.library.versionHistory}
+                        >
+                          <Clock size={16} />
+                        </button>
+                      )}
+                      {currentUser && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openShareModal(module);
+                          }}
+                          className="p-2.5 bg-white/90 backdrop-blur text-slate-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all"
+                          title={t.library.share}
+                        >
+                          <Share2 size={16} />
+                        </button>
+                      )}
                       {module.imageUrl && (
                         <button onClick={(e) => { e.stopPropagation(); setViewingImage(module.imageUrl!); }} className="p-2.5 bg-white/90 backdrop-blur text-slate-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all" title="View Original Image">
                           <Maximize size={16} />
@@ -389,6 +468,21 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{t.library.labelContent}</label>
                 <textarea className="flex-1 min-h-[250px] bg-slate-50 border border-slate-200 rounded-3xl p-6 font-mono text-xs leading-relaxed outline-none focus:border-blue-500" value={content} onChange={e => setContent(e.target.value)} placeholder={t.library.placeholderContent} />
               </div>
+
+              {/* 修改说明 (仅编辑模式显示) */}
+              {editingModule && currentUser && (
+                <div className="col-span-2 space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                    {t.library.changeDescription}
+                  </label>
+                  <input
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 font-mono text-xs outline-none focus:border-blue-500"
+                    value={changeSummary}
+                    onChange={e => setChangeSummary(e.target.value)}
+                    placeholder={t.library.changeDescPlaceholder}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="p-10 bg-slate-50 border-t border-slate-100 flex justify-end gap-4">
@@ -526,6 +620,44 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
           </div>
 
         </div>
+      )}
+
+      {/* 版本历史模态框 */}
+      {versionHistoryOpen && versionHistoryModuleId && currentUser && (
+        <VersionHistoryModal
+          isOpen={versionHistoryOpen}
+          onClose={() => setVersionHistoryOpen(false)}
+          itemId={versionHistoryModuleId}
+          itemType="module"
+          userId={currentUser.id}
+          onRestore={handleRestoreVersion}
+          lang={lang}
+        />
+      )}
+
+      {/* 分享模态框 */}
+      {shareModalOpen && sharingModule && currentUser && (
+        <ShareModal
+          isOpen={shareModalOpen}
+          onClose={() => {
+            setShareModalOpen(false);
+            setSharingModule(null);
+          }}
+          item={sharingModule}
+          itemType="module"
+          currentUser={currentUser}
+          lang={lang}
+        />
+      )}
+
+      {/* 导入模态框 */}
+      {importModalOpen && (
+        <ImportModal
+          isOpen={importModalOpen}
+          onClose={() => setImportModalOpen(false)}
+          onImport={handleImport}
+          lang={lang}
+        />
       )}
     </div>
   );
