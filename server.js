@@ -6,6 +6,26 @@ import Database from 'better-sqlite3';
 import cors from 'cors';
 import multer from 'multer';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
+import rateLimit from 'express-rate-limit';
+
+// --- Security Configuration ---
+const BCRYPT_ROUNDS = 10;
+
+// XSS 防护：输入清理函数
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
+// 检查是否为 bcrypt 格式的密码
+function isBcryptHash(str) {
+  return str && str.startsWith('$2');
+}
 
 // --- Configuration ---
 const __filename = fileURLToPath(import.meta.url);
@@ -98,6 +118,41 @@ app.set('trust proxy', true);
 app.use(cors());
 app.use(express.json({ limit: UPLOAD_LIMIT }));
 app.use(express.text({ limit: UPLOAD_LIMIT }));
+
+// --- Security Middleware ---
+// CSP 头部
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://generativelanguage.googleapis.com https://api.qrserver.com"
+  );
+  next();
+});
+
+// 频率限制器
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1分钟
+  max: 5, // 最多5次请求
+  message: { error: '请求过于频繁，请稍后再试' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const shareLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 20,
+  message: { error: '请求过于频繁，请稍后再试' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const optimizeLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { error: 'AI 请求过于频繁，请稍后再试' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // --- Logic Helpers (Copied from Cloudflare Functions) ---
 function xorDecodeBinary(buffer) {
@@ -334,7 +389,7 @@ app.get('/api/auth', async (req, res) => {
 });
 
 // 2.2 Local username/password (POST)
-app.post('/api/auth', async (req, res) => {
+app.post('/api/auth', authLimiter, async (req, res) => {
   const action = req.query.action;
   const body = req.body;
 
@@ -345,23 +400,31 @@ app.post('/api/auth', async (req, res) => {
         return res.status(400).json({ error: 'Username and password required.' });
       }
 
-      const existing = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+      // 清理输入防止 XSS
+      const safeUsername = sanitizeInput(username);
+
+      const existing = db.prepare('SELECT * FROM users WHERE username = ?').get(safeUsername);
       if (existing) return res.status(409).json({ error: '该用户名已被注册' });
+
+      // 使用 bcrypt 加密密码
+      const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
       const newUser = {
         id: crypto.randomUUID(),
-        username,
-        password,
+        username: safeUsername,
+        password: hashedPassword,
         provider: 'local',
         createdAt: Date.now(),
-        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
+        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${safeUsername}`
       };
 
       db.prepare(
         'INSERT INTO users (id, username, password, provider, created_at, avatar_url) VALUES (?, ?, ?, ?, ?, ?)'
       ).run(newUser.id, newUser.username, newUser.password, newUser.provider, newUser.createdAt, newUser.avatarUrl);
 
-      return res.status(201).json(newUser);
+      // 不返回密码字段
+      const { password: _, ...userWithoutPassword } = newUser;
+      return res.status(201).json(userWithoutPassword);
 
     } else if (action === 'login') {
       const { username, password } = body;
@@ -370,7 +433,25 @@ app.post('/api/auth', async (req, res) => {
       const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
       if (!user) return res.status(404).json({ error: '用户不存在' });
-      if (user.password !== password) return res.status(401).json({ error: '密码错误' });
+
+      // 检查密码格式并验证
+      let isPasswordValid = false;
+
+      if (isBcryptHash(user.password)) {
+        // 新格式：bcrypt 验证
+        isPasswordValid = await bcrypt.compare(password, user.password);
+      } else {
+        // 旧格式：明文比较，然后自动迁移到 bcrypt
+        if (user.password === password) {
+          isPasswordValid = true;
+          // 迁移到 bcrypt
+          const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+          db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hashedPassword, user.id);
+          console.log(`🔐 Password migrated to bcrypt for user: ${user.username}`);
+        }
+      }
+
+      if (!isPasswordValid) return res.status(401).json({ error: '密码错误' });
 
       // Normalize fields to match frontend expectation (camelCase)
       const safeUser = {
@@ -388,9 +469,21 @@ app.post('/api/auth', async (req, res) => {
       const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
       if (!user) return res.status(404).json({ error: '用户不存在' });
-      if (user.password !== currentPassword) return res.status(401).json({ error: '当前密码错误' });
 
-      db.prepare('UPDATE users SET password = ? WHERE username = ?').run(newPassword, username);
+      // 验证当前密码
+      let isCurrentPasswordValid = false;
+
+      if (isBcryptHash(user.password)) {
+        isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      } else {
+        isCurrentPasswordValid = (user.password === currentPassword);
+      }
+
+      if (!isCurrentPasswordValid) return res.status(401).json({ error: '当前密码错误' });
+
+      // 新密码使用 bcrypt 加密
+      const hashedNewPassword = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
+      db.prepare('UPDATE users SET password = ? WHERE username = ?').run(hashedNewPassword, username);
       return res.json({ success: true });
     }
 
@@ -707,7 +800,7 @@ app.post('/api/versions/restore', (req, res) => {
 // 5. Sharing Routes
 
 // 5.1 创建分享
-app.post('/api/shares/create', (req, res) => {
+app.post('/api/shares/create', shareLimiter, async (req, res) => {
   const { userId, shareType, title, description, data, password, expiresInDays } = req.body;
 
   if (!userId || !shareType || !title || !data) {
@@ -724,10 +817,15 @@ app.post('/api/shares/create', (req, res) => {
       expireAt = now + (expiresInDays * 24 * 60 * 60 * 1000);
     }
 
+    // 使用 bcrypt 加密分享密码
     let passwordHash = null;
     if (password && password.trim()) {
-      passwordHash = Buffer.from(password).toString('base64');
+      passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
     }
+
+    // XSS 防护：清理标题和描述
+    const safeTitle = sanitizeInput(title);
+    const safeDescription = description ? sanitizeInput(description) : null;
 
     db.prepare(`
       INSERT INTO shares 
@@ -738,8 +836,8 @@ app.post('/api/shares/create', (req, res) => {
       shareKey,
       userId,
       shareType,
-      title,
-      description || null,
+      safeTitle,
+      safeDescription,
       JSON.stringify(data),
       passwordHash,
       expireAt,
@@ -764,7 +862,7 @@ app.post('/api/shares/create', (req, res) => {
 });
 
 // 5.2 访问分享
-app.post('/api/shares/access', (req, res) => {
+app.post('/api/shares/access', shareLimiter, async (req, res) => {
   const { shareKey, password } = req.body;
 
   if (!shareKey) {
@@ -782,9 +880,30 @@ app.post('/api/shares/access', (req, res) => {
       return res.status(410).json({ error: 'Share expired' });
     }
 
+    // 验证分享密码
     if (share.password_hash) {
-      const providedHash = password ? Buffer.from(password).toString('base64') : '';
-      if (providedHash !== share.password_hash) {
+      if (!password) {
+        return res.status(401).json({ error: 'Password required' });
+      }
+
+      let isPasswordValid = false;
+
+      if (isBcryptHash(share.password_hash)) {
+        // 新格式：bcrypt 验证
+        isPasswordValid = await bcrypt.compare(password, share.password_hash);
+      } else {
+        // 旧格式：Base64 比较，然后自动迁移到 bcrypt
+        const providedHash = Buffer.from(password).toString('base64');
+        if (providedHash === share.password_hash) {
+          isPasswordValid = true;
+          // 迁移到 bcrypt
+          const newHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+          db.prepare('UPDATE shares SET password_hash = ? WHERE id = ?').run(newHash, share.id);
+          console.log(`🔐 Share password migrated to bcrypt for share: ${share.share_key}`);
+        }
+      }
+
+      if (!isPasswordValid) {
         return res.status(401).json({ error: 'Invalid password' });
       }
     }
@@ -927,7 +1046,7 @@ async function callGeminiAPI(prompt, apiKey, model = 'gemini-2.0-flash-exp') {
 }
 
 // 提示词质量分析
-app.post('/api/optimize/analyze', async (req, res) => {
+app.post('/api/optimize/analyze', optimizeLimiter, async (req, res) => {
   const { prompt, apiKey } = req.body;
 
   if (!prompt || !apiKey) {
@@ -991,7 +1110,7 @@ ${prompt}
 });
 
 // 提示词优化
-app.post('/api/optimize/improve', async (req, res) => {
+app.post('/api/optimize/improve', optimizeLimiter, async (req, res) => {
   const { prompt, apiKey } = req.body;
 
   if (!prompt || !apiKey) {

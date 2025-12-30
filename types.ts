@@ -68,7 +68,7 @@ export interface User {
   createdAt: number;
 }
 
-export type ViewState = 'dashboard' | 'library' | 'builder' | 'history';
+export type ViewState = 'dashboard' | 'library' | 'builder' | 'history' | 'myShares';
 
 // Global declarations for Gemini API Studio environment
 declare global {

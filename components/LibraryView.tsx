@@ -173,13 +173,34 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
     setShareModalOpen(true);
   };
 
-  const handleImport = (item: PromptModule, type: 'module' | 'template') => {
+  const handleImport = async (item: PromptModule, type: 'module' | 'template') => {
     if (type === 'module') {
       // 生成新ID避免冲突
       const newModule = { ...item, id: crypto.randomUUID(), createdAt: Date.now() };
-      setModules(prev => [newModule, ...prev]);
+      
+      try {
+        // 调用后端 API 保存到数据库
+        const res = await fetch('/api/modules', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newModule)
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to save imported module');
+        }
+
+        // 更新本地状态
+        setModules(prev => [newModule, ...prev]);
+        
+        console.log('Module imported and saved successfully:', newModule.id);
+      } catch (error) {
+        console.error('Failed to import module:', error);
+        alert(lang === 'zh' ? '导入失败，请重试' : 'Import failed, please try again');
+      }
     }
   };
+
 
   const filteredModules = modules.filter(m => {
     const matchesSearch = m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

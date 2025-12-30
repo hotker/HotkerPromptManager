@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutGrid, Library, TestTube2, History, LogOut, KeyRound, X, Cloud, RefreshCcw, AlertCircle, Menu, Command, ChevronRight, ExternalLink, ShieldCheck, Check } from 'lucide-react';
+import { LayoutGrid, Library, TestTube2, History, LogOut, KeyRound, X, Cloud, RefreshCcw, AlertCircle, Menu, Command, ChevronRight, ExternalLink, ShieldCheck, Check, Link2 } from 'lucide-react';
 import { ViewState, User } from '../types';
 import { Language, translations } from '../translations';
 import { validateApiKey } from '../services/geminiService';
@@ -47,6 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'library', label: t.sidebar.library, icon: <Library size={18} /> },
     { id: 'builder', label: t.sidebar.builder, icon: <TestTube2 size={18} /> },
     { id: 'history', label: t.sidebar.history, icon: <History size={18} /> },
+    { id: 'myShares', label: lang === 'zh' ? '我的分享' : 'My Shares', icon: <Link2 size={18} /> },
   ];
 
   // Guidelines: API key handling is managed by the execution environment via process.env.API_KEY.
@@ -327,8 +328,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="p-4 border-t border-slate-100 overflow-hidden">
           {/* API Status */}
           <div className={`flex items-center transition-all duration-300 ${isHovered
-              ? 'justify-between'
-              : (isLibrary ? 'justify-center' : 'justify-center lg:justify-between')
+            ? 'justify-between'
+            : (isLibrary ? 'justify-center' : 'justify-center lg:justify-between')
             }`}>
             <div className="flex items-center justify-between w-full px-2 mb-4 h-6">
               <div className="flex items-center gap-2">
@@ -349,8 +350,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* User Profile */}
           <div className={`rounded-lg bg-slate-50 border border-slate-100 flex items-center mb-3 transition-all duration-300 ${isHovered
-              ? 'p-2 gap-3'
-              : (isLibrary ? 'p-0 border-0 bg-transparent justify-center' : 'p-0 border-0 bg-transparent justify-center lg:p-2 lg:gap-3 lg:border lg:bg-slate-50 lg:justify-start')
+            ? 'p-2 gap-3'
+            : (isLibrary ? 'p-0 border-0 bg-transparent justify-center' : 'p-0 border-0 bg-transparent justify-center lg:p-2 lg:gap-3 lg:border lg:bg-slate-50 lg:justify-start')
             }`}>
             <div className="w-8 h-8 bg-white border border-slate-200 rounded-md flex items-center justify-center text-xs font-bold text-slate-700 shadow-sm shrink-0">
               {currentUser?.username.substring(0, 1).toUpperCase()}

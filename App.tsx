@@ -1,17 +1,19 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { LibraryView } from './components/LibraryView';
 import { BuilderView } from './components/BuilderView';
 import { HistoryView } from './components/HistoryView';
 import { Dashboard } from './components/Dashboard';
 import { AuthPage } from './components/AuthPage';
+import { MySharesView } from './components/MySharesView';
+import { ToastProvider, useToast } from './components/Toast';
 import { ViewState, PromptModule, PromptTemplate, RunLog, User } from './types';
 import { authService } from './services/authService';
 import { apiService, UserData } from './services/apiService';
 import { INITIAL_MODULES } from './constants';
 import { Language, translations } from './translations';
-
 import { useDebounce } from './hooks/useDebounce';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 
 const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -49,12 +51,14 @@ const App = () => {
   if (!currentUser) return <AuthPage onLogin={handleLogin} lang={lang} setLang={setLang} />;
 
   return (
-    <AuthenticatedApp
-      currentUser={currentUser}
-      onLogout={handleLogout}
-      lang={lang}
-      setLang={setLang}
-    />
+    <ToastProvider>
+      <AuthenticatedApp
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        lang={lang}
+        setLang={setLang}
+      />
+    </ToastProvider>
   );
 };
 
@@ -65,7 +69,9 @@ const AuthenticatedApp: React.FC<{
   setLang: (l: Language) => void
 }> = ({ currentUser, onLogout, lang, setLang }) => {
   const [view, setView] = useState<ViewState>('dashboard');
+  const [searchOpen, setSearchOpen] = useState(false);
   const t = translations[lang];
+  const toast = useToast();
 
   const [modules, setModules] = useState<PromptModule[]>([]);
   const [templates, setTemplates] = useState<PromptTemplate[]>([]);
@@ -162,19 +168,31 @@ const AuthenticatedApp: React.FC<{
     };
   }, [debouncedData, currentUser.id, isDataLoaded]);
 
-  const handleForceSync = () => {
+  const handleForceSync = useCallback(() => {
     setSyncStatus('saving');
+    toast.info('正在同步...');
     apiService.saveData(currentUser.id, currentData)
       .then(() => {
         setSyncStatus('saved');
         setSyncErrorMsg(undefined);
         lastSavedJson.current = JSON.stringify(currentData);
+        toast.success('同步成功');
       })
       .catch(e => {
         setSyncStatus('error');
         setSyncErrorMsg(e.message);
+        toast.error('同步失败: ' + e.message);
       });
-  };
+  }, [currentUser.id, currentData, toast]);
+
+  // 注册全局快捷键
+  useKeyboardShortcuts({
+    onSave: handleForceSync,
+    onSearch: () => setSearchOpen(true),
+    onNew: () => setView('library'),
+    setView,
+    enabled: isDataLoaded
+  });
 
   if (!isDataLoaded) {
     return (
@@ -240,6 +258,12 @@ const AuthenticatedApp: React.FC<{
             <HistoryView
               logs={logs}
               updateLog={(id, updates) => setLogs(prev => prev.map(log => log.id === id ? { ...log, ...updates } : log))}
+              lang={lang}
+            />
+          )}
+          {view === 'myShares' && (
+            <MySharesView
+              currentUser={currentUser}
               lang={lang}
             />
           )}
