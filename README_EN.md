@@ -41,6 +41,18 @@ Optimized for **Google Gemini** models and perfectly adapted to Cloudflare Serve
     - QR code sharing support
     - Access and import statistics
 
+*   **📋 My Shares Management**:
+    - Centralized view and management of all shares
+    - Real-time access and import count statistics
+    - One-click delete expired or unwanted shares
+    - Visual share status (active/expired)
+
+*   **🔔 Toast Notification System**:
+    - Elegant operation feedback notifications
+    - Supports success, error, warning, info types
+    - Auto-dismiss without interrupting user flow
+    - Replaces traditional alert popups for better UX
+
 *   **🤖 AI-Powered Optimization**:
     - Prompt quality analysis (Clarity, Specificity, Structure, Completeness)
     - AI-driven automatic optimization suggestions
@@ -194,11 +206,11 @@ For detailed steps, see [Cloudflare Deployment Documentation](./DEPLOY.md)
 
 ## 📊 Project Statistics
 
-- **Lines of Code**: ~2750+ lines
+- **Lines of Code**: ~3000+ lines
 - **Components**: 13+ components
-- **API Endpoints**: 20+ endpoints
+- **API Endpoints**: 25+ endpoints
 - **Supported Languages**: Chinese + English
-- **Completion**: 88%
+- **Completion**: 92%
 
 ---
 
@@ -245,6 +257,12 @@ git push origin feature/amazing-feature
 ---
 
 ## 📝 Changelog
+
+### v2.1.0 (2025-12-30)
+- ✨ New: Toast notification system, replacing traditional alert popups
+- ✨ New: My Shares management page for centralized share management
+- 🎨 Improved: User experience enhancements and UI polish
+- 🐛 Fixed: Share import data persistence issue
 
 ### v2.0.0 (2025-12-29)
 - ✨ New: AI-powered optimization assistant
