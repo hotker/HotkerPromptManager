@@ -18,7 +18,7 @@ interface LibraryViewProps {
   modules: PromptModule[];
   setModules: React.Dispatch<React.SetStateAction<PromptModule[]>>;
   lang: Language;
-  syncStatus?: 'saved' | 'saving' | 'error';
+  syncStatus?: 'saved' | 'saving' | 'error' | 'offline';
   currentUser?: User;
 }
 
@@ -177,7 +177,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
     if (type === 'module') {
       // 生成新ID避免冲突
       const newModule = { ...item, id: crypto.randomUUID(), createdAt: Date.now() };
-      
+
       try {
         // 调用后端 API 保存到数据库
         const res = await fetch('/api/modules', {
@@ -192,7 +192,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
         // 更新本地状态
         setModules(prev => [newModule, ...prev]);
-        
+
         console.log('Module imported and saved successfully:', newModule.id);
       } catch (error) {
         console.error('Failed to import module:', error);
