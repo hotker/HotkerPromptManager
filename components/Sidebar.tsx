@@ -11,7 +11,7 @@ interface SidebarProps {
   onLogout: () => void;
   userApiKey: string; // Deprecated: API key is now strictly from environment
   setUserApiKey: (key: string) => void;
-  syncStatus?: 'saved' | 'saving' | 'error';
+  syncStatus?: 'saved' | 'saving' | 'error' | 'offline';
   syncErrorMsg?: string;
   lang: Language;
   setLang: (l: Language) => void;
@@ -157,6 +157,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           >
             <AlertCircle size={10} className="group-hover:animate-bounce" />
             {t.sidebar.syncError}
+          </button>
+        );
+      case 'offline':
+        return (
+          <button
+            onClick={onForceSync}
+            title="数据来自本地备份，点击同步到云端"
+            className="text-amber-600 flex items-center gap-1.5 text-[10px] font-medium hover:bg-amber-50 px-1.5 py-0.5 rounded transition-colors group"
+          >
+            <AlertCircle size={10} />
+            本地数据
           </button>
         );
       case 'saved':

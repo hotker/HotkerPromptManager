@@ -10,6 +10,7 @@ import { ToastProvider, useToast } from './components/Toast';
 import { ViewState, PromptModule, PromptTemplate, RunLog, User } from './types';
 import { authService } from './services/authService';
 import { apiService, UserData } from './services/apiService';
+import { offlineStorageService } from './services/offlineStorageService';
 import { INITIAL_MODULES } from './constants';
 import { Language, translations } from './translations';
 import { useDebounce } from './hooks/useDebounce';
@@ -79,38 +80,65 @@ const AuthenticatedApp: React.FC<{
   const [userApiKey, setUserApiKey] = useState<string>('');
 
   const [isDataLoaded, setIsDataLoaded] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'error'>('saved');
+  const [syncStatus, setSyncStatus] = useState<'saved' | 'saving' | 'error' | 'offline'>('saved');
   const [syncErrorMsg, setSyncErrorMsg] = useState<string | undefined>(undefined);
+  const [dataSource, setDataSource] = useState<'cloud' | 'local' | null>(null);
 
-  // 1. 数据初始加载
+  // 1. 数据初始加载 (支持离线恢复)
   useEffect(() => {
-    const loadCloudData = async () => {
+    const loadData = async () => {
+      let loadedFromCloud = false;
+
       try {
+        // 首先尝试从云端加载
         const cloudData = await apiService.loadData(currentUser.id);
         if (cloudData) {
-          // 只有当云端确实有数据时才覆盖
           if (cloudData.modules?.length > 0 || cloudData.templates?.length > 0 || cloudData.apiKey) {
             setModules(cloudData.modules || []);
             setTemplates(cloudData.templates || []);
             setLogs(cloudData.logs || []);
             setUserApiKey(cloudData.apiKey || '');
-          } else {
-            setModules(INITIAL_MODULES);
+            loadedFromCloud = true;
+            setDataSource('cloud');
+
+            // 同步保存到本地作为备份
+            await offlineStorageService.saveLocalData(currentUser.id, cloudData);
           }
-        } else {
-          setModules(INITIAL_MODULES);
         }
       } catch (e: any) {
-        console.error("Critical Load data failed:", e);
-        setModules(INITIAL_MODULES);
-        setSyncStatus('error');
+        console.error("Cloud data loading failed, trying local recovery:", e);
         setSyncErrorMsg(e.message);
-      } finally {
-        setIsDataLoaded(true);
       }
+
+      // 如果云端加载失败，尝试从本地恢复
+      if (!loadedFromCloud) {
+        try {
+          const localData = await offlineStorageService.loadLocalData(currentUser.id);
+          if (localData && (localData.modules?.length > 0 || localData.templates?.length > 0)) {
+            setModules(localData.modules || []);
+            setTemplates(localData.templates || []);
+            setLogs(localData.logs || []);
+            setUserApiKey(localData.apiKey || '');
+            setDataSource('local');
+            setSyncStatus('offline');
+            toast.warning('已从本地备份恢复数据');
+            console.log('Data recovered from local backup, saved at:', new Date(localData.savedAt).toLocaleString());
+          } else {
+            // 没有本地数据，使用初始模块
+            setModules(INITIAL_MODULES);
+            setDataSource('cloud');
+          }
+        } catch (localError) {
+          console.error("Local data recovery also failed:", localError);
+          setModules(INITIAL_MODULES);
+          setSyncStatus('error');
+        }
+      }
+
+      setIsDataLoaded(true);
     };
-    loadCloudData();
-  }, [currentUser.id]);
+    loadData();
+  }, [currentUser.id, toast]);
 
   // 2. 稳定数据引用
   const currentData = useMemo<UserData>(() => ({
@@ -147,13 +175,24 @@ const AuthenticatedApp: React.FC<{
 
       setSyncStatus('saving');
       try {
-        await apiService.saveData(currentUser.id, debouncedData, controller.signal);
+        // 同时保存到云端和本地
+        await Promise.all([
+          apiService.saveData(currentUser.id, debouncedData, controller.signal),
+          offlineStorageService.saveLocalData(currentUser.id, debouncedData)
+        ]);
         setSyncStatus('saved');
         setSyncErrorMsg(undefined);
+        setDataSource('cloud');
         lastSavedJson.current = currentJson;
       } catch (e: any) {
         if (e.name === 'AbortError') return;
-        console.error("Sync Failure:", e);
+        console.error("Cloud sync failed, but local backup saved:", e);
+        // 即使云端失败，也尝试保存到本地
+        try {
+          await offlineStorageService.saveLocalData(currentUser.id, debouncedData);
+        } catch (localError) {
+          console.error("Local backup also failed:", localError);
+        }
         setSyncStatus('error');
         setSyncErrorMsg(e.message);
       }
