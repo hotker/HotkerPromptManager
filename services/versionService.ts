@@ -137,7 +137,7 @@ export const versionService = {
     /**
      * 计算两个版本之间的差异
      */
-    calculateDiff(oldVersion: any, newVersion: any): VersionDiff[] {
+    calculateDiff(oldVersion: Record<string, unknown>, newVersion: Record<string, unknown>): VersionDiff[] {
         const diffs: VersionDiff[] = [];
         const allKeys = new Set([...Object.keys(oldVersion), ...Object.keys(newVersion)]);
 

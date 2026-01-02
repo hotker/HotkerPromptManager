@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { PromptModule, ModuleType, User } from '../types';
 import {
   Plus, Trash2, Search, Copy, X,
@@ -34,8 +34,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   // New State for Lightbox
   const [viewingImage, setViewingImage] = useState<string | null>(null);
 
-  const t = translations[lang];
-
   // Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -65,6 +63,24 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const [sharingModule, setSharingModule] = useState<PromptModule | null>(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
 
+  const t = translations[lang];
+
+  // 过滤模块 - 移到 useCallback 之前以便正确引用
+  const filteredModules = modules.filter(m => {
+    const matchesSearch = m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      m.content.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'ALL' || m.type === filterType;
+    return matchesSearch && matchesType;
+  });
+
+  const handleNext = useCallback(() => {
+    setImmersiveIndex(prev => (prev + 1) % filteredModules.length);
+  }, [filteredModules.length]);
+
+  const handlePrev = useCallback(() => {
+    setImmersiveIndex(prev => (prev - 1 + filteredModules.length) % filteredModules.length);
+  }, [filteredModules.length]);
+
   useEffect(() => {
     if (isImmersiveMode) {
       const handleKeyDown = (e: KeyboardEvent) => {
@@ -75,7 +91,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [isImmersiveMode, immersiveIndex]);
+  }, [isImmersiveMode, handleNext, handlePrev]);
 
 
   useEffect(() => {
@@ -201,21 +217,6 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
     }
   };
 
-
-  const filteredModules = modules.filter(m => {
-    const matchesSearch = m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'ALL' || m.type === filterType;
-    return matchesSearch && matchesType;
-  });
-
-  const handleNext = () => {
-    setImmersiveIndex(prev => (prev + 1) % filteredModules.length);
-  };
-
-  const handlePrev = () => {
-    setImmersiveIndex(prev => (prev - 1 + filteredModules.length) % filteredModules.length);
-  };
 
   const totalPages = Math.ceil(filteredModules.length / ITEMS_PER_PAGE);
   const paginatedModules = filteredModules.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);

@@ -11,6 +11,7 @@ import rateLimit from 'express-rate-limit';
 
 // --- Security Configuration ---
 const BCRYPT_ROUNDS = 10;
+const XOR_SECRET_KEY = process.env.XOR_SECRET_KEY || 'HotkerSync2025_Default_Change_In_Production';
 
 // XSS 防护：输入清理函数
 function sanitizeInput(str) {
@@ -25,6 +26,15 @@ function sanitizeInput(str) {
 // 检查是否为 bcrypt 格式的密码
 function isBcryptHash(str) {
   return str && str.startsWith('$2');
+}
+
+// 安全转义 JSON 用于嵌入 HTML script 标签
+function escapeJsonForHtml(obj) {
+  return JSON.stringify(obj)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/'/g, '\\u0027');
 }
 
 // --- Configuration ---
@@ -115,7 +125,23 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.set('trust proxy', true);
-app.use(cors());
+
+// CORS 配置 - 只允许特定域名
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:5173', 'http://localhost:3000'];
+
+app.use(cors({
+  origin: function(origin, callback) {
+    // 允许无 origin 的请求 (如移动端应用或 Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('CORS not allowed'), false);
+  },
+  credentials: true
+}));
 app.use(express.json({ limit: UPLOAD_LIMIT }));
 app.use(express.text({ limit: UPLOAD_LIMIT }));
 
@@ -157,8 +183,7 @@ const optimizeLimiter = rateLimit({
 // --- Logic Helpers (Copied from Cloudflare Functions) ---
 function xorDecodeBinary(buffer) {
   try {
-    const key = "HotkerSync2025_Secret";
-    const keyBytes = Buffer.from(key);
+    const keyBytes = Buffer.from(XOR_SECRET_KEY);
     const output = Buffer.alloc(buffer.length);
 
     for (let i = 0; i < buffer.length; i++) {
@@ -171,10 +196,9 @@ function xorDecodeBinary(buffer) {
 }
 
 function xorHexDecode(hexStr) {
-  const key = "HotkerSync2025_Secret";
   if (hexStr.length % 2 !== 0) return "";
   const buffer = Buffer.from(hexStr, 'hex');
-  const keyBytes = Buffer.from(key);
+  const keyBytes = Buffer.from(XOR_SECRET_KEY);
   const output = Buffer.alloc(buffer.length);
 
   for (let i = 0; i < buffer.length; i++) {
@@ -360,7 +384,7 @@ app.get('/api/auth', async (req, res) => {
             </div>
             <script>
               try {
-                const user = ${JSON.stringify(appUser)};
+                const user = ${escapeJsonForHtml(appUser)};
                 localStorage.setItem('hotker_cloud_session', JSON.stringify(user));
                 window.location.href = '/';
               } catch (e) {
@@ -725,6 +749,11 @@ app.post('/api/versions/tag', (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  // 验证 type 参数，防止 SQL 注入
+  if (type !== 'module' && type !== 'template') {
+    return res.status(400).json({ error: 'Invalid type parameter' });
+  }
+
   try {
     const table = type === 'module' ? 'module_versions' : 'template_versions';
     db.prepare(`UPDATE ${table} SET is_tagged = 1, tag_name = ? WHERE id = ?`)
@@ -744,6 +773,11 @@ app.post('/api/versions/untag', (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  // 验证 type 参数，防止 SQL 注入
+  if (type !== 'module' && type !== 'template') {
+    return res.status(400).json({ error: 'Invalid type parameter' });
+  }
+
   try {
     const table = type === 'module' ? 'module_versions' : 'template_versions';
     db.prepare(`UPDATE ${table} SET is_tagged = 0, tag_name = NULL WHERE id = ?`)
@@ -761,6 +795,11 @@ app.post('/api/versions/restore', (req, res) => {
 
   if (!versionId || !type) {
     return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  // 验证 type 参数，防止 SQL 注入
+  if (type !== 'module' && type !== 'template') {
+    return res.status(400).json({ error: 'Invalid type parameter' });
   }
 
   try {

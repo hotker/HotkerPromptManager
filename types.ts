@@ -119,8 +119,8 @@ export interface TemplateVersion {
 
 export interface VersionDiff {
   field: string;
-  oldValue: any;
-  newValue: any;
+  oldValue: unknown;
+  newValue: unknown;
   changeType: 'added' | 'removed' | 'modified';
 }
 
@@ -149,7 +149,7 @@ export interface CreateShareRequest {
   shareType: ShareType;
   title: string;
   description?: string;
-  data: any;
+  data: PromptModule | PromptTemplate | PromptModule[] | PromptTemplate[];
   password?: string;
   expiresInDays?: number;
 }

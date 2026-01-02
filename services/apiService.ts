@@ -37,10 +37,10 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
         await new Promise(r => setTimeout(r, backoff));
         return request(endpoint, options, retries - 1, backoff * 1.5);
       }
-      
+
       let errorMsg = `API Error: ${res.status}`;
       try {
-        const errJson = await res.json() as any;
+        const errJson = await res.json() as { error?: string };
         errorMsg = errJson.error || errorMsg;
       } catch {
         if (res.status === 403) errorMsg = 'WAF拦截: 请检查内容安全策略 (Binary Mode)';
@@ -50,13 +50,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
 
     if (res.status === 204) return {} as T;
     return await res.json();
-  } catch (e: any) {
-    if (e.name === 'AbortError') throw e;
-    if (retries > 0 && !e.message?.includes('400') && !e.message?.includes('401')) {
+  } catch (e) {
+    const error = e as Error & { name?: string };
+    if (error.name === 'AbortError') throw error;
+    if (retries > 0 && !error.message?.includes('400') && !error.message?.includes('401')) {
       await new Promise(r => setTimeout(r, backoff));
       return request(endpoint, options, retries - 1, backoff * 2);
     }
-    throw e;
+    throw error;
   }
 }
 
@@ -112,14 +113,14 @@ export const apiService = {
   saveData: async (userId: string, data: UserData, signal?: AbortSignal): Promise<void> => {
     // 1. 序列化数据
     const jsonStr = JSON.stringify(data);
-    
+
     // 2. Binary XOR 混淆 (生成二进制流)
     const binaryData = xorEncodeBinary(jsonStr);
 
     // 3. 封装为文件上传 (Multipart/Form-Data)
     // 使用 application/octet-stream 模拟通用二进制文件，避开文本检查
-    // Fix TS Error: Cast to any to avoid "SharedArrayBuffer" mismatch in Blob constructor types
-    const blob = new Blob([binaryData as any], { type: 'application/octet-stream' });
+    // TypeScript 类型系统过于严格，Uint8Array 实际上是有效的 BlobPart
+    const blob = new Blob([binaryData as unknown as BlobPart], { type: 'application/octet-stream' });
     const formData = new FormData();
     formData.append('file', blob, 'data.bin');
 

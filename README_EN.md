@@ -53,6 +53,20 @@ Optimized for **Google Gemini** models and perfectly adapted to Cloudflare Serve
     - Auto-dismiss without interrupting user flow
     - Replaces traditional alert popups for better UX
 
+*   **📴 Offline Data Storage**:
+    - Local offline storage based on IndexedDB
+    - Prevents data loss from network sync errors
+    - Automatically saves user data locally
+    - Visual sync status tracking
+    - Continue using in offline mode
+
+*   **⌨️ Keyboard Shortcuts**:
+    - `⌘/Ctrl + S`: Save
+    - `⌘/Ctrl + K`: Search
+    - `⌘/Ctrl + N`: New
+    - `⌘/Ctrl + 1-4`: Switch views
+    - `Esc`: Close modal
+
 *   **🤖 AI-Powered Optimization**:
     - Prompt quality analysis (Clarity, Specificity, Structure, Completeness)
     - AI-driven automatic optimization suggestions
@@ -258,6 +272,13 @@ git push origin feature/amazing-feature
 
 ## 📝 Changelog
 
+### v2.2.0 (2026-01-02)
+- ✨ New: Offline data storage (based on IndexedDB)
+- ✨ New: Global keyboard shortcuts (save, search, new, view switch)
+- ✨ New: Sync status visualization
+- 🛡️ Improved: Enhanced data security, preventing data loss from sync errors
+- 🎨 Improved: User experience refinements
+
 ### v2.1.0 (2025-12-30)
 - ✨ New: Toast notification system, replacing traditional alert popups
 - ✨ New: My Shares management page for centralized share management
@@ -321,4 +342,4 @@ MIT License - See [LICENSE](./LICENSE) file for details
 
 ---
 
-© 2025 Hotker Prompt Studio. All rights reserved.
+© 2026 Hotker Prompt Studio. All rights reserved.

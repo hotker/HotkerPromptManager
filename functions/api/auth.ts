@@ -11,9 +11,94 @@ const JSON_HEADERS = {
   'Content-Type': 'application/json'
 };
 
-const response = (data: any, status = 200) => {
+const response = (data: Record<string, unknown>, status = 200) => {
   return new Response(JSON.stringify(data), { status, headers: JSON_HEADERS });
 };
+
+// 使用 Web Crypto API 进行密码哈希 (PBKDF2)
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(password),
+    'PBKDF2',
+    false,
+    ['deriveBits']
+  );
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 100000,
+      hash: 'SHA-256'
+    },
+    keyMaterial,
+    256
+  );
+  const hashArray = new Uint8Array(derivedBits);
+  const combined = new Uint8Array(salt.length + hashArray.length);
+  combined.set(salt);
+  combined.set(hashArray, salt.length);
+  return btoa(String.fromCharCode(...combined));
+}
+
+async function verifyPassword(password: string, storedHash: string): Promise<boolean> {
+  try {
+    const combined = Uint8Array.from(atob(storedHash), c => c.charCodeAt(0));
+    const salt = combined.slice(0, 16);
+    const storedKey = combined.slice(16);
+
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(password),
+      'PBKDF2',
+      false,
+      ['deriveBits']
+    );
+    const derivedBits = await crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: salt,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      keyMaterial,
+      256
+    );
+    const derivedKey = new Uint8Array(derivedBits);
+
+    // 常量时间比较
+    if (derivedKey.length !== storedKey.length) return false;
+    let result = 0;
+    for (let i = 0; i < derivedKey.length; i++) {
+      result |= derivedKey[i] ^ storedKey[i];
+    }
+    return result === 0;
+  } catch {
+    return false;
+  }
+}
+
+// 检测是否为新格式哈希 (PBKDF2)
+function isPBKDF2Hash(str: string): boolean {
+  try {
+    const decoded = atob(str);
+    return decoded.length === 48; // 16 bytes salt + 32 bytes hash
+  } catch {
+    return false;
+  }
+}
+
+// 安全转义 JSON 用于嵌入 HTML script 标签
+function escapeJsonForHtml(obj: Record<string, unknown>): string {
+  return JSON.stringify(obj)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/'/g, '\\u0027');
+}
 
 export const onRequestOptions = async () => {
   return new Response(null, { headers: CORS_HEADERS });
@@ -77,17 +162,57 @@ export const onRequest = async (context: PagesContext) => {
 // SQL Schema for D1:
 // CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE, password TEXT, provider TEXT, created_at INTEGER, avatar_url TEXT);
 
-async function handleRegister(env: any, body: any) {
+interface UserRecord {
+  id: string;
+  username: string;
+  password: string;
+  provider: string;
+  createdAt: number;
+  avatarUrl: string;
+  avatar_url?: string;
+  created_at?: number;
+}
+
+interface CloudflareEnv {
+  DB?: D1Database;
+  NANO_DB?: KVNamespace;
+  GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
+}
+
+interface D1Database {
+  prepare(query: string): D1PreparedStatement;
+}
+
+interface D1PreparedStatement {
+  bind(...values: unknown[]): D1PreparedStatement;
+  first<T = unknown>(): Promise<T | null>;
+  run(): Promise<D1Result>;
+}
+
+interface D1Result {
+  success: boolean;
+}
+
+interface KVNamespace {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string): Promise<void>;
+}
+
+async function handleRegister(env: CloudflareEnv, body: { username?: string; password?: string }) {
   const { username, password } = body;
-  
+
   if (!username || !password || username.length < 3) {
     return response({ error: 'Validation Error: Username and password are required.' }, 400);
   }
 
-  const newUser = {
+  // 使用 PBKDF2 哈希密码
+  const hashedPassword = await hashPassword(password);
+
+  const newUser: UserRecord = {
     id: crypto.randomUUID(),
     username,
-    password, 
+    password: hashedPassword,
     provider: 'local',
     createdAt: Date.now(),
     avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`
@@ -102,39 +227,43 @@ async function handleRegister(env: any, body: any) {
       await env.DB.prepare(
         'INSERT INTO users (id, username, password, provider, created_at, avatar_url) VALUES (?, ?, ?, ?, ?, ?)'
       ).bind(newUser.id, newUser.username, newUser.password, newUser.provider, newUser.createdAt, newUser.avatarUrl).run();
-      
-      return response(newUser, 201);
-    } catch (e: any) {
-      console.error("D1 Error", e);
-      return response({ error: 'Database Error: ' + e.message }, 500);
+
+      // 不返回密码
+      const { password: _, ...userWithoutPassword } = newUser;
+      return response(userWithoutPassword as Record<string, unknown>, 201);
+    } catch (e) {
+      const error = e as Error;
+      console.error("D1 Error", error);
+      return response({ error: 'Database Error: ' + error.message }, 500);
     }
   }
 
   // KV Path
   const userKey = `USER:${username}`;
-  const existing = await env.NANO_DB.get(userKey);
-  
+  const existing = await env.NANO_DB?.get(userKey);
+
   if (existing) {
     return response({ error: '该用户名已被注册' }, 409);
   }
 
-  await env.NANO_DB.put(userKey, JSON.stringify(newUser));
-  return response(newUser, 201);
+  await env.NANO_DB?.put(userKey, JSON.stringify(newUser));
+  const { password: _, ...userWithoutPassword } = newUser;
+  return response(userWithoutPassword as Record<string, unknown>, 201);
 }
 
-async function handleLogin(env: any, body: any) {
+async function handleLogin(env: CloudflareEnv, body: { username?: string; password?: string }) {
   const { username, password } = body;
-  
+
   if (!username || !password) {
     return response({ error: 'Missing credentials' }, 400);
   }
 
-  let user: any = null;
+  let user: UserRecord | null = null;
 
   // D1 Path
   if (env.DB) {
      try {
-       user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
+       user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first<UserRecord>();
        if (user) {
          if (user.avatar_url) { user.avatarUrl = user.avatar_url; delete user.avatar_url; }
          if (user.created_at) { user.createdAt = user.created_at; delete user.created_at; }
@@ -144,57 +273,103 @@ async function handleLogin(env: any, body: any) {
      }
   } else {
     // KV Path
-    const userStr = await env.NANO_DB.get(`USER:${username}`);
-    if (userStr) user = JSON.parse(userStr);
+    const userStr = await env.NANO_DB?.get(`USER:${username}`);
+    if (userStr) user = JSON.parse(userStr) as UserRecord;
   }
-  
+
   if (!user) {
     return response({ error: '用户不存在' }, 404);
   }
-  
-  if (user.password !== password) {
+
+  // 验证密码
+  let isPasswordValid = false;
+
+  if (isPBKDF2Hash(user.password)) {
+    // 新格式：PBKDF2 验证
+    isPasswordValid = await verifyPassword(password, user.password);
+  } else {
+    // 旧格式：明文比较，然后自动迁移到 PBKDF2
+    if (user.password === password) {
+      isPasswordValid = true;
+      // 迁移到 PBKDF2
+      const hashedPassword = await hashPassword(password);
+      if (env.DB) {
+        await env.DB.prepare('UPDATE users SET password = ? WHERE username = ?').bind(hashedPassword, username).run();
+      } else if (env.NANO_DB) {
+        user.password = hashedPassword;
+        await env.NANO_DB.put(`USER:${username}`, JSON.stringify(user));
+      }
+      console.log(`Password migrated to PBKDF2 for user: ${user.username}`);
+    }
+  }
+
+  if (!isPasswordValid) {
     return response({ error: '密码错误' }, 401);
   }
-  
-  return response(user, 200);
+
+  // 不返回密码
+  const { password: _, ...userWithoutPassword } = user;
+  return response(userWithoutPassword as Record<string, unknown>, 200);
 }
 
-async function handleChangePassword(env: any, body: any) {
+async function handleChangePassword(env: CloudflareEnv, body: { username?: string; currentPassword?: string; newPassword?: string }) {
   const { username, currentPassword, newPassword } = body;
 
   if (!username || !currentPassword || !newPassword) {
     return response({ error: 'Missing information' }, 400);
   }
 
+  let user: UserRecord | null = null;
+
   // D1 Path
   if (env.DB) {
-    const user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
+    user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first<UserRecord>();
     if (!user) return response({ error: '用户不存在' }, 404);
-    if (user.password !== currentPassword) return response({ error: '当前密码错误' }, 401);
 
-    await env.DB.prepare('UPDATE users SET password = ? WHERE username = ?').bind(newPassword, username).run();
+    // 验证当前密码
+    let isCurrentPasswordValid = false;
+    if (isPBKDF2Hash(user.password)) {
+      isCurrentPasswordValid = await verifyPassword(currentPassword, user.password);
+    } else {
+      isCurrentPasswordValid = user.password === currentPassword;
+    }
+
+    if (!isCurrentPasswordValid) return response({ error: '当前密码错误' }, 401);
+
+    const hashedNewPassword = await hashPassword(newPassword);
+    await env.DB.prepare('UPDATE users SET password = ? WHERE username = ?').bind(hashedNewPassword, username).run();
     return response({ success: true });
   }
 
   // KV Path
   const userKey = `USER:${username}`;
-  const userStr = await env.NANO_DB.get(userKey);
+  const userStr = await env.NANO_DB?.get(userKey);
   if (!userStr) return response({ error: '用户不存在' }, 404);
 
-  const user = JSON.parse(userStr);
-  if (user.password !== currentPassword) {
+  user = JSON.parse(userStr) as UserRecord;
+
+  // 验证当前密码
+  let isCurrentPasswordValid = false;
+  if (isPBKDF2Hash(user.password)) {
+    isCurrentPasswordValid = await verifyPassword(currentPassword, user.password);
+  } else {
+    isCurrentPasswordValid = user.password === currentPassword;
+  }
+
+  if (!isCurrentPasswordValid) {
     return response({ error: '当前密码错误' }, 401);
   }
 
-  user.password = newPassword;
-  await env.NANO_DB.put(userKey, JSON.stringify(user));
+  const hashedNewPassword = await hashPassword(newPassword);
+  user.password = hashedNewPassword;
+  await env.NANO_DB?.put(userKey, JSON.stringify(user));
 
   return response({ success: true });
 }
 
 // --- Google OAuth Handlers ---
 
-function handleGoogleLogin(env: any, url: URL) {
+function handleGoogleLogin(env: CloudflareEnv, url: URL) {
   if (!env.GOOGLE_CLIENT_ID) {
     return new Response("Error: GOOGLE_CLIENT_ID not configured on server.", { status: 500 });
   }
@@ -205,7 +380,18 @@ function handleGoogleLogin(env: any, url: URL) {
   return Response.redirect(googleAuthUrl, 302);
 }
 
-async function handleGoogleCallback(env: any, request: Request, url: URL) {
+interface TokenData {
+  access_token?: string;
+  error?: string;
+  error_description?: string;
+}
+
+interface GoogleUser {
+  email?: string;
+  picture?: string;
+}
+
+async function handleGoogleCallback(env: CloudflareEnv, request: Request, url: URL) {
   const code = url.searchParams.get('code');
   const error = url.searchParams.get('error');
 
@@ -221,7 +407,7 @@ async function handleGoogleCallback(env: any, request: Request, url: URL) {
 
   try {
     const redirectUri = `${url.origin}/api/auth?action=google-callback`;
-    
+
     // 1. Exchange code for token
     const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -235,29 +421,37 @@ async function handleGoogleCallback(env: any, request: Request, url: URL) {
       })
     });
 
-    const tokenData: any = await tokenResp.json();
+    const tokenData = await tokenResp.json() as TokenData;
     if (tokenData.error) throw new Error(tokenData.error_description || tokenData.error);
 
     // 2. Get User Info
     const userResp = await fetch('https://www.googleapis.com/oauth2/v1/userinfo', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` }
     });
-    const googleUser: any = await userResp.json();
-    
+    const googleUser = await userResp.json() as GoogleUser;
+
     // 3. Upsert User in DB
     const email = googleUser.email;
     const avatar = googleUser.picture;
-    
-    let appUser = null;
+
+    if (!email) {
+      throw new Error('Google user missing email');
+    }
+
+    let appUser: Omit<UserRecord, 'avatar_url' | 'created_at'> | null = null;
 
     if (env.DB) {
        // Check existing
-       const existing = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(email).first();
+       const existing = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(email).first<UserRecord>();
        if (existing) {
-         appUser = existing;
-         // Map fields back
-         if (appUser.avatar_url) { appUser.avatarUrl = appUser.avatar_url; delete appUser.avatar_url; }
-         if (appUser.created_at) { appUser.createdAt = appUser.created_at; delete appUser.created_at; }
+         appUser = {
+           id: existing.id,
+           username: existing.username,
+           password: existing.password,
+           provider: existing.provider,
+           avatarUrl: existing.avatar_url || existing.avatarUrl || '',
+           createdAt: existing.created_at || existing.createdAt
+         };
        } else {
          // Create new
          appUser = {
@@ -266,18 +460,18 @@ async function handleGoogleCallback(env: any, request: Request, url: URL) {
            password: 'google-oauth-login-only',
            provider: 'google',
            createdAt: Date.now(),
-           avatarUrl: avatar
+           avatarUrl: avatar || ''
          };
          await env.DB.prepare(
             'INSERT INTO users (id, username, password, provider, created_at, avatar_url) VALUES (?, ?, ?, ?, ?, ?)'
          ).bind(appUser.id, appUser.username, appUser.password, appUser.provider, appUser.createdAt, appUser.avatarUrl).run();
        }
-    } else {
+    } else if (env.NANO_DB) {
        // KV
        const userKey = `USER:${email}`;
        const userStr = await env.NANO_DB.get(userKey);
        if (userStr) {
-         appUser = JSON.parse(userStr);
+         appUser = JSON.parse(userStr) as UserRecord;
        } else {
          appUser = {
            id: crypto.randomUUID(),
@@ -285,11 +479,18 @@ async function handleGoogleCallback(env: any, request: Request, url: URL) {
            password: 'google-oauth-login-only',
            provider: 'google',
            createdAt: Date.now(),
-           avatarUrl: avatar
+           avatarUrl: avatar || ''
          };
          await env.NANO_DB.put(userKey, JSON.stringify(appUser));
        }
     }
+
+    if (!appUser) {
+      throw new Error('Failed to create or retrieve user');
+    }
+
+    // 不返回密码
+    const { password: _, ...userWithoutPassword } = appUser;
 
     // 4. Return HTML to save session and redirect (Bridge server-to-client)
     const html = `
@@ -306,7 +507,7 @@ async function handleGoogleCallback(env: any, request: Request, url: URL) {
         </div>
         <script>
           try {
-            const user = ${JSON.stringify(appUser)};
+            const user = ${escapeJsonForHtml(userWithoutPassword as Record<string, unknown>)};
             localStorage.setItem('hotker_cloud_session', JSON.stringify(user));
             window.location.href = '/';
           } catch (e) {
@@ -321,7 +522,8 @@ async function handleGoogleCallback(env: any, request: Request, url: URL) {
       headers: { 'Content-Type': 'text/html' }
     });
 
-  } catch (e: any) {
-    return new Response(`OAuth Error: ${e.message}`, { status: 500 });
+  } catch (e) {
+    const error = e as Error;
+    return new Response(`OAuth Error: ${error.message}`, { status: 500 });
   }
 }
