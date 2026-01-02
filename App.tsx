@@ -291,6 +291,7 @@ const AuthenticatedApp: React.FC<{
               saveTemplate={(t) => setTemplates(prev => [t, ...prev])}
               addLog={(l) => setLogs(prev => [l, ...prev])}
               onUpdateModule={(m) => setModules(prev => prev.map(old => old.id === m.id ? m : old))}
+              onAddModule={(m) => setModules(prev => [m, ...prev])}
               userApiKey={userApiKey}
               currentUser={currentUser}
               lang={lang}

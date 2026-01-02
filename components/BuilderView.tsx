@@ -1,18 +1,22 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { PromptModule, PromptTemplate, RunLog, FixedConfig, ModuleType, User } from '../types';
 import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
 import {
   Plus, Save, Play, X, Settings2, CheckCircle2, Copy, Download,
   Box, Layout, Eye, Search, ArrowRight, GripVertical, AlertCircle,
   Cpu, Thermometer, Layers, ChevronDown, Image as ImageIcon,
-  Maximize, Edit2, Check, RefreshCcw, BarChart3, Sparkles
+  Maximize, Edit2, Check, RefreshCcw, BarChart3, Sparkles,
+  Undo2, Redo2
 } from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
 import { Language, translations } from '../translations';
 import { optimizerService, AnalysisResult, OptimizationResult } from '../services/optimizerService';
 import { PromptAnalyzer } from './PromptAnalyzer';
 import { PromptOptimizer } from './PromptOptimizer';
+import { OptimizationApplyModal } from './OptimizationApplyModal';
+import { DraggableModuleList } from './DraggableModuleList';
+import { useUndoRedo } from '../hooks/useUndoRedo';
 
 interface BuilderViewProps {
   modules: PromptModule[];
@@ -20,15 +24,35 @@ interface BuilderViewProps {
   saveTemplate: (t: PromptTemplate) => void;
   addLog: (l: RunLog) => void;
   onUpdateModule: (m: PromptModule) => void;
-  userApiKey: string; // Deprecated, kept for prop compatibility
+  onAddModule: (m: PromptModule) => void;
+  userApiKey: string;
   currentUser: User;
   lang: Language;
 }
 
-export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, saveTemplate, addLog, onUpdateModule, userApiKey, currentUser, lang }) => {
+export const BuilderView: React.FC<BuilderViewProps> = ({
+  modules,
+  templates,
+  saveTemplate,
+  addLog,
+  onUpdateModule,
+  onAddModule,
+  userApiKey,
+  currentUser,
+  lang
+}) => {
   const t = translations[lang];
 
-  const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([]);
+  // 使用撤销/重做 Hook 管理选中模块
+  const {
+    state: selectedModuleIds,
+    setState: setSelectedModuleIds,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useUndoRedo<string[]>([], { maxHistory: 20 });
+
   const [templateName, setTemplateName] = useState(t.builder.defaultTemplateName);
   const [config, setConfig] = useState<FixedConfig>(DEFAULT_CONFIG);
 
@@ -48,16 +72,28 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
   const [showAnalyzer, setShowAnalyzer] = useState(false);
   const [showOptimizer, setShowOptimizer] = useState(false);
 
+  // 优化应用弹窗状态
+  const [showApplyModal, setShowApplyModal] = useState(false);
+  const [optimizedPromptToApply, setOptimizedPromptToApply] = useState('');
+
   const compiledPrompt = useMemo(() => {
     const parts = selectedModuleIds.map(id => modules.find(m => m.id === id)?.content).filter(Boolean);
     if (config.appendString) parts.push(`\n[System Note]: ${config.appendString}`);
     return parts.join('\n\n');
   }, [selectedModuleIds, modules, config.appendString]);
 
-  const handleAddModule = (id: string) => {
+  const handleAddModule = useCallback((id: string) => {
     setSelectedModuleIds(prev => [...prev, id]);
     if (window.innerWidth < 768) setMobileSection('assembly');
-  };
+  }, [setSelectedModuleIds]);
+
+  const handleRemoveModule = useCallback((index: number) => {
+    setSelectedModuleIds(prev => prev.filter((_, i) => i !== index));
+  }, [setSelectedModuleIds]);
+
+  const handleReorderModules = useCallback((newOrder: string[]) => {
+    setSelectedModuleIds(newOrder);
+  }, [setSelectedModuleIds]);
 
   const handleRun = async () => {
     if (!compiledPrompt) return;
@@ -67,14 +103,14 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
     const startTime = Date.now();
 
     try {
-      // Guidelines: geminiService now obtains API key from environment internally, or uses provided user key
       const output = await generateResponse(compiledPrompt, config, userApiKey);
       if (output.startsWith('ERR_')) throw new Error(output);
       setResult(output);
       addLog({ id: crypto.randomUUID(), templateId: 'unsaved', templateName, finalPrompt: compiledPrompt, output, status: 'success', timestamp: Date.now(), durationMs: Date.now() - startTime });
-    } catch (e: any) {
-      setExecutionError(e.message);
-      addLog({ id: crypto.randomUUID(), templateId: 'unsaved', templateName, finalPrompt: compiledPrompt, output: '', status: 'failure', notes: e.message, timestamp: Date.now(), durationMs: Date.now() - startTime });
+    } catch (e: unknown) {
+      const error = e as Error;
+      setExecutionError(error.message);
+      addLog({ id: crypto.randomUUID(), templateId: 'unsaved', templateName, finalPrompt: compiledPrompt, output: '', status: 'failure', notes: error.message, timestamp: Date.now(), durationMs: Date.now() - startTime });
     } finally {
       setIsRunning(false);
     }
@@ -104,8 +140,9 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         setAnalysis(result);
         setShowAnalyzer(true);
       }
-    } catch (error: any) {
-      alert(lang === 'zh' ? `分析失败: ${error.message}` : `Analysis failed: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as Error;
+      alert(lang === 'zh' ? `分析失败: ${err.message}` : `Analysis failed: ${err.message}`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -125,28 +162,81 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         setOptimization(result);
         setShowOptimizer(true);
       }
-    } catch (error: any) {
-      alert(lang === 'zh' ? `优化失败: ${error.message}` : `Optimization failed: ${error.message}`);
+    } catch (error: unknown) {
+      const err = error as Error;
+      alert(lang === 'zh' ? `优化失败: ${err.message}` : `Optimization failed: ${err.message}`);
     } finally {
       setIsOptimizing(false);
     }
   };
 
-  // 应用优化后的提示词
+  // 应用优化后的提示词 - 打开选择弹窗
   const handleApplyOptimization = (optimizedPrompt: string) => {
-    // 这里可以选择如何应用优化：
-    // 1. 创建新模块
-    // 2. 更新现有模块
-    // 3. 仅显示在结果中
-    alert(lang === 'zh' ? '优化已应用！您可以在预览中看到效果。' : 'Optimization applied! You can see the result in preview.');
+    setOptimizedPromptToApply(optimizedPrompt);
+    setShowOptimizer(false);
+    setShowApplyModal(true);
   };
+
+  // 创建新模块
+  const handleCreateModuleFromOptimization = (content: string, title: string, type: ModuleType) => {
+    const newModule: PromptModule = {
+      id: crypto.randomUUID(),
+      title,
+      content,
+      type,
+      tags: [lang === 'zh' ? 'AI优化' : 'AI Optimized'],
+      createdAt: Date.now(),
+    };
+    onAddModule(newModule);
+    // 添加到当前选中列表
+    setSelectedModuleIds(prev => [...prev, newModule.id]);
+  };
+
+  // 替换当前组合
+  const handleReplaceWithOptimization = (content: string) => {
+    // 创建一个临时模块替换当前选中的所有模块
+    const tempModule: PromptModule = {
+      id: crypto.randomUUID(),
+      title: lang === 'zh' ? '优化后的 Prompt' : 'Optimized Prompt',
+      content,
+      type: ModuleType.OTHER,
+      tags: [lang === 'zh' ? 'AI优化' : 'AI Optimized'],
+      createdAt: Date.now(),
+    };
+    onAddModule(tempModule);
+    // 替换当前选中为新模块
+    setSelectedModuleIds([tempModule.id]);
+  };
+
+  // 复制到剪贴板
+  const handleCopyToClipboard = (content: string) => {
+    navigator.clipboard.writeText(content);
+  };
+
+  // 键盘快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          redo();
+        } else {
+          e.preventDefault();
+          undo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
 
   return (
     <div className="h-full flex flex-col md:flex-row bg-slate-50 overflow-hidden relative font-sans md:rounded-tl-xl md:border-l md:border-t md:border-slate-200">
       {/* Mobile Tab Switcher */}
       <div className="md:hidden flex border-b border-slate-200 bg-white shrink-0 z-20">
         {[{ id: 'resources', icon: Box, label: t.builder.tabResources }, { id: 'assembly', icon: Layout, label: t.builder.tabAssembly }, { id: 'preview', icon: Eye, label: t.builder.tabPreview }].map(tab => (
-          <button key={tab.id} onClick={() => setMobileSection(tab.id as any)} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${mobileSection === tab.id ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600' : 'text-slate-500'}`}>
+          <button key={tab.id} onClick={() => setMobileSection(tab.id as 'resources' | 'assembly' | 'preview')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${mobileSection === tab.id ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600' : 'text-slate-500'}`}>
             <tab.icon size={14} /> {tab.label}
           </button>
         ))}
@@ -168,13 +258,56 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
         <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
           <div className="max-w-2xl mx-auto space-y-6 pb-20">
             <div className="mb-4">
-              <div className="flex items-center justify-between mb-4"><div className="flex items-center gap-2 text-slate-400"><Layers size={14} /><span className="text-xs font-bold uppercase tracking-widest">{t.builder.flowTitle}</span></div><button onClick={() => saveTemplate({ id: crypto.randomUUID(), name: templateName, description: 'Builder Session', moduleIds: selectedModuleIds, config, createdAt: Date.now(), updatedAt: Date.now() })} className="text-xs flex items-center gap-1.5 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"><Save size={14} /> <span>{t.builder.saveTemplateBtn}</span></button></div>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-slate-400">
+                  <Layers size={14} />
+                  <span className="text-xs font-bold uppercase tracking-widest">{t.builder.flowTitle}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* 撤销/重做按钮 */}
+                  <button
+                    onClick={undo}
+                    disabled={!canUndo}
+                    className={`p-1.5 rounded transition-colors ${canUndo ? 'text-slate-500 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-300 cursor-not-allowed'}`}
+                    title={lang === 'zh' ? '撤销 (Cmd+Z)' : 'Undo (Cmd+Z)'}
+                  >
+                    <Undo2 size={14} />
+                  </button>
+                  <button
+                    onClick={redo}
+                    disabled={!canRedo}
+                    className={`p-1.5 rounded transition-colors ${canRedo ? 'text-slate-500 hover:text-slate-700 hover:bg-slate-100' : 'text-slate-300 cursor-not-allowed'}`}
+                    title={lang === 'zh' ? '重做 (Cmd+Shift+Z)' : 'Redo (Cmd+Shift+Z)'}
+                  >
+                    <Redo2 size={14} />
+                  </button>
+                  <div className="w-px h-4 bg-slate-200 mx-1"></div>
+                  <button onClick={() => saveTemplate({ id: crypto.randomUUID(), name: templateName, description: 'Builder Session', moduleIds: selectedModuleIds, config, createdAt: Date.now(), updatedAt: Date.now() })} className="text-xs flex items-center gap-1.5 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"><Save size={14} /> <span>{t.builder.saveTemplateBtn}</span></button>
+                </div>
+              </div>
               <input className="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 text-slate-900 w-full outline-none" value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder={t.builder.untitledTemplate} />
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
               <div className="px-4 py-3 bg-slate-50 border-b flex justify-between items-center cursor-pointer" onClick={() => setSectionsOpen(p => ({ ...p, structure: !p.structure }))}><div className="flex items-center gap-2"><div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</div><span className="text-xs font-bold text-slate-700 uppercase">{t.builder.structureTitle}</span></div><ChevronDown size={14} className={`text-slate-400 transition-transform ${sectionsOpen.structure ? 'rotate-180' : ''}`} /></div>
-              {sectionsOpen.structure && (<div className="p-5 bg-slate-50/30">{selectedModuleIds.length === 0 ? (<div className="border-2 border-dashed border-slate-200 rounded-lg p-8 flex flex-col items-center justify-center text-center"><Plus size={20} className="text-slate-400 mb-2" /><p className="text-sm font-medium text-slate-600">{t.builder.startBuilding}</p></div>) : (<div className="space-y-3">{selectedModuleIds.map((id, index) => { const m = modules.find(x => x.id === id); return m ? (<div key={index} className="bg-white border rounded-lg p-3 flex items-start gap-3 group relative"><GripVertical size={14} className="mt-1 text-slate-300" /><div className="flex-1 min-w-0"><h4 className="text-xs font-bold text-slate-700 mb-1">{m.title}</h4><p className="text-xs text-slate-500 font-mono line-clamp-2">{m.content}</p></div><button onClick={() => setSelectedModuleIds(prev => prev.filter((_, i) => i !== index))} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><X size={16} /></button></div>) : null; })}</div>)}</div>)}
+              {sectionsOpen.structure && (
+                <div className="p-5 bg-slate-50/30">
+                  {selectedModuleIds.length === 0 ? (
+                    <div className="border-2 border-dashed border-slate-200 rounded-lg p-8 flex flex-col items-center justify-center text-center">
+                      <Plus size={20} className="text-slate-400 mb-2" />
+                      <p className="text-sm font-medium text-slate-600">{t.builder.startBuilding}</p>
+                    </div>
+                  ) : (
+                    <DraggableModuleList
+                      moduleIds={selectedModuleIds}
+                      modules={modules}
+                      onReorder={handleReorderModules}
+                      onRemove={handleRemoveModule}
+                      lang={lang}
+                    />
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -241,6 +374,17 @@ export const BuilderView: React.FC<BuilderViewProps> = ({ modules, templates, sa
           onClose={() => setShowOptimizer(false)}
         />
       )}
+
+      {/* 优化应用选择弹窗 */}
+      <OptimizationApplyModal
+        isOpen={showApplyModal}
+        onClose={() => setShowApplyModal(false)}
+        optimizedPrompt={optimizedPromptToApply}
+        onCreateModule={handleCreateModuleFromOptimization}
+        onReplaceModules={handleReplaceWithOptimization}
+        onCopyToClipboard={handleCopyToClipboard}
+        lang={lang}
+      />
     </div>
   );
 };

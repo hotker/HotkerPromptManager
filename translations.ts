@@ -151,7 +151,11 @@ export const translations = {
       importSuccess: '导入成功！',
       invalidShare: '无效的分享链接',
       shareExpired: '分享已过期',
-      wrongPassword: '密码错误'
+      wrongPassword: '密码错误',
+      undo: '撤销',
+      redo: '重做',
+      undone: '已撤销',
+      redone: '已重做'
     },
     // 智能优化助手
     optimizer: {
@@ -173,7 +177,12 @@ export const translations = {
       optimized: '优化后',
       noIssues: '未发现问题',
       analysisComplete: '分析完成',
-      optimizationComplete: '优化完成'
+      optimizationComplete: '优化完成',
+      applyTitle: '应用优化结果',
+      createModule: '创建新模块',
+      replaceCurrent: '替换当前组合',
+      copyOnly: '仅复制',
+      copied: '已复制'
     },
     // 构建器
     builder: {

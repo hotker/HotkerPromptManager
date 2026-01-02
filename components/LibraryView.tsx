@@ -6,13 +6,15 @@ import {
   Box, ChevronLeft, ChevronRight, AlertCircle,
   Settings, Terminal, Tag, X as CloseIcon,
   ChevronsLeft, ChevronsRight, Maximize, ExternalLink,
-  Image as ImageIcon, Minimize, MonitorPlay, Clock, Share2, Download
+  Image as ImageIcon, Minimize, MonitorPlay, Clock, Share2, Download,
+  Undo2, Redo2
 } from 'lucide-react';
 import { Language, translations } from '../translations';
 import { VersionHistoryModal } from './VersionHistoryModal';
 import { versionService } from '../services/versionService';
 import { ShareModal } from './ShareModal';
 import { ImportModal } from './ImportModal';
+import { useUndoRedoWithExternalState } from '../hooks/useUndoRedo';
 
 interface LibraryViewProps {
   modules: PromptModule[];
@@ -25,6 +27,15 @@ interface LibraryViewProps {
 const ITEMS_PER_PAGE = 12;
 
 export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, lang, currentUser }) => {
+  // 撤销/重做功能
+  const {
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+    recordChange,
+  } = useUndoRedoWithExternalState(modules, setModules, { maxHistory: 20 });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingModule, setEditingModule] = useState<PromptModule | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -93,6 +104,24 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
     }
   }, [isImmersiveMode, handleNext, handlePrev]);
 
+  // 撤销/重做快捷键
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          redo();
+        } else {
+          e.preventDefault();
+          undo();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [undo, redo]);
+
 
   useEffect(() => {
     setCurrentPage(1);
@@ -154,6 +183,8 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
       imageUrl: imageUrl.trim(),
       createdAt: editingModule ? editingModule.createdAt : Date.now(),
     };
+    // 记录撤销历史
+    recordChange(editingModule ? modules.map(m => m.id === editingModule.id ? newModule : m) : [newModule, ...modules]);
     setModules(prev => editingModule ? prev.map(m => m.id === editingModule.id ? newModule : m) : [newModule, ...prev]);
 
     // 如果是编辑模式且用户已登录，创建版本记录
@@ -172,7 +203,11 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   };
 
   const handleDelete = (id: string) => {
-    if (confirm(t.library.deleteConfirm)) setModules(prev => prev.filter(m => m.id !== id));
+    if (confirm(t.library.deleteConfirm)) {
+      // 记录撤销历史
+      recordChange(modules.filter(m => m.id !== id));
+      setModules(prev => prev.filter(m => m.id !== id));
+    }
   };
 
   const openVersionHistory = (moduleId: string) => {
@@ -288,6 +323,25 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
               <MonitorPlay size={20} />
             </button>
             <div className="flex gap-3">
+              {/* 撤销/重做按钮 */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={undo}
+                  disabled={!canUndo}
+                  className={`h-[48px] w-[48px] flex items-center justify-center bg-white border border-slate-200 rounded-2xl shadow-sm transition-all ${canUndo ? 'text-slate-500 hover:text-slate-700 hover:border-slate-300' : 'text-slate-300 cursor-not-allowed'}`}
+                  title={lang === 'zh' ? '撤销 (Cmd+Z)' : 'Undo (Cmd+Z)'}
+                >
+                  <Undo2 size={18} />
+                </button>
+                <button
+                  onClick={redo}
+                  disabled={!canRedo}
+                  className={`h-[48px] w-[48px] flex items-center justify-center bg-white border border-slate-200 rounded-2xl shadow-sm transition-all ${canRedo ? 'text-slate-500 hover:text-slate-700 hover:border-slate-300' : 'text-slate-300 cursor-not-allowed'}`}
+                  title={lang === 'zh' ? '重做 (Cmd+Shift+Z)' : 'Redo (Cmd+Shift+Z)'}
+                >
+                  <Redo2 size={18} />
+                </button>
+              </div>
               <button onClick={() => setImportModalOpen(true)} className="px-4 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center gap-2 shadow-sm">
                 <Download size={18} />
                 <span>{t.library.importPrompt}</span>
