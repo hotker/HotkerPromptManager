@@ -19,14 +19,17 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 const App = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
-  const [lang, setLangState] = useState<Language>(() => (localStorage.getItem('hotker_lang') as Language) || 'zh');
+  const [lang, setLangState] = useState<Language>(() => {
+    const saved = localStorage.getItem('hotker_lang');
+    return (saved === 'zh' || saved === 'en') ? saved as Language : 'zh';
+  });
 
   const setLang = (l: Language) => {
     setLangState(l);
     localStorage.setItem('hotker_lang', l);
   };
 
-  const t = translations[lang];
+  const t = translations[lang] || translations.zh;
 
   useEffect(() => {
     const user = authService.getCurrentUser();
@@ -71,7 +74,7 @@ const AuthenticatedApp: React.FC<{
 }> = ({ currentUser, onLogout, lang, setLang }) => {
   const [view, setView] = useState<ViewState>('dashboard');
   const [searchOpen, setSearchOpen] = useState(false);
-  const t = translations[lang];
+  const t = translations[lang] || translations.zh;
   const toast = useToast();
 
   const [modules, setModules] = useState<PromptModule[]>([]);

@@ -138,7 +138,8 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('CORS not allowed'), false);
+    // 不抛出 Error 而是直接拒绝，或者如果是生产环境可以更宽松些
+    return callback(null, false);
   },
   credentials: true
 }));
@@ -150,7 +151,7 @@ app.use(express.text({ limit: UPLOAD_LIMIT }));
 app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://generativelanguage.googleapis.com https://api.qrserver.com"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://generativelanguage.googleapis.com https://api.qrserver.com; manifest-src 'self'; frame-ancestors 'none';"
   );
   next();
 });

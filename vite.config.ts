@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
           const distDir = path.resolve(__dirname, 'dist');
           const indexHtml = path.join(distDir, 'index.html');
           const notFoundHtml = path.join(distDir, '404.html');
-          
+
           if (fs.existsSync(indexHtml)) {
             fs.copyFileSync(indexHtml, notFoundHtml);
             console.log('✨ Created 404.html for Cloudflare Pages SPA routing');
@@ -36,8 +36,11 @@ export default defineConfig(({ mode }) => {
     ],
     define: {
       // Polyfill process.env for browser compatibility
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
-      'process.env': {} 
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || ''),
+      'process.env': JSON.stringify({
+        NODE_ENV: mode,
+        API_KEY: env.API_KEY || ''
+      })
     },
     build: {
       outDir: 'dist',
