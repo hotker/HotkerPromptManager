@@ -11,7 +11,7 @@ import rateLimit from 'express-rate-limit';
 
 // --- Security Configuration ---
 const BCRYPT_ROUNDS = 10;
-const XOR_SECRET_KEY = process.env.XOR_SECRET_KEY || 'HotkerSync2025_Default_Change_In_Production';
+const XOR_SECRET_KEY = process.env.XOR_SECRET_KEY || 'HotkerSync2025_Secret';
 
 // XSS 防护：输入清理函数
 function sanitizeInput(str) {
