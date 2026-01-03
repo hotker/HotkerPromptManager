@@ -17,6 +17,7 @@ import { PromptOptimizer } from './PromptOptimizer';
 import { OptimizationApplyModal } from './OptimizationApplyModal';
 import { DraggableModuleList } from './DraggableModuleList';
 import { useUndoRedo } from '../hooks/useUndoRedo';
+import { generateUUID } from '../services/uuid';
 
 interface BuilderViewProps {
   modules: PromptModule[];
@@ -106,11 +107,11 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
       const output = await generateResponse(compiledPrompt, config, userApiKey);
       if (output.startsWith('ERR_')) throw new Error(output);
       setResult(output);
-      addLog({ id: crypto.randomUUID(), templateId: 'unsaved', templateName, finalPrompt: compiledPrompt, output, status: 'success', timestamp: Date.now(), durationMs: Date.now() - startTime });
+      addLog({ id: generateUUID(), templateId: 'unsaved', templateName, finalPrompt: compiledPrompt, output, status: 'success', timestamp: Date.now(), durationMs: Date.now() - startTime });
     } catch (e: unknown) {
       const error = e as Error;
       setExecutionError(error.message);
-      addLog({ id: crypto.randomUUID(), templateId: 'unsaved', templateName, finalPrompt: compiledPrompt, output: '', status: 'failure', notes: error.message, timestamp: Date.now(), durationMs: Date.now() - startTime });
+      addLog({ id: generateUUID(), templateId: 'unsaved', templateName, finalPrompt: compiledPrompt, output: '', status: 'failure', notes: error.message, timestamp: Date.now(), durationMs: Date.now() - startTime });
     } finally {
       setIsRunning(false);
     }
@@ -180,7 +181,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
   // 创建新模块
   const handleCreateModuleFromOptimization = (content: string, title: string, type: ModuleType) => {
     const newModule: PromptModule = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       title,
       content,
       type,
@@ -196,7 +197,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
   const handleReplaceWithOptimization = (content: string) => {
     // 创建一个临时模块替换当前选中的所有模块
     const tempModule: PromptModule = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       title: lang === 'zh' ? '优化后的 Prompt' : 'Optimized Prompt',
       content,
       type: ModuleType.OTHER,
@@ -282,7 +283,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
                     <Redo2 size={14} />
                   </button>
                   <div className="w-px h-4 bg-slate-200 mx-1"></div>
-                  <button onClick={() => saveTemplate({ id: crypto.randomUUID(), name: templateName, description: 'Builder Session', moduleIds: selectedModuleIds, config, createdAt: Date.now(), updatedAt: Date.now() })} className="text-xs flex items-center gap-1.5 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"><Save size={14} /> <span>{t.builder.saveTemplateBtn}</span></button>
+                  <button onClick={() => saveTemplate({ id: generateUUID(), name: templateName, description: 'Builder Session', moduleIds: selectedModuleIds, config, createdAt: Date.now(), updatedAt: Date.now() })} className="text-xs flex items-center gap-1.5 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded transition-colors"><Save size={14} /> <span>{t.builder.saveTemplateBtn}</span></button>
                 </div>
               </div>
               <input className="text-2xl font-bold bg-transparent border-none focus:ring-0 p-0 text-slate-900 w-full outline-none" value={templateName} onChange={e => setTemplateName(e.target.value)} placeholder={t.builder.untitledTemplate} />

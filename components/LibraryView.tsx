@@ -15,6 +15,7 @@ import { versionService } from '../services/versionService';
 import { ShareModal } from './ShareModal';
 import { ImportModal } from './ImportModal';
 import { useUndoRedoWithExternalState } from '../hooks/useUndoRedo';
+import { generateUUID } from '../services/uuid';
 
 interface LibraryViewProps {
   modules: PromptModule[];
@@ -174,7 +175,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
     }
     setIsSaving(true);
     const newModule: PromptModule = {
-      id: editingModule ? editingModule.id : crypto.randomUUID(),
+      id: editingModule ? editingModule.id : generateUUID(),
       title: title.trim(),
       description: description.trim(),
       content: content.trim(),
@@ -189,12 +190,17 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
 
     // 如果是编辑模式且用户已登录，创建版本记录
     if (editingModule && currentUser) {
-      await versionService.createModuleVersion(
-        editingModule.id,
-        currentUser.id,
-        newModule,
-        changeSummary || undefined
-      );
+      try {
+        await versionService.createModuleVersion(
+          editingModule.id,
+          currentUser.id,
+          newModule,
+          changeSummary || undefined
+        );
+      } catch (e) {
+        console.error("Failed to create version history:", e);
+        // 不阻断主流程
+      }
       setChangeSummary(''); // 重置修改说明
     }
 
@@ -227,7 +233,7 @@ export const LibraryView: React.FC<LibraryViewProps> = ({ modules, setModules, l
   const handleImport = async (item: PromptModule, type: 'module' | 'template') => {
     if (type === 'module') {
       // 生成新ID避免冲突
-      const newModule = { ...item, id: crypto.randomUUID(), createdAt: Date.now() };
+      const newModule = { ...item, id: generateUUID(), createdAt: Date.now() };
 
       try {
         // 调用后端 API 保存到数据库
