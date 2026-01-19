@@ -1,12 +1,12 @@
 
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { PromptModule, PromptTemplate, RunLog, FixedConfig, ModuleType, User } from '../types';
 import { AVAILABLE_MODELS, DEFAULT_CONFIG, MODULE_COLORS } from '../constants';
 import {
-  Plus, Save, Play, X, Settings2, CheckCircle2, Copy, Download,
-  Box, Layout, Eye, Search, ArrowRight, GripVertical, AlertCircle,
-  Cpu, Thermometer, Layers, ChevronDown, Image as ImageIcon,
-  Maximize, Edit2, Check, RefreshCcw, BarChart3, Sparkles,
+  Plus, Save, Play, Copy,
+  Box, Layout, Eye, Search, ArrowRight, AlertCircle,
+  Layers, ChevronDown,
+  RefreshCcw, BarChart3, Sparkles,
   Undo2, Redo2
 } from 'lucide-react';
 import { generateResponse } from '../services/geminiService';
@@ -17,6 +17,7 @@ import { PromptOptimizer } from './PromptOptimizer';
 import { OptimizationApplyModal } from './OptimizationApplyModal';
 import { DraggableModuleList } from './DraggableModuleList';
 import { useUndoRedo } from '../hooks/useUndoRedo';
+import { useIsMobile } from '../hooks/useMediaQuery';
 import { generateUUID } from '../services/uuid';
 
 interface BuilderViewProps {
@@ -43,6 +44,7 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
   lang
 }) => {
   const t = translations[lang];
+  const isMobile = useIsMobile();
 
   // 使用撤销/重做 Hook 管理选中模块
   const {
@@ -85,8 +87,8 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
 
   const handleAddModule = useCallback((id: string) => {
     setSelectedModuleIds(prev => [...prev, id]);
-    if (window.innerWidth < 768) setMobileSection('assembly');
-  }, [setSelectedModuleIds]);
+    if (isMobile) setMobileSection('assembly');
+  }, [setSelectedModuleIds, isMobile]);
 
   const handleRemoveModule = useCallback((index: number) => {
     setSelectedModuleIds(prev => prev.filter((_, i) => i !== index));
@@ -234,16 +236,33 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
 
   return (
     <div className="h-full flex flex-col md:flex-row bg-slate-50 overflow-hidden relative font-sans md:rounded-tl-xl md:border-l md:border-t md:border-slate-200">
-      {/* Mobile Tab Switcher */}
-      <div className="md:hidden flex border-b border-slate-200 bg-white shrink-0 z-20">
-        {[{ id: 'resources', icon: Box, label: t.builder.tabResources }, { id: 'assembly', icon: Layout, label: t.builder.tabAssembly }, { id: 'preview', icon: Eye, label: t.builder.tabPreview }].map(tab => (
-          <button key={tab.id} onClick={() => setMobileSection(tab.id as 'resources' | 'assembly' | 'preview')} className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${mobileSection === tab.id ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600' : 'text-slate-500'}`}>
-            <tab.icon size={14} /> {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* Mobile Tab Switcher - only visible on mobile */}
+      {isMobile && (
+        <div className="flex border-b border-slate-200 bg-white shrink-0 z-20">
+          {[
+            { id: 'resources', icon: Box, label: t.builder.tabResources },
+            { id: 'assembly', icon: Layout, label: t.builder.tabAssembly },
+            { id: 'preview', icon: Eye, label: t.builder.tabPreview }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setMobileSection(tab.id as 'resources' | 'assembly' | 'preview')}
+              className={`flex-1 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
+                mobileSection === tab.id
+                  ? 'text-blue-600 bg-blue-50 border-b-2 border-blue-600'
+                  : 'text-slate-500'
+              }`}
+            >
+              <tab.icon size={14} /> {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <div className={`w-full md:w-72 border-r border-slate-200 flex flex-col bg-white shrink-0 ${mobileSection === 'resources' ? 'flex-1' : 'hidden md:flex'}`}>
+      {/* Resources Panel */}
+      <div className={`w-full md:w-72 border-r border-slate-200 flex flex-col bg-white shrink-0 ${
+        isMobile ? (mobileSection === 'resources' ? 'flex-1' : 'hidden') : 'flex'
+      }`}>
         <div className="p-4 border-b border-slate-100"><div className="relative"><input type="text" placeholder={t.builder.searchModules} className="prod-input pl-9 text-xs" value={searchModule} onChange={e => setSearchModule(e.target.value)} /><Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /></div></div>
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-6">
           {(Object.keys(groupedModules) as ModuleType[]).map(type => (
@@ -255,7 +274,10 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
         </div>
       </div>
 
-      <div className={`flex-1 flex flex-col min-w-0 bg-slate-50 relative ${mobileSection === 'assembly' ? 'flex-1' : 'hidden md:flex'}`}>
+      {/* Assembly Panel */}
+      <div className={`flex-1 flex flex-col min-w-0 bg-slate-50 relative ${
+        isMobile ? (mobileSection === 'assembly' ? 'flex-1' : 'hidden') : 'flex'
+      }`}>
         <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
           <div className="max-w-2xl mx-auto space-y-6 pb-20">
             <div className="mb-4">
@@ -319,7 +341,10 @@ export const BuilderView: React.FC<BuilderViewProps> = ({
         </div>
       </div>
 
-      <div className={`w-full md:w-96 border-l border-slate-200 flex flex-col bg-white shrink-0 ${mobileSection === 'preview' ? 'flex-1' : 'hidden md:flex'}`}>
+      {/* Preview Panel */}
+      <div className={`w-full md:w-96 border-l border-slate-200 flex flex-col bg-white shrink-0 ${
+        isMobile ? (mobileSection === 'preview' ? 'flex-1' : 'hidden') : 'flex'
+      }`}>
         <div className="p-5 border-b sticky top-0 bg-white z-10">
           <h3 className="text-sm font-bold text-slate-800 mb-4">{t.builder.runnerTitle}</h3>
           <button
